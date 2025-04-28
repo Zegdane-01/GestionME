@@ -1,0 +1,110 @@
+/* Hero Section */
+.hero {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .hero-content {
+    width: 60%;
+    max-width: 700px;
+    padding: 50px;
+    background-color: rgba(61, 40, 98, 0.85);
+    border-radius: 30px;
+    margin-left: 10%;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .background-elements {
+    position: absolute;
+    inset: 0;
+    inset: 0;
+    background: url('../../../assets/images/innovation-slider-desktop.jpg') no-repeat center center / cover;
+    z-index: -1;
+    height: 100vh;
+    width: 100%;
+    background-attachment: fixed;
+
+  }
+  
+  .hero-title {
+    font-size: 48px;
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+  
+  .hero-text {
+    font-size: 18px;
+    line-height: 1.7;
+    margin-bottom: 30px;
+  }
+  .section-title {
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #2c3e50;
+  }
+  .section-bg {
+    background-color: #623fbf;
+    height: 100%;
+    padding:100px 300px 100px 300px;
+    align-content: center;
+  }
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .hero {
+      justify-content: center;
+    }
+  
+    .hero-content {
+      width: 70%;
+      margin: 0;
+      padding: 40px;
+    }
+    .section-bg {
+        height: 100%;
+        padding:30px 100px 30px 100px;
+        align-content: center;
+      }
+  }
+  
+  @media (max-width: 768px) {
+    .hero-content {
+      width: 80%;
+      padding: 30px;
+    }
+  
+    .hero-title {
+      font-size: 36px;
+    }
+    .section-bg {
+        height: 100%;
+        padding:20px 30px 20px 30px;
+        align-content: center;
+      }
+  }
+  
+  @media (max-width: 576px) {
+    .hero-content {
+      width: 90%;
+      padding: 20px;
+    }
+  
+    .hero-title {
+      font-size: 28px;
+    }
+  
+    .hero-text {
+      font-size: 16px;
+    }
+    .section-bg {
+        height: 100%;
+        padding:20px 30px 20px 30px;
+        align-content: center;
+      }
+  }
+  
