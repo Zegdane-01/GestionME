@@ -1,0 +1,169 @@
+/* Apropos.css */
+section{
+    position: relative;
+}
+.about-hero {
+    height: 100vh;
+    padding: 4rem 0;
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+    url(../../../assets/images/APropos/expleo-featured-pic-02.jpg) no-repeat center center / cover;
+    background-attachment: fixed;
+    align-content: center;
+  }
+  
+  .gradient-title {
+    background: linear-gradient(45deg, #fff, #0dcaf0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.2;
+  }
+  
+  .text-underline {
+    border-bottom: 3px solid #0dcaf0;
+    padding-bottom: 0.25rem;
+  }
+  
+  .values-section {
+    background: #f8f9fa;
+    height: 100%;
+    align-content: center;
+    display:flex;
+  }
+  .values-section .col-lg-3 {
+    min-width: 250px;
+  }
+  
+  .value-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  
+  .value-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  }
+  
+  .stats-badge {
+    background: rgba(13, 202, 240, 0.15);
+    color: #0dcaf0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    display: inline-block;
+  }
+  
+  .mission-section {
+    background: linear-gradient(90deg, #623fbf, #ffffff);
+  }
+  .mission-section .icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+  .methods-section .col-lg-4 {
+    min-width: 300px;
+  }
+  
+  .method-card {
+    color: white;
+    background: black;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .method-card ul {
+    margin-top: auto;
+  }
+  
+  .method-card:hover {
+    background: rgba(255,255,255,0.05);
+    transform: scale(1.02);
+    color: black;
+  }
+  
+  .icon-wrapper {
+    transition: transform 0.3s ease;
+  }
+  
+  .icon-wrapper:hover {
+    transform: rotate(15deg) scale(1.1);
+  }
+  /* Vidéo responsive */
+.mission-video iframe {
+    background: #000;
+    border: none;
+  }
+  /* Responsive Typography */
+@media (max-width: 992px) {
+    .display-4 {
+      font-size: 2.5rem;
+    }
+    
+    .display-5 {
+      font-size: 2rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .about-hero {
+      padding: 3rem 0;
+    }
+    
+    .display-4 {
+      font-size: 2rem;
+    }
+    
+    .mission-section .row {
+      flex-direction: column-reverse;
+    }
+    
+    .method-card {
+      min-width: 100%;
+    }
+    .value-card {
+        min-height: 280px;
+      }
+      
+      .hero-title {
+        font-size: 2rem !important;
+      }
+  }
+  
+  @media (max-width: 576px) {
+    .gradient-title {
+      font-size: 1.75rem !important;
+    }
+    
+    .value-card {
+      min-width: 100%;
+    }
+    
+    .mission-section .icon-wrapper {
+      width: 40px;
+      height: 40px;
+      padding: 0.5rem;
+    }
+  }
+  
+  /* Touch Optimization */
+  .btn-lg {
+    min-height: 56px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Fluid Spacing */
+  .py-6 {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+  
+  @media (min-width: 1200px) {
+    .py-6 {
+      padding-top: 5rem;
+      padding-bottom: 5rem;
+    }
+  }

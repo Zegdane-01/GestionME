@@ -2,10 +2,10 @@ import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import FlipCard from './FlipCard';
 import NosClients from '../NosClients/NosClients';
-import processImage from '../../../assets/images/Optimisation_des_Processus_FlipCard.jpg'; // Assurez-vous que le chemin est correct
-import conceptionImage from '../../../assets/images/Conception_Industrialisation_FlipCard.jpg'; // Assurez-vous que le chemin est correct
-import managementImage from '../../../assets/images/Management_Collaboration_FlipCard.jpg'; // Assurez-vous que le chemin est correct
-import './Presentation.css'; // Assurez-vous que le chemin est correct
+import processImage from '../../../../assets/images/Optimisation_des_Processus_FlipCard.jpg'; 
+import conceptionImage from '../../../../assets/images/Conception_Industrialisation_FlipCard.jpg'; 
+import managementImage from '../../../../assets/images/Management_Collaboration_FlipCard.jpg'; 
+import './Presentation.css'; 
 function Presentation() {
     const processContent = (
       <ul className="list-unstyled">
@@ -37,8 +37,7 @@ function Presentation() {
         <div className="hero-content">
           <h1 className="hero-title">Portail Manufacturing Engineering d'Expleo</h1>
           <p className="hero-text">
-            Plateforme intégrée pour la transformation digitale des processus d'industrialisation, 
-            combinant l'expertise métier d'Expleo.
+          Notre plateforme dédiée au département Manufacturing Engineering d'Expleo centralise et optimise la gestion de vos projets industriels et de vos ressources techniques.
           </p>
           <div className="mt-4">
             <a href="/login" className="btn btn-primary btn-lg px-5 py-3">
