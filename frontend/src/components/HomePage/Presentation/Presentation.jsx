@@ -1,6 +1,7 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import FlipCard from './FlipCard';
+import NosClients from '../NosClients/NosClients';
 import processImage from '../../../assets/images/Optimisation_des_Processus_FlipCard.jpg'; // Assurez-vous que le chemin est correct
 import conceptionImage from '../../../assets/images/Conception_Industrialisation_FlipCard.jpg'; // Assurez-vous que le chemin est correct
 import managementImage from '../../../assets/images/Management_Collaboration_FlipCard.jpg'; // Assurez-vous que le chemin est correct
@@ -46,7 +47,7 @@ function Presentation() {
           </div>
         </div>
       </div>
-
+      <NosClients />
       <div className="mt-5">
           <h2  className="section-title text-center">
             Nos Expertises Clés
