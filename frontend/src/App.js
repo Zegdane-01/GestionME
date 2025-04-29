@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PersonneList from './components/Personne/PersonneList';
-import HomePage from './components/HomePage/HomePage';
+import HomePage from './components/Public/HomePage/HomePage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 

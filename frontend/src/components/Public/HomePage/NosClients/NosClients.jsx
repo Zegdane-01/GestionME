@@ -2,13 +2,13 @@ import React from 'react';
 import './NosClients.css'; 
 
 const clients = [
-  { id: 1, name: 'STELLANTIS', logo: require('../../../assets/images/NosClients/Stellantis.png') },
-  { id: 2, name: 'Client 2', logo: require('../../../assets/images/NosClients/Airbus-Logo.png')},
-  { id: 3, name: 'Client 3', logo: require('../../../assets/images/NosClients/continental.png') },
-  { id: 4, name: 'Client 4', logo: require('../../../assets/images/NosClients/NHS_logo.png')},
-  { id: 5, name: 'Client 4', logo: require('../../../assets/images/NosClients/Primark_Logo_03.2024.png')},
-  { id: 6, name: 'Client 4', logo: require('../../../assets/images/NosClients/renault-logo.png')},
-  { id: 7, name: 'Client 4', logo: require('../../../assets/images/NosClients/Thales_Logo.png')},
+  { id: 1, name: 'STELLANTIS', logo: require('../../../../assets/images/NosClients/Stellantis.png') },
+  { id: 2, name: 'Airbus', logo: require('../../../../assets/images/NosClients/Airbus-Logo.png')},
+  { id: 3, name: 'Continental', logo: require('../../../../assets/images/NosClients/continental.png') },
+  { id: 4, name: 'NHS', logo: require('../../../../assets/images/NosClients/NHS_logo.png')},
+  { id: 5, name: 'Primark', logo: require('../../../../assets/images/NosClients/Primark_Logo_03.2024.png')},
+  { id: 6, name: 'renault', logo: require('../../../../assets/images/NosClients/renault-logo.png')},
+  { id: 7, name: 'Thales', logo: require('../../../../assets/images/NosClients/Thales_Logo.png')},
 
 
   // Ajoute autant que tu veux
