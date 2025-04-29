@@ -26,7 +26,7 @@ const Navbar = () => {
         </Link>
 
       <div className="cyber-links">
-        {['/', '/about', '/services'].map((path, index) => (
+        {['/', '/A_Propos', '/services'].map((path, index) => (
           <Link
             key={path}
             to={path}

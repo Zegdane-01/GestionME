@@ -37,7 +37,7 @@ function Presentation() {
         <div className="hero-content">
           <h1 className="hero-title">Portail Manufacturing Engineering d'Expleo</h1>
           <p className="hero-text">
-            Notre solution permet de piloter efficacement vos projets tout en valorisant les compétences de vos équipes
+          Notre plateforme dédiée au département Manufacturing Engineering d'Expleo centralise et optimise la gestion de vos projets industriels et de vos ressources techniques.
           </p>
           <div className="mt-4">
             <a href="/login" className="btn btn-primary btn-lg px-5 py-3">

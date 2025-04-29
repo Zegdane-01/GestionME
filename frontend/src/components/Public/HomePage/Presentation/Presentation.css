@@ -23,7 +23,6 @@
   .background-elements {
     position: absolute;
     inset: 0;
-    inset: 0;
     background: url('../../../../assets/images/innovation-slider-desktop.jpg') no-repeat center center / cover;
     z-index: -1;
     height: 100vh;
