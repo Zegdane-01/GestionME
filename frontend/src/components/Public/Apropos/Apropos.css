@@ -24,27 +24,7 @@ section{
     padding-bottom: 0.25rem;
   }
   
-  .values-section {
-    background: #f8f9fa;
-    height: 100%;
-    align-content: center;
-    display:flex;
-  }
-  .values-section .col-lg-3 {
-    min-width: 250px;
-  }
-  
-  .value-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  }
-  
-  .value-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-  }
-  
+
   .stats-badge {
     background: rgba(13, 202, 240, 0.15);
     color: #0dcaf0;
@@ -122,10 +102,6 @@ section{
     .method-card {
       min-width: 100%;
     }
-    .value-card {
-        min-height: 280px;
-      }
-      
       .hero-title {
         font-size: 2rem !important;
       }
@@ -134,10 +110,6 @@ section{
   @media (max-width: 576px) {
     .gradient-title {
       font-size: 1.75rem !important;
-    }
-    
-    .value-card {
-      min-width: 100%;
     }
     
     .mission-section .icon-wrapper {

@@ -11,7 +11,7 @@ function Footer() {
           <em>Vos projets en cours • Les ressources techniques • Les indicateurs temps-réel</em>
         </p>
       </div>
-        <small>© 2025 Expleo ME- Tous droits réservés.</small>
+        <small>© 2025 Expleo ME - Tous droits réservés.</small>
       </div>
     </footer>
   );

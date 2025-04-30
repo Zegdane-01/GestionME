@@ -1,0 +1,31 @@
+.lead-quote {
+    position: relative;
+}
+
+.blockquote {
+    position: relative;
+    z-index: 1;
+}
+
+
+@media (max-width: 768px) {
+    .lead-quote {
+        padding: 3rem 0;
+    }
+    
+    .lead-quote::before {
+        font-size: 4rem;
+        top: -10px;
+    }
+  }
+  
+@media (max-width: 576px) {
+    .lead-quote {
+        padding: 3rem 0;
+    }
+    
+    .lead-quote::before {
+        font-size: 4rem;
+        top: -10px;
+    }
+}

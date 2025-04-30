@@ -1,10 +1,39 @@
 import React from 'react';
 import './Apropos.css';
 import NavBar from '../Navbar/Navbar';
+import FlipCard from './FlipCard/FlipCard';
 import Footer from '../Footer/Footer';
 import { BiBrain, BiUserCheck, BiRocket, BiShield } from 'react-icons/bi';
+import processImage from '../../../assets/images/Optimisation_des_Processus_FlipCard.jpg'; 
+import conceptionImage from '../../../assets/images/Conception_Industrialisation_FlipCard.jpg'; 
+import managementImage from '../../../assets/images/Management_Collaboration_FlipCard.jpg'; 
+
 
 const Apropos = () => {
+  const processContent = (
+    <ul className="list-unstyled">
+      <li>✔ Lean Manufacturing et SMED</li>
+      <li>✔ Automatisation industrielle (OT/IT)</li>
+      <li>✔ Analyse de données de production</li>
+      <li>✔ Gestion des flux matières</li>
+      <li>✔ Amélioration continue (Kaizen)</li>
+    </ul>
+    );
+  const ConceptionContent= (
+    <ul className="list-unstyled">
+      <li>✔ Ingénierie produit et process</li>
+      <li>✔ Prototypage rapide et jumeaux numériques</li>
+      <li>✔ Déploiement de lignes de production</li>
+    </ul>
+  )
+  const managementContent = (
+    <ul className="list-unstyled">
+      <li>✔ Suivi de projets cross-fonctionnels</li>
+      <li>✔ Gestion des ressources techniques</li>
+      <li>✔ Tableaux de bord QCD (Qualité-Coût-Délai)</li>
+    </ul>
+  )
+
   return (
     <div className="about-page">
       <NavBar />
@@ -21,7 +50,7 @@ const Apropos = () => {
                 Réinventer l'industrie par l'innovation digitale et l'excellence opérationnelle
               </p>
               <div className="d-grid gap-2 d-md-flex justify-content-md-center">
-                <a href="#values" className="btn btn-primary btn-lg px-4 px-lg-5 py-3">
+                <a href="#expertises" className="btn btn-primary btn-lg px-4 px-lg-5 py-3">
                   Découvrir
                 </a>
               </div>
@@ -31,60 +60,33 @@ const Apropos = () => {
         <div className="hero-overlay"></div>
       </section>
 
-      {/* Valeurs */}
-      <section id="values" className="values-section py-5 py-lg-6">
-        <div className="container">
-          <div className="row d-flex justify-content-center">
-          <div class="col-4 text-center">
-            <h2 className="display-5 fw-bold mb-4 mb-lg-5">
-              Nos <span className="text-primary">Valeurs</span>
-            </h2>
-          </div>
-          </div>
-          <div className="row g-4 g-lg-5 justify-content-center">
-            {/* Carte Expertise */}
-            <div className="col-12 col-md-6 col-xl-3">
-              <div className="value-card bg-dark text-center p-3 p-lg-4 rounded-4 h-100 d-flex flex-column">
-                <BiBrain className="value-icon fs-2 fs-lg-1 text-primary mb-3 mt-2 mx-auto" />
-                <h3 className="mb-3 fs-5 fs-lg-4">Expertise Technique</h3>
-                <p className="mb-3 fs-6 fs-lg-5">500+ ingénieurs spécialisés</p>
-                <div className="stats-badge mt-auto">15 ans d'expérience</div>
-              </div>
-            </div>
+      {/* Expertises */}
+      <section id="expertises">
+        <div className="mt-5">
+          <h2  className="section-title text-center">
+            Nos <span className="text-primary">Expertises</span> Clés
+          </h2>
+          <div className="row g-4 m-5">
+            <FlipCard
+              title="Conception & Industrialisation"
+              image={conceptionImage}
+              content={ConceptionContent}
+            />
 
-            {/* Carte Client */}
-            <div className="col-12 col-md-6 col-xl-3">
-              <div className="value-card bg-dark text-center p-3 p-lg-4 rounded-4 h-100 d-flex flex-column">
-                <BiUserCheck className="value-icon fs-2 fs-lg-1 text-primary mb-3 mt-2 mx-auto" />
-                <h3 className="mb-3 fs-5 fs-lg-4">Approche Client</h3>
-                <p className="mb-3 fs-6 fs-lg-5">95% de satisfaction</p>
-                <div className="stats-badge mt-auto">200+ projets annuels</div>
-              </div>
-            </div>
+            <FlipCard
+              title="Optimisation des Processus"
+              image={processImage}
+              content={processContent}
+            />
 
-            {/* Carte Innovation */}
-            <div className="col-12 col-md-6 col-xl-3">
-              <div className="value-card bg-dark text-center p-3 p-lg-4 rounded-4 h-100 d-flex flex-column">
-                <BiRocket className="value-icon fs-2 fs-lg-1 text-primary mb-3 mt-2 mx-auto" />
-                <h3 className="mb-3 fs-5 fs-lg-4">Innovation</h3>
-                <p className="mb-3 fs-6 fs-lg-5">30 brevets déposés</p>
-                <div className="stats-badge mt-auto">Lab R&D dédié</div>
-              </div>
-            </div>
-
-            {/* Carte Qualité */}
-            <div className="col-12 col-md-6 col-xl-3">
-              <div className="value-card bg-dark text-center p-3 p-lg-4 rounded-4 h-100 d-flex flex-column">
-                <BiShield className="value-icon fs-2 fs-lg-1 text-primary mb-3 mt-2 mx-auto" />
-                <h3 className="mb-3 fs-5 fs-lg-4">Qualité</h3>
-                <p className="mb-3 fs-6 fs-lg-5">Certifications ISO</p>
-                <div className="stats-badge mt-auto">0 défaut critique</div>
-              </div>
-            </div>
+            <FlipCard
+              title="Management & Collaboration"
+              image={managementImage}
+              content={managementContent}
+            />
           </div>
         </div>
       </section>
-
       {/* Mission */}
       <section className="mission-section py-5 py-lg-6">
         <div className="container">
