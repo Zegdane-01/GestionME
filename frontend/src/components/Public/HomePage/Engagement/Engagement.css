@@ -1,0 +1,31 @@
+.section-title {
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #2c3e50;
+  }
+  .section-bg {
+    background-color: #623fbf;
+    height: 100%;
+    padding:100px 300px 100px 300px;
+    align-content: center;
+  }
+
+  @media (max-width: 768px) {
+    .section-bg {
+        height: 100%;
+        padding:20px 30px 20px 30px;
+        align-content: center;
+      }
+  }
+  
+  @media (max-width: 576px) {
+    .hero-text {
+      font-size: 16px;
+    }
+    .section-bg {
+        height: 100%;
+        padding:20px 30px 20px 30px;
+        align-content: center;
+      }
+  }
+  
