@@ -8,3 +8,9 @@ class Manager(models.Model):
     
     def __str__(self):
         return f"{self.personne.prenom} {self.personne.nom} - {self.niveau}"
+
+    def natural_key(self):
+        return (self.matricule,)
+
+    def get_by_natural_key(self, matricule):
+        return self.__class__.objects.get(matricule=matricule)
