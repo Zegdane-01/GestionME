@@ -1,19 +1,28 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
 class PersonneManager(BaseUserManager):
     def create_user(self, matricule, password=None, **extra_fields):
-        user = self.model(matricule=matricule, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-    def create_superuser(self, matricule, password=None, **extra_fields):
+        if not matricule:
+            raise ValueError('Les utilisateurs doivent avoir un matricule.')
         user = self.model(matricule=matricule, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-class Personne(AbstractBaseUser):
+    def create_superuser(self, matricule, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Le superutilisateur doit avoir is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Le superutilisateur doit avoir is_superuser=True.')
+
+        return self.create_user(matricule, password, **extra_fields)
+
+class Personne(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
         ('N1', 'Team Leader N1'),
         ('N2', 'Team Leader N2'),
@@ -33,7 +42,8 @@ class Personne(AbstractBaseUser):
     is_active = models.BooleanField(default=True) 
 
     USERNAME_FIELD = 'matricule'
-    REQUIRED_FIELDS = ['dt_Embauche', 'sexe', 'position', 'role', 'telephone']
+    REQUIRED_FIELDS = ['password']
+    USERNAME_FIELD = 'matricule'
 
     objects = PersonneManager()
 
