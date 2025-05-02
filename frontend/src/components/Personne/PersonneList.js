@@ -9,7 +9,7 @@ const PersonneList = () => {
   useEffect(() => {
     const fetchPersonnes = async () => {
       try {
-        const response = await api.get('personne/');
+        const response = await api.get('personne/personne/'); // Assurez-vous que l'URL est correcte
         setPersonnes(response.data);
       } catch (error) {
         console.error('Erreur lors de la récupération des personnes:', error);
