@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth import authenticate
 from .models import Personne
 
 class PersonneSerializer(serializers.ModelSerializer):
@@ -16,12 +17,17 @@ class PersonneLoginSerializer(serializers.Serializer):
         password = data.get('password')
 
         if matricule and password:
-            from django.contrib.auth import authenticate
-            user = authenticate(request=self.context.get('request'), username=matricule, password=password)
-            if user is None:
-                raise serializers.ValidationError('Identifiants invalides.')
+            user = authenticate(username=matricule, password=password)
+            if user:
+                if not user.is_active:
+                    raise serializers.ValidationError("Compte utilisateur désactivé.")
+                data['user'] = user
+            else:
+                raise serializers.ValidationError("Identifiants invalides.")
         else:
-            raise serializers.ValidationError('Veuillez fournir le matricule et le mot de passe.')
+            raise serializers.ValidationError("Doit inclure 'matricule' et 'mot de passe'.")
 
-        data['user'] = user
         return data
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
