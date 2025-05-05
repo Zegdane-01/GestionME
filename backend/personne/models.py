@@ -43,12 +43,11 @@ class Personne(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'matricule'
     REQUIRED_FIELDS = ['password']
-    USERNAME_FIELD = 'matricule'
 
     objects = PersonneManager()
 
     def __str__(self):
-        return f"{self.matricule} - {self.role}"
+        return {self.matricule}
 
     def natural_key(self):
         return (self.matricule,)

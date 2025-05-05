@@ -40,7 +40,7 @@ const Navbar = () => {
         ))}
       </div>
 
-      <Link to="login" className="cyber-button">
+      <Link to="/login" className="cyber-button">
         <span className="button-pulse"></span>
         Se Connecter
       </Link>

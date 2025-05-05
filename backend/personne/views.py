@@ -4,28 +4,38 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Personne
+from manager.models import Manager
 from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer
+from manager.serializers import ManagerSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class PersonneViewSet(viewsets.ModelViewSet):
     queryset = Personne.objects.all()
     serializer_class = PersonneSerializer
-    permission_classes = [permissions.AllowAny] 
+    permission_classes = [IsAuthenticated] 
 
 class PersonneLoginView(APIView):
-    permission_classes = [permissions.AllowAny] 
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = PersonneLoginSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
-            return Response({
+            response_data = {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-                'user': PersonneSerializer(user).data,
-            }, status=status.HTTP_200_OK)
+            }
+            try:
+                manager = Manager.objects.get(matricule=user.matricule)
+                response_data['is_manager'] = True
+                response_data['manager'] = ManagerSerializer(manager).data  # Utilisez ManagerSerializer
+            except Manager.DoesNotExist:
+                response_data['is_manager'] = False
+                response_data['user'] = PersonneSerializer(user).data  # Utilisez PersonneSerializer pour les non-managers
+
+            return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
 logger = logging.getLogger(__name__)
@@ -48,3 +58,16 @@ class PersonneLogoutView(APIView):
         else:
             logger.error(f"Erreurs du sérialiseur : {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class LogoutView(APIView):
+     permission_classes = (IsAuthenticated,)
+     def post(self, request):
+          
+          try:
+               refresh_token = request.data["refresh_token"]
+               token = RefreshToken(refresh_token)
+               token.blacklist()
+               return Response(status=status.HTTP_205_RESET_CONTENT)
+          except Exception as e:
+               return Response(status=status.HTTP_400_BAD_REQUEST)
