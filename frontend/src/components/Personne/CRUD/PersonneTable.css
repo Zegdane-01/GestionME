@@ -1,0 +1,70 @@
+/* PersonneTable.css */
+.custom-table {
+    --bs-table-hover-bg: #adadad7c;
+    border: 0;
+
+  }
+.custom-table tr{
+  border-bottom: 1px solid #81818180;
+}
+  
+  .custom-table th {
+    border:0;
+    border-bottom: 1px solid black;
+    font-weight: 500;
+  }
+  
+  .custom-table td {
+    vertical-align: middle;
+    border:0;
+  }
+  
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px !important;
+    transition: all 0.2s ease;
+  }
+  
+  .action-btn:hover {
+    transform: scale(1.1);
+  }
+  
+  .no-data-row {
+    background-color: #3a2862 !important;
+  }
+
+  @media (max-width: 992px) {
+    .custom-table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+  
+    .action-btn {
+      min-width: 36px;
+      margin: 2px;
+    }
+  
+    .no-data-row {
+      white-space: normal;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .custom-table th,
+    .custom-table td {
+      font-size: 0.875rem;
+      padding: 0.5rem;
+    }
+  
+    .action-btn {
+      width: 28px;
+      height: 28px;
+    }
+  }

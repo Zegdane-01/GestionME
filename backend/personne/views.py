@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Personne
 from manager.models import Manager
-from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer
+from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer, PersonneCreateSerializer
 from manager.serializers import ManagerSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -13,7 +13,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 class PersonneViewSet(viewsets.ModelViewSet):
     queryset = Personne.objects.all()
     serializer_class = PersonneSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [AllowAny] 
 
 class PersonneLoginView(APIView):
     permission_classes = [AllowAny]
@@ -71,3 +71,12 @@ class LogoutView(APIView):
                return Response(status=status.HTTP_205_RESET_CONTENT)
           except Exception as e:
                return Response(status=status.HTTP_400_BAD_REQUEST)
+          
+class PersonneViewSet(viewsets.ModelViewSet):
+    queryset = Personne.objects.all()
+    lookup_field = 'matricule'
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return PersonneCreateSerializer
+        return PersonneSerializer

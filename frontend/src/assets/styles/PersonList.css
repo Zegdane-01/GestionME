@@ -1,0 +1,48 @@
+/* PersonList.css */
+.custom-card {
+    border: 1px solid #3a2862;
+    border-radius: 1.06rem;
+    background-color: #ffffff;
+  }
+  
+  .custom-card-header {
+    background-color: #3a2862;
+    color: white;
+    border-bottom: 2px solid #5d3f98;
+    font-size: 1.25rem;
+    font-weight: 500;
+
+  }
+  
+  .custom-primary-btn {
+    background-color: #5d3f98;
+    border: none;
+    border-radius: 25px;
+    padding: 8px 20px;
+    transition: all 0.3s ease;
+  }
+  
+  .custom-primary-btn:hover {
+    background-color: #6d4faf;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    .custom-card-header {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+  
+    .custom-primary-btn {
+      width: 100%;
+      padding: 10px;
+    }
+  
+    .custom-card {
+      margin: 0 -15px;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+  }

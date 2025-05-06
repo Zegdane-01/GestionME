@@ -6,7 +6,10 @@ class PersonneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Personne
         fields = '__all__'
-        read_only_fields = ['matricule']
+        read_only_fields = ['is_superuser', 'is_staff', 'is_active', 'date_joined','updated_at']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
 class PersonneLoginSerializer(serializers.Serializer):
     matricule = serializers.CharField(max_length=50)
@@ -31,3 +34,16 @@ class PersonneLoginSerializer(serializers.Serializer):
 
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
+
+class PersonneCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Personne
+        fields = ['matricule', 'password', 'first_name', 'last_name', 'email', 'telephone', 'sexe', 'dt_Embauche', 'position', 'role', 'cv', 'photo']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = Personne.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
