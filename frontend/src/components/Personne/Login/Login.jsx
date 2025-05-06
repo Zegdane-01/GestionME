@@ -32,7 +32,7 @@ const Login = () => {
         localStorage.setItem('managerData', JSON.stringify(data.manager));
         // Rediriger l'utilisateur en fonction de son rôle (exemple)
         if (data.manager.role === 'N1') {
-          navigate('/n1');
+          navigate('/personnes');
         } else if (data.manager.role === 'N2') {
           navigate('/n2');
         }

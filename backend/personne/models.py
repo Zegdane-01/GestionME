@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.utils import timezone
 
 class PersonneManager(BaseUserManager):
     def create_user(self, matricule, password=None, **extra_fields):
@@ -30,12 +31,20 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     ]
 
     matricule = models.CharField(max_length=50, primary_key=True)
+
+    # Add fields from AbstractUser that you need
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(blank=True)
+    date_joined = models.DateTimeField(default=timezone.now)
+
     dt_Embauche = models.DateField()
     sexe = models.CharField(max_length=10)
     position = models.CharField(max_length=100)
     role = models.CharField(max_length=100, choices=ROLE_CHOICES)
     telephone = models.CharField(max_length=20)
     password = models.CharField(max_length=128, default='default_password')
+    photo = models.ImageField(upload_to='photos/', null=True, blank=True)
     cv = models.ImageField(upload_to='cvs/', null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -47,7 +56,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     objects = PersonneManager()
 
     def __str__(self):
-        return {self.matricule}
+        return f"{self.matricule}"
 
     def natural_key(self):
         return (self.matricule,)
