@@ -43,12 +43,27 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     position = models.CharField(max_length=100)
     role = models.CharField(max_length=100, choices=ROLE_CHOICES)
     telephone = models.CharField(max_length=20)
-    password = models.CharField(max_length=128, default='default_password')
+    password = models.CharField(max_length=128, default='ExpleoME@2025')
     photo = models.ImageField(upload_to='photos/', null=True, blank=True)
     cv = models.ImageField(upload_to='cvs/', null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True) 
+
+    I_E_CHOICES = [
+        ('Intern', 'Intern'),
+        ('Extern', 'Extern'),
+    ]
+    STATUS_CHOICES = [
+        ('En formation', 'En formation'),
+        ('En cours', 'En cours'),
+        ('Bench', 'Bench'),
+        ('Out', 'Out'),
+        ('Management', 'Management'),
+        ('Stage', 'Stage'),
+    ]
+    I_E = models.CharField(max_length=10, choices=I_E_CHOICES, default='Intern')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')
 
     USERNAME_FIELD = 'matricule'
     REQUIRED_FIELDS = ['password']

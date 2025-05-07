@@ -24,7 +24,8 @@ const PersonList = () => {
   const fetchPeople = async () => {
     try {
       const response = await api.get('/personne/personnes/');
-      setPeople(response.data);
+      const collaborateurs = response.data.filter(person => person.role.toLowerCase() === 'collaborateur');
+      setPeople(collaborateurs);
     } catch (error) {
       /*toast.error(`Erreur lors de la récupération des personnes: ${error.message}`);*/
       console.error("Erreur de récupération des personnes:", error);
@@ -78,16 +79,16 @@ const PersonList = () => {
   };
 
   const handleEdit = (matricule) => {
-    navigate(`/person/edit/${matricule}`);
+    navigate(`/personnes/edit/${matricule}`);
   };
 
   const handleAdd = () => {
-    navigate('/person/add');
+    navigate('/personnes/add');
   };
 
   return (
     <Container fluid className="person-list-container"> 
-      <Card className="mt-3 custom-card">
+      <Card className="mt-3 custom-card rounded-4">
         <Card.Header className="custom-card-header d-flex justify-content-between align-items-center rounded-top-4">
           <h2 className="person-list-title">Liste des Collaborateurs</h2> 
           <Button variant="primary" size="sm" onClick={handleAdd} className="custom-primary-btn align-items-center">

@@ -12,8 +12,10 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
           <th>Matricule</th>
           <th>Nom</th>
           <th>Prénom</th>
-          <th>Email</th>
-          <th>Rôle</th>
+          <th>I/E</th>
+          <th>Position</th>
+          <th>Date d'embauche</th>
+          <th>Status</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -24,8 +26,10 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
               <td>{person.matricule}</td>
               <td>{person.last_name}</td>
               <td>{person.first_name}</td>
-              <td>{person.email}</td>
-              <td>{person.role}</td>
+              <td>{person.I_E}</td>
+              <td>{person.position}</td>
+              <td>{person.dt_Embauche}</td>
+              <td>{person.status}</td>
               <td>
                 <Button
                   variant="outline-secondary"

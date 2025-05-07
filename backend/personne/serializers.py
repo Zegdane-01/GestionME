@@ -38,7 +38,7 @@ class LogoutSerializer(serializers.Serializer):
 class PersonneCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Personne
-        fields = ['matricule', 'password', 'first_name', 'last_name', 'email', 'telephone', 'sexe', 'dt_Embauche', 'position', 'role', 'cv', 'photo']
+        fields = ['matricule', 'password', 'first_name', 'last_name', 'email', 'telephone', 'sexe', 'dt_Embauche', 'position', 'role', 'cv', 'photo', 'I_E', 'status']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
