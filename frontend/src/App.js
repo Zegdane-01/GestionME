@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import PersonList from './pages/PersonList.jsx';
 import PersonForm from './pages/PersonForm.jsx';
 import HomePage from './components/Public/HomePage/HomePage';
@@ -10,9 +11,6 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <header>
-          {/* Menu de navigation */}
-        </header>
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -23,6 +21,7 @@ function App() {
             <Route path="/personnes/edit/:id" element={<PersonForm />} />
           </Routes>
         </main>
+        <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 5000 }} />
       </div>
     </Router>
   );
