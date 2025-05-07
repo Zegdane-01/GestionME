@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Card, Form, Button, Row, Col } from 'react-bootstrap';
-import Header from '@/components/Header';
 import { toast } from "sonner";
 import axios from 'axios';
 
@@ -33,7 +32,7 @@ const PersonForm = () => {
         .then((res) => setFormData(res.data))
         .catch(() => {
           toast.error("Personne non trouvée");
-          navigate('/persons');
+          navigate('/personnes');
         });
     }
   }, [id, isEditMode, navigate]);
@@ -76,7 +75,7 @@ const PersonForm = () => {
         toast.success(`${formData.first_name} ${formData.last_name} a été ajouté`);
       }
 
-      navigate('/persons');
+      navigate('/personnes');
     } catch (error) {
       toast.error("Erreur lors de l'enregistrement");
       console.error(error);
@@ -85,7 +84,6 @@ const PersonForm = () => {
 
   return (
     <div className="min-vh-100 d-flex flex-column bg-light">
-      <Header />
       <Container className="py-4 flex-grow-1">
         <Card className="mx-auto" style={{ maxWidth: '900px' }}>
           <Card.Header>
