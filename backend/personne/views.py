@@ -13,7 +13,28 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 class PersonneViewSet(viewsets.ModelViewSet):
     queryset = Personne.objects.all()
     serializer_class = PersonneSerializer
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
+    lookup_field = 'matricule'
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return PersonneCreateSerializer
+        return PersonneSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            print("❌ Erreurs de validation :", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'message': 'Personne supprimée avec succès'}, status=status.HTTP_204_NO_CONTENT)
 
 class PersonneLoginView(APIView):
     permission_classes = [AllowAny]
@@ -72,11 +93,3 @@ class LogoutView(APIView):
           except Exception as e:
                return Response(status=status.HTTP_400_BAD_REQUEST)
           
-class PersonneViewSet(viewsets.ModelViewSet):
-    queryset = Personne.objects.all()
-    lookup_field = 'matricule'
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return PersonneCreateSerializer
-        return PersonneSerializer

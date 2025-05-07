@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { toast } from 'react-hot-toast';
 import SearchBar from '../components/Personne/CRUD/SearchBar';
 import PersonTable from '../components/Personne/CRUD/PersonneTable';
 import ViewPersonModal from '../components/Personne/CRUD/ViewPersonneModal';
@@ -27,7 +28,7 @@ const PersonList = () => {
       const collaborateurs = response.data.filter(person => person.role.toLowerCase() === 'collaborateur');
       setPeople(collaborateurs);
     } catch (error) {
-      /*toast.error(`Erreur lors de la récupération des personnes: ${error.message}`);*/
+      toast.error(`Erreur lors de la récupération des Collaborateurs: ${error.message}`);
       console.error("Erreur de récupération des personnes:", error);
     }
   };
@@ -65,11 +66,11 @@ const PersonList = () => {
   const deletePerson = async () => {
     if (personToDelete) {
       try {
-        await api.delete(`/api/personne/personnes/${personToDelete}/`);
+        await api.delete(`/personne/personnes/${personToDelete}/`);
         setPeople(people.filter(person => person.matricule !== personToDelete));
-        /*toast.success("La personne a été supprimée avec succès");*/
+        toast.success("La personne a été supprimée avec succès");
       } catch (error) {
-        /*toast.error(`Erreur lors de la suppression de la personne: ${error.message}`);*/
+        toast.error(`Erreur lors de la suppression de la personne: ${error.message}`);
         console.error("Erreur de suppression de la personne:", error);
       } finally {
         setShowDeleteModal(false);
