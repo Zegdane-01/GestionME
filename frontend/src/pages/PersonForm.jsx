@@ -92,7 +92,7 @@ const PersonForm = () => {
         toast.success(`${formData.first_name} ${formData.last_name} a été ajouté`);
       }
 
-      navigate('/personnes');
+      navigate('/collaborateurs');
     } catch (error) {
       if (error.response && error.response.data) {
         const errors = error.response.data;
@@ -240,7 +240,7 @@ const PersonForm = () => {
               </Row>
             </Card.Body>
             <Card.Footer className="d-flex justify-content-end gap-2">
-              <Button variant="secondary" onClick={() => navigate('/personnes')}>Annuler</Button>
+              <Button variant="secondary" onClick={() => navigate('/collaborateurs')}>Annuler</Button>
               <Button type="submit" variant="primary">
                 {isEditMode ? 'Mettre à jour' : 'Ajouter'}
               </Button>

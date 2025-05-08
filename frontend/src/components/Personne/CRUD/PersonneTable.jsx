@@ -16,6 +16,7 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
           <th>Position</th>
           <th>Date d'embauche</th>
           <th>Status</th>
+          <th>Actif</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -30,6 +31,7 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
               <td>{person.position}</td>
               <td>{person.dt_Embauche}</td>
               <td>{person.status}</td>
+              <td>{person.is_active ? 'Oui' : 'Non'}</td>
               <td>
                 <Button
                   variant="outline-secondary"
