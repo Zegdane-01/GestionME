@@ -80,11 +80,11 @@ const PersonList = () => {
   };
 
   const handleEdit = (matricule) => {
-    navigate(`/personnes/edit/${matricule}`);
+    navigate(`/collaborateurs/edit/${matricule}`);
   };
 
   const handleAdd = () => {
-    navigate('/personnes/add');
+    navigate('/collaborateurs/add');
   };
 
   return (

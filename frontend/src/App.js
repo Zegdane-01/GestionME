@@ -16,9 +16,9 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/A_Propos" element={<Apropos />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/personnes" element={<PersonList />} />
-            <Route path="/personnes/add" element={<PersonForm />} />
-            <Route path="/personnes/edit/:id" element={<PersonForm />} />
+            <Route path="/collaborateurs" element={<PersonList />} />
+            <Route path="/collaborateurs/add" element={<PersonForm />} />
+            <Route path="/collaborateurs/edit/:id" element={<PersonForm />} />
           </Routes>
         </main>
         <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 5000 }} />

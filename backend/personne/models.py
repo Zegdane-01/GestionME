@@ -24,35 +24,24 @@ class PersonneManager(BaseUserManager):
         return self.create_user(matricule, password, **extra_fields)
 
 class Personne(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = [
-        ('N1', 'Team Leader N1'),
-        ('N2', 'Team Leader N2'),
-        ('COLLABORATEUR', 'Collaborateur')
+    POSITION_CHOICES = [
+        ('I1', 'I1'),
+        ('I2', 'I2'),
+        ('I3', 'I3'),
+        ('I4', 'I4'),
+        ('I5', 'I5'),
+        ('I6', 'I6'),
+        ('T1', 'T1'),
+        ('T2', 'T2'),
+        ('T3', 'T3'),
+        ('T4', 'T4'),
+        ('T5', 'T5'),
+        ('T6', 'T6'),
     ]
-
-    matricule = models.CharField(max_length=50, primary_key=True)
-
-    # Add fields from AbstractUser that you need
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField(blank=True)
-    date_joined = models.DateTimeField(default=timezone.now)
-
-    dt_Embauche = models.DateField()
-    sexe = models.CharField(max_length=10)
-    position = models.CharField(max_length=100)
-    role = models.CharField(max_length=100, choices=ROLE_CHOICES)
-    telephone = models.CharField(max_length=20)
-    password = models.CharField(max_length=128, default='ExpleoME@2025')
-    photo = models.ImageField(upload_to='photos/', null=True, blank=True)
-    cv = models.ImageField(upload_to='cvs/', null=True, blank=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True) 
-
-    I_E_CHOICES = [
-        ('Intern', 'Intern'),
-        ('Extern', 'Extern'),
+    DEPLOME_CHOICES = [
+        ('Bac+2', 'Bac+2'),
+        ('Bac+3', 'Bac+3'),
+        ('Bac+5', 'Bac+5'),
     ]
     STATUS_CHOICES = [
         ('En formation', 'En formation'),
@@ -62,11 +51,70 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         ('Management', 'Management'),
         ('Stage', 'Stage'),
     ]
-    I_E = models.CharField(max_length=10, choices=I_E_CHOICES, default='Intern')
+    ROLE_CHOICES = [
+        ('TL1', 'Team Leader N1'),
+        ('TL2', 'Team Leader N2'),
+        ('COLLABORATEUR', 'Collaborateur')
+    ]
+
+
+
+    matricule = models.CharField(max_length=50, primary_key=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    sexe = models.CharField(max_length=10)
+    email = models.EmailField(blank=True)
+    telephone = models.CharField(max_length=14)
+    role = models.CharField(max_length=100, choices=ROLE_CHOICES)
+
+    dt_Debut_Carriere = models.DateField()
+    dt_Embauche = models.DateField()
+    experience_expleo = models.IntegerField(default=0)
+    experience_total = models.IntegerField(default=0)
+
+    position = models.CharField(max_length=100, choices=[POSITION_CHOICES], default='T1')
+    deplome = models.CharField(max_length=100,choices=[DEPLOME_CHOICES], default='Bac+2')
+    specialite_deplome = models.CharField(max_length=100, blank=True)
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')
+
+    ddc = models.FileField(upload_to='ddc/', null=True, blank=True)
+
+    manager = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='manager_persons'
+    )
+
+    backup = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='backup_persons'
+    )
+
+    projet = models.ForeignKey(
+        'projet.Projet',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='projet_persons'
+    )
+
+
+    password = models.CharField(max_length=128)
+    photo = models.ImageField(upload_to='photos/', null=True, blank=True)
+
 
     USERNAME_FIELD = 'matricule'
     REQUIRED_FIELDS = ['password']
+
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True) 
 
     objects = PersonneManager()
 

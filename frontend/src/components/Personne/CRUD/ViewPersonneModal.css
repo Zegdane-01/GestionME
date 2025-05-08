@@ -1,0 +1,5 @@
+
+  .custom-modal .modal-body{
+    width: fit-content;
+    max-width: "1000px";
+  }
