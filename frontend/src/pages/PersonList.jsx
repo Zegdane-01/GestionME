@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { toast } from 'react-hot-toast';
 import SearchBar from '../components/Personne/CRUD/SearchBar';
 import PersonTable from '../components/Personne/CRUD/PersonneTable';
@@ -9,7 +8,7 @@ import DeletePersonModal from '../components/Personne/CRUD/DeletePersonneModal';
 import '../assets/styles/PersonList.css'; 
 import api from '../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 const PersonList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,17 +18,19 @@ const PersonList = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [personToDelete, setPersonToDelete] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-
   const fetchPeople = async () => {
+    setIsLoading(true);
     try {
       const response = await api.get('/personne/personnes/');
-      const collaborateurs = response.data.filter(person => person.role.toLowerCase() === 'collaborateur');
-      setPeople(collaborateurs);
+      setPeople(response.data);
+      setFilteredPeople(response.data);
     } catch (error) {
-      toast.error(`Erreur lors de la récupération des Collaborateurs: ${error.message}`);
-      console.error("Erreur de récupération des personnes:", error);
+      toast.error("Erreur de récupération des personnes:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -88,29 +89,37 @@ const PersonList = () => {
   };
 
   return (
-    <Container fluid className="person-list-container"> 
-      <Card className="mt-3 custom-card rounded-4">
-        <Card.Header className="custom-card-header d-flex justify-content-between align-items-center rounded-top-4">
-          <h2 className="person-list-title">Liste des Collaborateurs</h2> 
-          <Button variant="primary" size="sm" onClick={handleAdd} className="custom-primary-btn align-items-center">
-            <FontAwesomeIcon icon={faPlus} className="me-1" size="sm" />
-            Ajouter
-          </Button>
-        </Card.Header>
-        <Card.Body className="person-list-body"> 
-          <Row className="person-list-search-row mb-3"> 
-            <Col md={6} className="person-list-search-col"> 
-              <SearchBar value={searchTerm} onChange={handleSearch} placeholder="Rechercher par nom, matricule, email..." />
-            </Col>
-          </Row>
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <h1 className="dashboard-title">Collaborateurs</h1>
+        <button className="add-button" onClick={handleAdd}>
+          <FontAwesomeIcon icon={faPlus} className="add-icon" />
+          <span>Nouveau Collaborateur</span>
+        </button>
+      </div>
+
+      <div className="search-container">
+      <SearchBar value={searchTerm} onChange={handleSearch} placeholder="Rechercher par nom, matricule, email..." />
+        <div className="search-stats">
+          {filteredPeople.length} collaborateur{filteredPeople.length !== 1 ? 's' : ''} trouvé{filteredPeople.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+
+      <div className="content-container">
+        {isLoading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Chargement des collaborateurs...</p>
+          </div>
+        ) : (
           <PersonTable
             people={filteredPeople}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDeleteConfirm}
           />
-        </Card.Body>
-      </Card>
+        )}
+      </div>
 
       {/* Modals */}
       <ViewPersonModal
@@ -124,7 +133,7 @@ const PersonList = () => {
         onHide={() => setShowDeleteModal(false)}
         onConfirm={deletePerson}
       />
-    </Container>
+    </div>
   );
 };
 

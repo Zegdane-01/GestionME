@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-from django.utils import timezone
+from datetime import date
+
 
 class PersonneManager(BaseUserManager):
     def create_user(self, matricule, password=None, **extra_fields):
@@ -67,13 +68,13 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     telephone = models.CharField(max_length=14)
     role = models.CharField(max_length=100, choices=ROLE_CHOICES)
 
-    dt_Debut_Carriere = models.DateField()
-    dt_Embauche = models.DateField()
-    experience_expleo = models.IntegerField(default=0)
+    dt_Debut_Carriere = models.DateField(default=date.today)
     experience_total = models.IntegerField(default=0)
+    dt_Embauche = models.DateField(default=date.today)
+    experience_expleo = models.IntegerField(default=0)
 
-    position = models.CharField(max_length=100, choices=[POSITION_CHOICES], default='T1')
-    deplome = models.CharField(max_length=100,choices=[DEPLOME_CHOICES], default='Bac+2')
+    position = models.CharField(max_length=100, choices=POSITION_CHOICES, default='T1')
+    deplome = models.CharField(max_length=100,choices=DEPLOME_CHOICES, default='Bac+2')
     specialite_deplome = models.CharField(max_length=100, blank=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')
@@ -118,6 +119,16 @@ class Personne(AbstractBaseUser, PermissionsMixin):
 
     objects = PersonneManager()
 
+    def calcul_experience_expleo(self):
+        today = date.today()
+        delta = today.year * 12 + today.month - (self.dt_Embauche.year * 12 + self.dt_Embauche.month)
+        return delta
+    
+    def calcul_experience_total(self):
+        today = date.today()
+        delta = today.year * 12 + today.month - (self.dt_Debut_Carriere.year * 12 + self.dt_Debut_Carriere.month)
+        return delta
+
     def __str__(self):
         return f"{self.matricule}"
 
@@ -133,3 +144,10 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     def has_module_perms(self, app_label):
         """Does the user have permissions to view the app `app_label`?"""
         return self.is_superuser
+    
+    def save(self, *args, **kwargs):
+        # Calculer et stocker les expériences lors de la création ou de la mise à jour
+        self.experience_expleo = self.calcul_experience_expleo()
+        self.experience_total = self.calcul_experience_total()
+        
+        super(Personne, self).save(*args, **kwargs)

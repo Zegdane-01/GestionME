@@ -48,13 +48,9 @@ class PersonneLoginView(APIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }
-            try:
-                manager = Manager.objects.get(matricule=user.matricule)
-                response_data['is_manager'] = True
-                response_data['manager'] = ManagerSerializer(manager).data  # Utilisez ManagerSerializer
-            except Manager.DoesNotExist:
-                response_data['is_manager'] = False
-                response_data['user'] = PersonneSerializer(user).data  # Utilisez PersonneSerializer pour les non-managers
+
+            response_data['is_manager'] = True
+            response_data['user'] = PersonneSerializer(user).data  # Utilisez PersonneSerializer pour les non-managers
 
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
