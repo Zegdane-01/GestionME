@@ -1,13 +1,22 @@
 import React from 'react';
 
 const PersonDetail = ({ person }) => {
-  console.log("Détails de la personne:", person.photo); 
   if (!person) {
     return <p>Aucune personne sélectionnée.</p>;
   }
 
+  const FieldRow = ({ label, value }) => (
+    <>
+      <div className="row">
+        <div className="col-sm-6 text-secondary fw-bold">{label} :</div>
+        <div className="col-sm-6 text-break">{value ?? '—'}</div>
+      </div>
+      <hr className="my-2" />
+    </>
+  );
+
   return (
-    <div style={ { maxWidth: '100%', margin: '0 auto' }} className="p-4 border rounded shadow-sm bg-white">
+    <div style={{ maxWidth: '100%', margin: '0 auto' }} className="p-4 border rounded shadow-sm bg-white">
       {person.photo && (
         <div className="text-center mb-4">
           <img
@@ -18,84 +27,48 @@ const PersonDetail = ({ person }) => {
         </div>
       )}
 
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Matricule :</div>
-        <div className="col-sm-6"><span className="text-break">{person.matricule}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Nom :</div>
-        <div className="col-sm-6"><span className="text-break">{person.last_name}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Prénom :</div>
-        <div className="col-sm-6"><span className="text-break">{person.first_name}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Email :</div>
-        <div className="col-sm-6"><span className="text-break">{person.email}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Date d'embauche :</div>
-        <div className="col-sm-6"><span className="text-break">{person.dt_Embauche}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Sexe :</div>
-        <div className="col-sm-6"><span className="text-break">{person.sexe}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Position :</div>
-        <div className="col-sm-6"><span className="text-break">{person.position}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Téléphone :</div>
-        <div className="col-sm-6"><span className="text-break">{person.telephone}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Type :</div>
-        <div className="col-sm-6"><span className="text-break">{person.I_E}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Status :</div>
-        <div className="col-sm-6"><span className="text-break">{person.status}</span></div>
-      </div>
-      <hr className="my-2" />
-
-      {person.cv && (
-        <>
-          <div className="row">
-            <div className="col-sm-6 text-secondary fw-bold">CV :</div>
-            <div className="col-sm-6">
-              <a href={person.cv} target="_blank" rel="noopener noreferrer">
-                Voir le CV
-              </a>
-            </div>
+      <FieldRow label="Matricule" value={person.matricule} />
+      <FieldRow label="Nom" value={person.last_name} />
+      <FieldRow label="Prénom" value={person.first_name} />
+      <FieldRow label="Email" value={person.email} />
+      <FieldRow label="Téléphone" value={person.telephone} />
+      <FieldRow label="Sexe" value={person.sexe} />
+      <FieldRow label="Position" value={person.position} />
+      <FieldRow label="Status" value={person.status} />
+      <FieldRow label="Diplôme" value={person.deplome} />
+      <FieldRow label="Spécialité diplôme" value={person.specialite_deplome} />
+      <FieldRow label="Date début carrière" value={person.dt_Debut_Carriere} />
+      <FieldRow label="Date embauche" value={person.dt_Embauche} />
+      <FieldRow label="Expérience totale" value={person.experience_total} />
+      <FieldRow label="Expérience Expleo" value={person.experience_expleo} />
+      <FieldRow label="Manager" value={`${person.manager.first_name} ${person.manager.last_name} (${person.manager.matricule})`} />
+      <FieldRow label="Backup" value={`${person.backup.first_name} ${person.backup.last_name} (${person.backup.matricule})`} />
+      <FieldRow label="Projet" value={person.projet} />
+      <>
+        <div className="row">
+          <div className="col-sm-6 text-secondary fw-bold">DDC :</div>
+          <div className="col-sm-6">
+            <a href={person.ddc} target="_blank" rel="noopener noreferrer">Voir le document</a>
           </div>
-          <hr className="my-2" />
-        </>
-      )}
-
-      <div className="row">
-        <div className="col-sm-6 text-secondary fw-bold">Actif :</div>
-        <div className="col-sm-6">{person.is_active ? 'Oui' : 'Non'}</div>
-      </div>
+        </div>
+        <hr className="my-2" />
+      </>
+      <FieldRow
+        label="Actif"
+        value={
+            <span
+              style={{
+                display: 'inline-block',
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: person.is_active ? 'green' : 'red',
+                marginLeft: '8px',
+              }}
+              title={person.is_active ? 'Actif' : 'Inactif'}
+            />
+        }
+      />
     </div>
   );
 };
