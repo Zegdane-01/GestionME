@@ -31,6 +31,17 @@ class PersonneViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
+    def put(self, request, id, *args, **kwargs):
+        """Met à jour les données d'une personne existante."""
+        personne = self.get_object(id)
+        serializer = PersonneUpdateSerializer(personne, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
