@@ -39,7 +39,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         ('T5', 'T5'),
         ('T6', 'T6'),
     ]
-    DEPLOME_CHOICES = [
+    DIPLOME_CHOICES = [
         ('Bac+2', 'Bac+2'),
         ('Bac+3', 'Bac+3'),
         ('Bac+5', 'Bac+5'),
@@ -61,53 +61,53 @@ class Personne(AbstractBaseUser, PermissionsMixin):
 
 
     matricule = models.CharField(max_length=50, primary_key=True)
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
     sexe = models.CharField(max_length=10)
-    email = models.EmailField(blank=True)
-    telephone = models.CharField(max_length=14)
+    email = models.EmailField(blank=True, null=True)
+    telephone = models.CharField(max_length=14, blank=True, null=True)
     role = models.CharField(max_length=100, choices=ROLE_CHOICES)
 
-    dt_Debut_Carriere = models.DateField(default=date.today)
+    dt_Debut_Carriere = models.DateField(blank=True, null=True)
     experience_total = models.IntegerField(default=0)
-    dt_Embauche = models.DateField(default=date.today)
+    dt_Embauche = models.DateField()
     experience_expleo = models.IntegerField(default=0)
 
     position = models.CharField(max_length=100, choices=POSITION_CHOICES, default='T1')
-    deplome = models.CharField(max_length=100,choices=DEPLOME_CHOICES, default='Bac+2')
-    specialite_deplome = models.CharField(max_length=100, blank=True)
+    diplome = models.CharField(max_length=100,choices=DIPLOME_CHOICES, default='Bac+2')
+    specialite_diplome = models.CharField(max_length=100, blank=True, null=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')
 
-    ddc = models.FileField(upload_to='ddc/', null=True, blank=True)
+    ddc = models.FileField(upload_to='ddc/', blank=True, null=True)
 
     manager = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,
-        null=True,
         blank=True,
+        null=True,
         related_name='manager_persons'
     )
 
     backup = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,
-        null=True,
         blank=True,
+        null=True,
         related_name='backup_persons'
     )
 
     projet = models.ForeignKey(
         'projet.Projet',
         on_delete=models.SET_NULL,
-        null=True,
         blank=True,
+        null=True,
         related_name='projet_persons'
     )
 
 
     password = models.CharField(max_length=128)
-    photo = models.ImageField(upload_to='photos/', null=True, blank=True)
+    photo = models.ImageField(upload_to='photos/', blank=True, null=True)
 
 
     USERNAME_FIELD = 'matricule'
@@ -121,13 +121,17 @@ class Personne(AbstractBaseUser, PermissionsMixin):
 
     def calcul_experience_expleo(self):
         today = date.today()
-        delta = today.year * 12 + today.month - (self.dt_Embauche.year * 12 + self.dt_Embauche.month)
-        return delta
+        if self.dt_Embauche:
+            delta = today.year * 12 + today.month - (self.dt_Embauche.year * 12 + self.dt_Embauche.month)
+            return delta
+        return 0
     
     def calcul_experience_total(self):
-        today = date.today()
-        delta = today.year * 12 + today.month - (self.dt_Debut_Carriere.year * 12 + self.dt_Debut_Carriere.month)
-        return delta
+        if self.dt_Debut_Carriere:
+            today = date.today()
+            delta = today.year * 12 + today.month - (self.dt_Debut_Carriere.year * 12 + self.dt_Debut_Carriere.month)
+            return delta
+        return 0
 
     def __str__(self):
         return f"{self.matricule}"

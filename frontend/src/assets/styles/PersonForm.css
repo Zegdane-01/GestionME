@@ -1,82 +1,64 @@
-/* PersonForm.css */
+form {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 
-.person-form-container {
-    /* Your container styles */
-  }
-  
-  .person-form-container-inner {
-    /* Your inner container styles */
-  }
-  
-  .person-form-card {
-    /* Your card styles */
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .person-form-header {
-    background-color: #007bff; /* Example primary color */
-    color: white;
-    padding: 15px;
-    border-bottom: 1px solid #ccc;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-  }
-  
-  .person-form-title {
-    margin-bottom: 0;
-  }
-  
-  .person-form {
-    padding: 20px;
-  }
-  
-  .person-form-body {
-    padding-bottom: 0; /* Adjust if needed */
-  }
-  
-  .person-form-group {
-    margin-bottom: 15px;
-  }
-  
-  .person-form-label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: block;
-  }
-  
-  .person-form-input,
-  .person-form-select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
-  }
-  
-  .person-form-button {
-    padding: 10px 15px;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  
-  .person-form-button.primary {
-    background-color: #007bff;
-    color: white;
-    border: none;
-  }
-  
-  .person-form-button.primary:hover {
-    background-color: #0056b3;
-  }
-  
-  .person-form-button.secondary {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-  }
-  
-  .person-form-button.secondary:hover {
-    background-color: #5a6268;
-  }
+h2 {
+  font-size: 1.4rem;
+  color: #333;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  border-left: 4px solid #007bff;
+  padding-left: 10px;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #444;
+  font-weight: 500;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="date"],
+select,
+input[type="file"] {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background-color: #fff;
+}
+
+input[type="file"] {
+  padding: 6px;
+}
+
+button {
+  margin-top: 25px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+p {
+  margin-top: 15px;
+  font-weight: 500;
+  color: green;
+}
