@@ -1,309 +1,538 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import "../assets/styles/PersonForm.css";
 import api from "../api/api";
+import '../assets/styles/PersonForm.css'
 
 const PersonForm = () => {
+  const params = useParams();
+  const matricule = params.matricule || params.id;
   const navigate = useNavigate();
-  const { id } = useParams();
-  const isEditMode = Boolean(id);
-  const [personnesList, setPersonnesList] = useState([]);
-  const [projetsList, setProjetsList] = useState([]);
-
-  const [formData, setFormData] = useState({
-    matricule: '', first_name: '', last_name: '', email: '', telephone: '', sexe: '',role: '',
-    position: '', status: '', diplome: '', specialite_diplome: '', dt_Embauche: '',
-    dt_Debut_Carriere: '', experience_total: '', experience_expleo: '',
-    manager: '', backup: '', projet: '', photo: null, ddc: null, is_active: false,
-    existing_photo: '',
-    existing_ddc: '',
-    groups: [], user_permissions: [],
-  });
-  useEffect(() => {
-    api.get('/personne/personnes/').then(res => setPersonnesList(res.data));
-    api.get('/projet/projets/').then(res => setProjetsList(res.data));
-  }, []); 
-
-  useEffect(() => {
-  if (isEditMode) {
-    api.get(`/personne/personnes/${id}/`)
-      .then((res) => {
-        const data = res.data;
-        // Convertir les valeurs null en chaînes vides
-        const formattedData = Object.fromEntries(
-          Object.entries(data).map(([key, value]) => [
-            key, 
-            value === null ? '' : value
-          ])
-        );
-
-         // Stocker les chemins existants des fichiers
-          setFormData({
-            ...formattedData,
-            existing_photo: data.photo || '',
-            existing_ddc: data.ddc || ''
-          });
-      })
-      .catch(() => {
-        toast.error("Collaborateur non trouvé");
-        navigate('/collaborateurs');
-      });
-  }
-}, [id, isEditMode, navigate]);
-
- const handleChange = (e) => {
-  const { name, value, type, files, checked } = e.target;
+  const isEditMode = matricule !== undefined;
   
-  if (type === "file") {
-    const file = files[0];
-    setFormData((prev) => ({ 
-      ...prev, 
-      [name]: file,
-      [`existing_${name}`]: file ? '' : prev[`existing_${name}`]
+  // États initiaux du formulaire
+  const [formData, setFormData] = useState({
+    matricule: '',
+    password: '',
+    first_name: '',
+    last_name: '',
+    sexe: '',
+    email: '',
+    telephone: '',
+    role: '',
+    dt_Debut_Carriere: '',
+    dt_Embauche: '',
+    position: 'T1',
+    diplome: 'Bac+2',
+    specialite_diplome: '',
+    status: 'En cours',
+    ddc: null,
+    manager: null,
+    backup: null,
+    projet: null,
+    photo: null,
+    is_staff: false,
+    is_superuser: false,
+    is_active: true,
+  });
+
+  const [managers, setManagers] = useState([]);
+  const [collaborateurs, setCollaborateurs] = useState([]);
+  const [projets, setProjets] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Charger les données initiales pour le mode édition
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        // Charger les listes pour les selects
+        const [managersRes, collaborateursRes, projetsRes] = await Promise.all([
+          api.get('/personne/personnes/'),
+          api.get('/personne/personnes/'),
+          api.get('/projet/projets/'),
+        ]);
+
+        setManagers(managersRes.data);
+        setCollaborateurs(collaborateursRes.data);
+        setProjets(projetsRes.data);
+
+        // Si en mode édition, charger les données de la personne
+        if (isEditMode && matricule) {
+          const response = await api.get(`/personne/personnes/${matricule}/`);
+          const personneData = response.data;
+          
+          // Formater les dates pour l'input date
+          const formatDate = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+          };
+
+          setFormData({
+            ...personneData,
+            dt_Debut_Carriere: formatDate(personneData.dt_Debut_Carriere),
+            dt_Embauche: formatDate(personneData.dt_Embauche),
+            password: '', // Ne pas pré-remplir le mot de passe
+            manager: personneData.manager || null,
+            backup: personneData.backup || null,
+            projet: personneData.projet || null,
+          });
+        }
+      } catch (error) {
+        toast.error('Erreur lors du chargement des données');
+        console.error(error);
+      }
+    };
+
+    fetchInitialData();
+  }, [matricule, isEditMode]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked, files } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : 
+              type === 'file' ? files[0] : 
+              value
     }));
-  } else {
-    const newValue = type === "checkbox" ? checked : value;
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
-  }
-};
+  };
+
+  const handleSelectChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value === '' ? null : value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const requiredFields = ['matricule', 'first_name', 'last_name', 'email','role', 'sexe', 'position', 'status', 'manager'];
-    for (let field of requiredFields) {
-      if (!formData[field]) {
-        toast.error(`Champs manquants : ${field}`);
-        toast.error("Veuillez remplir tous les champs obligatoires");
-        return;
-      }
-    }
-
-   
-    
-    // Ajouter tous les champs sauf les fichiers
-    const payload = new FormData();
-    const cleanedFormData = { ...formData };
-    delete cleanedFormData.groups;
-    delete cleanedFormData.user_permissions;
-    delete cleanedFormData.existing_photo; // Ensure these are not sent as regular fields
-    delete cleanedFormData.existing_ddc;   // Ensure these are not sent as regular fields
-
-    // Champs normaux (sauf fichiers et existing paths)
-    Object.keys(cleanedFormData).forEach(key => {
-      if (['photo', 'ddc'].includes(key)) return;
-      if (cleanedFormData[key] !== null && cleanedFormData[key] !== undefined && cleanedFormData[key] !== '') {
-        payload.append(key, cleanedFormData[key]);
-      }
-    });
-
-    // Gérer les fichiers - Only append if a new file is selected
-    if (formData.photo instanceof File) {
-      payload.append('photo', formData.photo);
-    }
-
-    if (formData.ddc instanceof File) {
-      payload.append('ddc', formData.ddc);
-    }
-
-    
-    if (!isEditMode) {
-      payload.append("password", formData.matricule); // mot de passe = matricule
-    }
+    setLoading(true);
 
     try {
+      const formDataToSend = new FormData();
+      
+      // Ajouter tous les champs au FormData
+      Object.keys(formData).forEach(key => {
+        if (key === 'photo' || key === 'ddc') {
+          if (formData[key] instanceof File) {
+            formDataToSend.append(key, formData[key]);
+          }
+        }else if (key === 'manager' || key === 'backup' || key === 'projet') {
+          if (formData[key]) {
+            formDataToSend.append(key, formData[key]);
+          }
+        }else if(formData[key] !== null && formData[key] !== undefined) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      let response;
       if (isEditMode) {
-        for (let [key, value] of payload.entries()) {
+        // Mise à jour
+        for (let [key, value] of formDataToSend.entries()) {
           console.log(`${key}:`, value);
         }
-        await api.put(`/personne/personnes/${id}/`, payload,{
-          headers: {'Content-Type': 'multipart/form-data'},
+        response = await api.put(`/personne/personnes/${matricule}/`, formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
-        
-        toast.success("Collaborateur mis à jour");
+        toast.success('Personne mise à jour avec succès');
       } else {
-        await api.post(`/personne/personnes/`, payload, {
-          headers: {'Content-Type': 'multipart/form-data'}
+        // Création
+        response = await api.post('/personne/personnes/', formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
-        toast.success("Collaborateur ajouté");
+        toast.success('Personne créée avec succès');
       }
+
       navigate('/collaborateurs');
     } catch (error) {
-      toast.error("Erreur lors de l'enregistrement");
-      console.error(error.response?.data || error.message);
+      console.error(error);
+      if (error.response) {
+        // Afficher les erreurs de validation
+        const errors = error.response.data;
+        Object.keys(errors).forEach(key => {
+          toast.error(`${key}: ${errors[key].join(' ')}`);
+        });
+      } else {
+        toast.error('Une erreur est survenue');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
- return (
-    <form onSubmit={handleSubmit}>
-      <h2>🧍 Informations personnelles</h2>
-      <label>Compte actif ?</label>
-      <br/>
-      <input
-        id='is_active'
-        type="checkbox"
-        name="is_active"
-        checked={formData.is_active}
-        onChange={(e) =>
-          setFormData({ ...formData, is_active: e.target.checked })
-        }
-      />
-      <br />
-
-      <label>Matricule</label>
-      <input type="text" name="matricule" value={formData.matricule} onChange={handleChange} required />
-
-      <label>Prénom</label>
-      <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} required/>
-
-      <label>Nom</label>
-      <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} required/>
-
-      <label>Sexe</label>
-      <select name="sexe" value={formData.sexe} onChange={handleChange} required>
-        <option value="">-- Sélectionner --</option>
-        <option value="Homme">Homme</option>
-        <option value="Femme">Femme</option>
-      </select>
-
-      <label>Email</label>
-      <input type="email" name="email" value={formData.email} onChange={handleChange} required/>
-
-      <label>Téléphone</label>
-      <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} />
-
-      <label>Rôle</label>
-      <select name="role" value={formData.role} onChange={handleChange} required>
-        <option value=''>-- Choisir un rôle --</option>
-        <option value="COLLABORATEUR">Collaborateur</option>
-        <option value="TL1">Team Leader N1</option>
-        <option value="TL2">Team Leader N2</option>
-      </select>
-
-      <hr />
-
-      <h2>📅 Informations professionnelles</h2>
-      <label>Date début carrière</label>
-      <input type="date" name="dt_Debut_Carriere" value={formData.dt_Debut_Carriere} onChange={handleChange} />
-
-      <label>Date embauche</label>
-      <input type="date" name="dt_Embauche" value={formData.dt_Embauche} onChange={handleChange} required/>
-
-      <label>Position</label>
-      <select name="position" value={formData.position} onChange={handleChange} required>
-        <option value=''>-- Choisir une position --</option>
-        {['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6'].map(pos => (
-          <option key={pos} value={pos}>{pos}</option>
-        ))}
-      </select>
-
-      <label>Status</label>
-      <select name="status" value={formData.status} onChange={handleChange} required>
-        <option value=''>-- Choisir une status --</option>
-        {['En formation', 'En cours', 'Bench', 'Out', 'Management', 'Stage'].map(stat => (
-          <option key={stat} value={stat}>{stat}</option>
-        ))}
-      </select>
-
-      <hr />
-
-      <h2>🎓 Diplômes</h2>
-      <label>Diplôme</label>
-      <select name="diplome" value={formData.diplome} onChange={handleChange}>
-        <option value=''>-- Choisir Diplôme --</option>
-        <option value="Bac+2">Bac+2</option>
-        <option value="Bac+3">Bac+3</option>
-        <option value="Bac+5">Bac+5</option>
-      </select>
-
-      <label>Spécialité du diplôme</label>
-      <input type="text" name="specialite_diplome" value={formData.specialite_diplome} onChange={handleChange} />
-
-      <hr />
-
-      <h2>📁 Projet et reporting</h2>
-
-      <label>Manager</label>
-      <select
-        name="manager"
-        value={formData.manager?.matricule || ''} // Si l'API retourne un objet
-        onChange={handleChange}
-        required
-      >
-        <option value="">-- Choisir un manager --</option>
-        {personnesList.map(p => (
-          <option key={p.matricule} value={p.matricule}>
-            {p.first_name} {p.last_name}
-          </option>
-        ))}
-      </select>
-
-      <label>Backup</label>
-      <select
-        name="backup"
-        value={formData.backup?.matricule || ''}
-        onChange={handleChange}
-      >
-        <option value="">-- Choisir un backup --</option>
-        {personnesList.map(p => (
-          <option key={p.matricule} value={p.matricule}>
-            {p.first_name} {p.last_name}
-          </option>
-        ))}
-      </select>
-
-      <label>Projet</label>
-      <select
-        name="projet"
-        value={formData.projet?.id || ''}
-        onChange={handleChange}
-      >
-        <option value="">-- Choisir un projet --</option>
-        {projetsList.map(projet => (
-          <option key={projet.id} value={projet.id}>
-            {projet.nom}
-          </option>
-        ))}
-      </select>
-
-      <hr />
-
-      <h2>📎 Fichiers</h2>
-      <label>Photo</label>
-       <div>
-        {formData.existing_photo && (
-          <p>Fichier actuel : {formData.existing_photo}</p>
-        )}
-        <input 
-          type="file" 
-          name="photo" 
-          onChange={handleChange} 
-          accept="image/*" 
-        />
-      </div>
-
-      <label>DDC</label>
-      <div>
-        {formData.existing_ddc && (
-          <p>Fichier actuel : {formData.existing_ddc}</p>
-        )}
-        <input 
-          type="file" 
-          name="ddc" 
-          onChange={handleChange} 
-          accept=".doc,.docx" 
-        />
-      </div>
-
-      <hr />
-
-      <button variant="secondary" onClick={() => navigate('/collaborateurs')}>Annuler</button>
-      <button type="submit" variant="primary">
-        {isEditMode ? 'Mettre à jour' : 'Ajouter'}
-      </button>
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">
+        {isEditMode ? 'Modifier une personne' : 'Créer une nouvelle personne'}
+      </h1>
       
-    </form>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Section Informations de base */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Informations de base</h2>
+            
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Matricule*</label>
+              <input
+                type="text"
+                name="matricule"
+                value={formData.matricule}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+                disabled={isEditMode}
+              />
+            </div>
+
+            {!isEditMode && (
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Mot de passe*</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded"
+                  required={!isEditMode}
+                />
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Prénom*</label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Nom*</label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Sexe</label>
+              <select
+                name="sexe"
+                value={formData.sexe}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              >
+                <option value="">Sélectionner</option>
+                <option value="Homme">Homme</option>
+                <option value="Femme">Femme</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Téléphone</label>
+              <input
+                type="text"
+                name="telephone"
+                value={formData.telephone}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Photo</label>
+              <input
+                type="file"
+                name="photo"
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                accept="image/*"
+              />
+              {isEditMode && formData.photo && (
+                <div className="mt-2">
+                  <img 
+                    src={formData.photo} 
+                    alt="Photo actuelle" 
+                    className="h-20 w-20 object-cover rounded"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section Carrière */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Informations professionnelles</h2>
+            
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Rôle*</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              >
+                <option value="COLLABORATEUR">Collaborateur</option>
+                <option value="TL1">Team Leader N1</option>
+                <option value="TL2">Team Leader N2</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Date début carrière</label>
+              <input
+                type="date"
+                name="dt_Debut_Carriere"
+                value={formData.dt_Debut_Carriere}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Date embauche*</label>
+              <input
+                type="date"
+                name="dt_Embauche"
+                value={formData.dt_Embauche}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Position*</label>
+              <select
+                name="position"
+                value={formData.position}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              >
+                {['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6'].map(pos => (
+                  <option key={pos} value={pos}>{pos}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Diplôme*</label>
+              <select
+                name="diplome"
+                value={formData.diplome}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              >
+                <option value="Bac+2">Bac+2</option>
+                <option value="Bac+3">Bac+3</option>
+                <option value="Bac+5">Bac+5</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Spécialité diplôme</label>
+              <input
+                type="text"
+                name="specialite_diplome"
+                value={formData.specialite_diplome}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Statut*</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                required
+              >
+                <option value="En cours">En cours</option>
+                <option value="En formation">En formation</option>
+                <option value="Bench">Bench</option>
+                <option value="Out">Out</option>
+                <option value="Management">Management</option>
+                <option value="Stage">Stage</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Document DDC</label>
+              <input
+                type="file"
+                name="ddc"
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+                accept=".doc,.docx"
+              />
+              {isEditMode && formData.ddc && (
+                <div className="mt-2">
+                  <a 
+                    href={formData.ddc} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Voir le document actuel
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section Relations */}
+          <div className="bg-white p-6 rounded-lg shadow md:col-span-2">
+            <h2 className="text-xl font-semibold mb-4">Relations</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Manager</label>
+                <select
+                  name="manager"
+                  value={formData.manager || ''}
+                  onChange={handleSelectChange}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  <option value="">Aucun manager</option>
+                  {managers.map(manager => (
+                    <option key={manager.matricule} value={manager.matricule}>
+                      {manager.first_name} {manager.last_name} ({manager.matricule})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Backup</label>
+                <select
+                  name="backup"
+                  value={formData.backup || ''}
+                  onChange={handleSelectChange}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  <option value="">Aucun backup</option>
+                  {collaborateurs.map(collab => (
+                    <option key={collab.matricule} value={collab.matricule}>
+                      {collab.first_name} {collab.last_name} ({collab.matricule})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Projet</label>
+                <select
+                  name="projet"
+                  value={formData.projet || ''}
+                  onChange={handleSelectChange}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  <option value="">Aucun projet</option>
+                  {projets.map(projet => (
+                    <option key={projet.code} value={projet.code}>
+                      {projet.nom} ({projet.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section Admin */}
+          {isEditMode && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-xl font-semibold mb-4">Paramètres administrateur</h2>
+              
+              <div className="mb-4 flex items-center">
+                <input
+                  type="checkbox"
+                  name="is_staff"
+                  checked={formData.is_staff}
+                  onChange={handleChange}
+                  className="mr-2"
+                  id="is_staff"
+                />
+                <label htmlFor="is_staff" className="text-gray-700">Staff</label>
+              </div>
+
+              <div className="mb-4 flex items-center">
+                <input
+                  type="checkbox"
+                  name="is_superuser"
+                  checked={formData.is_superuser}
+                  onChange={handleChange}
+                  className="mr-2"
+                  id="is_superuser"
+                />
+                <label htmlFor="is_superuser" className="text-gray-700">Superutilisateur</label>
+              </div>
+
+              <div className="mb-4 flex items-center">
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
+                  className="mr-2"
+                  id="is_active"
+                />
+                <label htmlFor="is_active" className="text-gray-700">Compte actif</label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={() => navigate('/collaborateurs')}
+            className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400"
+          >
+            {loading ? 'Enregistrement...' : isEditMode ? 'Mettre à jour' : 'Créer'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
-}
+};
 
 export default PersonForm;

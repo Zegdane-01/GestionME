@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Personne
+from projet.models import Projet
 from datetime import date
 
 class MiniPersonneSerializer(serializers.ModelSerializer):
@@ -9,12 +10,49 @@ class MiniPersonneSerializer(serializers.ModelSerializer):
         fields = ('matricule', 'first_name', 'last_name')
 
 class PersonneSerializer(serializers.ModelSerializer):
-    manager = MiniPersonneSerializer(read_only=True)
-    backup = MiniPersonneSerializer(read_only=True)
+    manager = serializers.PrimaryKeyRelatedField(
+        queryset=Personne.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    backup = serializers.PrimaryKeyRelatedField(
+        queryset=Personne.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    manager_info =  MiniPersonneSerializer(source='manager',read_only=True)
+    backup_info =  MiniPersonneSerializer(source='backup',read_only=True)
     class Meta:
         model = Personne
-        fields = '__all__'
-        read_only_fields = ['is_superuser', 'is_staff', 'is_active', 'date_joined','updated_at']
+        fields = [
+            'matricule',
+            'password',
+            'first_name',
+            'last_name',
+            'sexe',
+            'email',
+            'telephone',
+            'role',
+            'dt_Debut_Carriere',
+            'dt_Embauche',
+            'position',
+            'diplome',
+            'specialite_diplome',
+            'status',
+            'ddc',
+            'manager',
+            'backup',
+            'manager_info',
+            'backup_info',
+            'projet',
+            'photo',
+            'is_staff',
+            'is_superuser',
+            'is_active',
+            'experience_expleo',
+            'experience_total',
+        ]
+        read_only_fields = ['is_superuser', 'is_staff', 'is_active']
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
 
 class PersonneLoginSerializer(serializers.Serializer):
@@ -47,7 +85,32 @@ class PersonneCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Personne
-        fields = '__all__'
+        fields = [
+            'matricule',
+            'password',
+            'first_name',
+            'last_name',
+            'sexe',
+            'email',
+            'telephone',
+            'role',
+            'dt_Debut_Carriere',
+            'dt_Embauche',
+            'position',
+            'diplome',
+            'specialite_diplome',
+            'status',
+            'ddc',
+            'manager',
+            'backup',
+            'projet',
+            'photo',
+            'is_staff',
+            'is_superuser',
+            'is_active',
+            'experience_expleo',
+            'experience_total',
+        ]
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
     
     def validate_matricule(self, value):
@@ -85,20 +148,48 @@ class PersonneCreateSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
-    
-from rest_framework import serializers
-from .models import Personne
-from datetime import date
+
 
 class PersonneUpdateSerializer(serializers.ModelSerializer):
     experience_expleo = serializers.SerializerMethodField()
     experience_total = serializers.SerializerMethodField()
+    manager = serializers.CharField(required=False, allow_null=True)
+    backup = serializers.CharField(required=False, allow_null=True)
+    projet = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = Personne
-        fields = '__all__'
+        fields = [
+            'matricule',
+            'password',
+            'first_name',
+            'last_name',
+            'sexe',
+            'email',
+            'telephone',
+            'role',
+            'dt_Debut_Carriere',
+            'dt_Embauche',
+            'position',
+            'diplome',
+            'specialite_diplome',
+            'status',
+            'ddc',
+            'manager',
+            'backup',
+            'projet',
+            'photo',
+            'is_staff',
+            'is_superuser',
+            'is_active',
+            'experience_expleo',
+            'experience_total',
+        ]
         extra_kwargs = {
-            'password': {'write_only': True, 'required': False}
+            'password': {'write_only': True, 'required': False},
+            'manager': {'required': False}, # Ensure they are not explicitly read_only
+            'backup': {'required': False},  # Ensure they are not explicitly read_only
+            'projet': {'required': False},  # Ensure they are not explicitly read_only
         }
 
     def validate_matricule(self, value):
@@ -134,6 +225,10 @@ class PersonneUpdateSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         photo = validated_data.pop('photo', None)
         ddc = validated_data.pop('ddc', None)
+        manager_matricule = self.initial_data.get('manager')
+        backup_matricule = self.initial_data.get('backup')
+        projet_id = self.initial_data.get('projet')
+
         if password:
             instance.set_password(password)
 
@@ -142,7 +237,27 @@ class PersonneUpdateSerializer(serializers.ModelSerializer):
         # sinon, ne rien faire → on garde l'ancien
         if ddc:
             instance.ddc = ddc
-        
+
+        # Gérer la mise à jour du manager
+        if manager_matricule:
+            try:
+                instance.manager = Personne.objects.get(matricule=manager_matricule)
+            except Personne.DoesNotExist:
+                raise serializers.ValidationError({'manager': 'Matricule de manager invalide.'})
+
+        # Gérer la mise à jour du backup
+        if backup_matricule:
+            try:
+                instance.backup = Personne.objects.get(matricule=backup_matricule)
+            except Personne.DoesNotExist:
+                raise serializers.ValidationError({'backup': 'Matricule de backup invalide.'})
+
+        # Gérer la mise à jour du projet
+        if projet_id:
+            try:
+                instance.projet = Projet.objects.get(id=projet_id)
+            except Projet.DoesNotExist:
+                raise serializers.ValidationError({'projet': 'ID de projet invalide.'})
         # Mettre à jour les autres champs
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
