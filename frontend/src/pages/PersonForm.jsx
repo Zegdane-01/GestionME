@@ -300,6 +300,7 @@ const PersonForm = () => {
                 className="w-full px-3 py-2 border rounded"
                 required
               >
+                <option value="">-- Choisir un rôle --</option>
                 <option value="COLLABORATEUR">Collaborateur</option>
                 <option value="TL1">Team Leader N1</option>
                 <option value="TL2">Team Leader N2</option>
