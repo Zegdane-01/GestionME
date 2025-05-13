@@ -35,14 +35,14 @@ const PersonDetail = ({ person }) => {
       <FieldRow label="Sexe" value={person.sexe} />
       <FieldRow label="Position" value={person.position} />
       <FieldRow label="Status" value={person.status} />
-      <FieldRow label="Diplôme" value={person.deplome} />
-      <FieldRow label="Spécialité diplôme" value={person.specialite_deplome} />
+      <FieldRow label="Diplôme" value={person.diplome} />
+      <FieldRow label="Spécialité diplôme" value={person.specialite_diplome} />
       <FieldRow label="Date début carrière" value={person.dt_Debut_Carriere} />
       <FieldRow label="Date embauche" value={person.dt_Embauche} />
       <FieldRow label="Expérience totale" value={person.experience_total} />
       <FieldRow label="Expérience Expleo" value={person.experience_expleo} />
-      <FieldRow label="Manager" value={`${person.manager.first_name} ${person.manager.last_name} (${person.manager.matricule})`} />
-      <FieldRow label="Backup" value={`${person.backup.first_name} ${person.backup.last_name} (${person.backup.matricule})`} />
+      <FieldRow label="Manager" value={`${person.manager_info.first_name} ${person.manager_info.last_name}`} />
+      <FieldRow label="Backup" value={`${person.backup_info.first_name} ${person.backup_info.last_name}`} />
       <FieldRow label="Projet" value={person.projet} />
       <>
         <div className="row">
