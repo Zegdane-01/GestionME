@@ -173,8 +173,8 @@ const PersonForm = () => {
         {isEditMode ? 'Modifier une personne' : 'Créer une nouvelle personne'}
       </h1>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="personne-form">
+        <div className="form-group">
           {/* Section Informations de base */}
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">Informations de base</h2>
@@ -462,8 +462,8 @@ const PersonForm = () => {
                 >
                   <option value="">Aucun projet</option>
                   {projets.map(projet => (
-                    <option key={projet.code} value={projet.code}>
-                      {projet.nom} ({projet.code})
+                    <option key={projet.wo} value={projet.wo}>
+                      {projet.nom}
                     </option>
                   ))}
                 </select>
