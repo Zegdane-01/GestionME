@@ -7,5 +7,5 @@ class ProjetViewSet(viewsets.ModelViewSet):
         queryset = Projet.objects.all()
         serializer_class = ProjetSerializer
         permission_classes = [AllowAny]
-        lookup_field = 'id'
+        lookup_field = 'wo'
 
