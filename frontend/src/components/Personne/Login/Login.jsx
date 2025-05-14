@@ -26,26 +26,28 @@ const Login = () => {
       // Gestion de la réponse
       localStorage.setItem('accessToken', data.access);
       localStorage.setItem('refreshToken', data.refresh);
-      localStorage.setItem('isManager', data.is_manager);
       
-      if (data.is_manager) {
-        localStorage.setItem('managerData', JSON.stringify(data.manager));
-        // Rediriger l'utilisateur en fonction de son rôle (exemple)
-        navigate('/collaborateurs');
+      // Stockage des données utilisateur
+      localStorage.setItem('userData', JSON.stringify(data.user));
 
-      } else {
-        localStorage.setItem('userData', JSON.stringify(data.user));
-          // Rediriger l'utilisateur en fonction de son rôle (exemple)
-        navigate('/collab');
-      }
-    } catch (error) {
+      // Rediriger l'utilisateur en fonction de son rôle (exemple)
+      navigate('/profile');
+
+   } catch (error) {
       console.error('Erreur de connexion:', error);
-      if (error.response && error.status === 401) {
-        setError('Identifiants invalides.');
+      
+      // Nettoyage en cas d'erreur
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userData');
+      
+      if (error.response && error.response.status === 401) {
+        setError('Matricule ou mot de passe incorrect');
       } else {
-        setError('Erreur de connexion. Veuillez réessayer.');
+        setError('Erreur de connexion. Veuillez réessayer plus tard.');
       }
-      setLoading(false); // Remettre loading à false en cas d'erreur
+    } finally {
+      setLoading(false);
     }
   };
 
