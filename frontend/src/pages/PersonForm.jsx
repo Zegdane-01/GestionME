@@ -429,7 +429,7 @@ const PersonForm = () => {
                   <option value="">Aucun manager</option>
                   {managers.map(manager => (
                     <option key={manager.matricule} value={manager.matricule}>
-                      {manager.first_name} {manager.last_name} ({manager.matricule})
+                      {manager.first_name} {manager.last_name}
                     </option>
                   ))}
                 </select>
@@ -446,7 +446,7 @@ const PersonForm = () => {
                   <option value="">Aucun backup</option>
                   {collaborateurs.map(collab => (
                     <option key={collab.matricule} value={collab.matricule}>
-                      {collab.first_name} {collab.last_name} ({collab.matricule})
+                      {collab.first_name} {collab.last_name}
                     </option>
                   ))}
                 </select>
@@ -472,7 +472,7 @@ const PersonForm = () => {
           </div>
 
           {/* Section Admin */}
-          {isEditMode && (
+          
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-xl font-semibold mb-4">Paramètres administrateur</h2>
               
@@ -512,7 +512,7 @@ const PersonForm = () => {
                 <label htmlFor="is_active" className="text-gray-700">Compte actif</label>
               </div>
             </div>
-          )}
+          
         </div>
 
         <div className="flex justify-end space-x-4">

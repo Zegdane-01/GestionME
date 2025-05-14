@@ -4,4 +4,4 @@ from .models import Projet
 class ProjetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projet
-        fields = ['wo', 'nom']
+        fields = ['wo','code', 'nom']
