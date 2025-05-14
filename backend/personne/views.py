@@ -1,11 +1,12 @@
 import logging
 from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Personne
 from manager.models import Manager
-from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer, PersonneCreateSerializer
+from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer, PersonneCreateSerializer,PersonneUpdateSerializer
 from manager.serializers import ManagerSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -46,6 +47,21 @@ class PersonneViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({'message': 'Personne supprimée avec succès'}, status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=['get', 'put'], permission_classes=[IsAuthenticated], url_path='me')
+    def me(self, request):
+        personne = request.user  # récupère l'utilisateur connecté
+        
+        if request.method == 'GET':
+            serializer = self.get_serializer(personne)
+            return Response(serializer.data)
+
+        elif request.method == 'PUT':
+            serializer = PersonneUpdateSerializer(personne, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PersonneLoginView(APIView):
     permission_classes = [AllowAny]

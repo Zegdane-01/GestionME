@@ -8,6 +8,10 @@ class MiniPersonneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Personne
         fields = ('matricule', 'first_name', 'last_name')
+class MiniProjetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Projet
+        fields = ('code', 'nom', 'wo')
 
 class PersonneSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(
@@ -20,8 +24,14 @@ class PersonneSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False
     )
+    projet = serializers.PrimaryKeyRelatedField(
+        queryset = Projet.objects.all(),
+        allow_null = True,
+        required = False
+    )
     manager_info =  MiniPersonneSerializer(source='manager',read_only=True)
     backup_info =  MiniPersonneSerializer(source='backup',read_only=True)
+    projet_info = MiniProjetSerializer(source='projet',read_only=True)
     class Meta:
         model = Personne
         fields = [
@@ -44,6 +54,7 @@ class PersonneSerializer(serializers.ModelSerializer):
             'backup',
             'manager_info',
             'backup_info',
+            'projet_info',
             'projet',
             'photo',
             'is_staff',

@@ -130,10 +130,6 @@ const PersonForm = () => {
 
       let response;
       if (isEditMode) {
-        // Mise à jour
-        for (let [key, value] of formDataToSend.entries()) {
-          console.log(`${key}:`, value);
-        }
         response = await api.put(`/personne/personnes/${matricule}/`, formDataToSend, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -462,7 +458,7 @@ const PersonForm = () => {
                 >
                   <option value="">Aucun projet</option>
                   {projets.map(projet => (
-                    <option key={projet.wo} value={projet.wo}>
+                    <option key={projet.code} value={projet.code}>
                       {projet.nom}
                     </option>
                   ))}

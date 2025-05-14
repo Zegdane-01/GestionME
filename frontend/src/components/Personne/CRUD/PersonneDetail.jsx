@@ -14,6 +14,18 @@ const PersonDetail = ({ person }) => {
       <hr className="my-2" />
     </>
   );
+  const getExperienceText = (totalMonths) => {
+    
+        if (typeof totalMonths !== 'number' || isNaN(totalMonths) || totalMonths < 0) {
+            return '0 ans, 0 mois';
+        }
+        
+        const years = Math.floor(totalMonths / 12);
+        const months = totalMonths % 12;
+        
+        return `${years} an${years > 1 ? 's' : ''}, ${months} mois`;
+    };
+
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }} className="p-4 border rounded shadow-sm bg-white">
@@ -39,8 +51,9 @@ const PersonDetail = ({ person }) => {
       <FieldRow label="Spécialité diplôme" value={person.specialite_diplome} />
       <FieldRow label="Date début carrière" value={person.dt_Debut_Carriere} />
       <FieldRow label="Date embauche" value={person.dt_Embauche} />
-      <FieldRow label="Expérience totale" value={person.experience_total} />
-      <FieldRow label="Expérience Expleo" value={person.experience_expleo} />
+      
+      <FieldRow label="Expérience totale" value={getExperienceText(person.experience_total)} />
+      <FieldRow label="Expérience Expleo" value={getExperienceText(person.experience_expleo)}  />
       <FieldRow label="Manager" value={`${person.manager_info.first_name} ${person.manager_info.last_name}`} />
       <FieldRow label="Backup" value={`${person.backup_info.first_name} ${person.backup_info.last_name}`} />
       <FieldRow label="Projet" value={person.projet} />
@@ -48,7 +61,7 @@ const PersonDetail = ({ person }) => {
         <div className="row">
           <div className="col-sm-6 text-secondary fw-bold">DDC :</div>
           <div className="col-sm-6">
-            <a href={person.ddc} target="_blank" rel="noopener noreferrer">Voir le document</a>
+            <a href={person.ddc} rel="noopener noreferrer" download>Télécharger le document</a>
           </div>
         </div>
         <hr className="my-2" />
