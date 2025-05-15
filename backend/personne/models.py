@@ -74,7 +74,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     experience_expleo = models.IntegerField(default=0)
 
     position = models.CharField(max_length=100, choices=POSITION_CHOICES, default='T1')
-    diplome = models.CharField(max_length=100,choices=DIPLOME_CHOICES, default='Bac+2')
+    diplome = models.CharField(max_length=100,choices=DIPLOME_CHOICES, blank=True, null=True)
     specialite_diplome = models.CharField(max_length=100, blank=True, null=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')

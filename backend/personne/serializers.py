@@ -52,10 +52,10 @@ class PersonneSerializer(serializers.ModelSerializer):
             'ddc',
             'manager',
             'backup',
+            'projet',
             'manager_info',
             'backup_info',
             'projet_info',
-            'projet',
             'photo',
             'is_staff',
             'is_superuser',
@@ -164,9 +164,24 @@ class PersonneCreateSerializer(serializers.ModelSerializer):
 class PersonneUpdateSerializer(serializers.ModelSerializer):
     experience_expleo = serializers.SerializerMethodField()
     experience_total = serializers.SerializerMethodField()
-    manager = serializers.CharField(required=False, allow_null=True)
-    backup = serializers.CharField(required=False, allow_null=True)
-    projet = serializers.CharField(required=False, allow_null=True)
+    manager = serializers.PrimaryKeyRelatedField(
+        queryset=Personne.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    backup = serializers.PrimaryKeyRelatedField(
+        queryset=Personne.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    projet = serializers.PrimaryKeyRelatedField(
+        queryset = Projet.objects.all(),
+        allow_null = True,
+        required = False
+    )
+    manager_info =  MiniPersonneSerializer(source='manager',read_only=True)
+    backup_info =  MiniPersonneSerializer(source='backup',read_only=True)
+    projet_info = MiniProjetSerializer(source='projet',read_only=True)
 
     class Meta:
         model = Personne
@@ -189,6 +204,9 @@ class PersonneUpdateSerializer(serializers.ModelSerializer):
             'manager',
             'backup',
             'projet',
+            'manager_info',
+            'backup_info',
+            'projet_info',
             'photo',
             'is_staff',
             'is_superuser',
@@ -201,6 +219,7 @@ class PersonneUpdateSerializer(serializers.ModelSerializer):
             'manager': {'required': False}, # Ensure they are not explicitly read_only
             'backup': {'required': False},  # Ensure they are not explicitly read_only
             'projet': {'required': False},  # Ensure they are not explicitly read_only
+            'diplome': {'allow_null': True}
         }
 
     def validate_matricule(self, value):
@@ -252,21 +271,21 @@ class PersonneUpdateSerializer(serializers.ModelSerializer):
         # Gérer la mise à jour du manager
         if manager_matricule:
             try:
-                instance.manager = Personne.objects.get(matricule=manager_matricule)
+                instance.manager_info = Personne.objects.get(matricule=manager_matricule)
             except Personne.DoesNotExist:
                 raise serializers.ValidationError({'manager': 'Matricule de manager invalide.'})
 
         # Gérer la mise à jour du backup
         if backup_matricule:
             try:
-                instance.backup = Personne.objects.get(matricule=backup_matricule)
+                instance.backup_info = Personne.objects.get(matricule=backup_matricule)
             except Personne.DoesNotExist:
                 raise serializers.ValidationError({'backup': 'Matricule de backup invalide.'})
 
         # Gérer la mise à jour du projet
         if projet_id:
             try:
-                instance.projet = Projet.objects.get(id=projet_id)
+                instance.projet = Projet.objects.get(code=projet_id)
             except Projet.DoesNotExist:
                 raise serializers.ValidationError({'projet': 'ID de projet invalide.'})
         # Mettre à jour les autres champs
