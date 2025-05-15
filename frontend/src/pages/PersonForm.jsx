@@ -22,10 +22,10 @@ const PersonForm = () => {
     role: '',
     dt_Debut_Carriere: '',
     dt_Embauche: '',
-    position: 'T1',
-    diplome: 'Bac+2',
+    position: '',
+    diplome: '',
     specialite_diplome: '',
-    status: 'En cours',
+    status: '',
     ddc: null,
     manager: null,
     backup: null,
@@ -35,6 +35,22 @@ const PersonForm = () => {
     is_superuser: false,
     is_active: true,
   });
+
+  const [errors, setErrors] = useState({});
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.matricule) newErrors.matricule = "Le matricule est requis.";
+    if (!isEditMode && !formData.password) newErrors.password = "Le mot de passe est requis.";
+    if (!formData.first_name) newErrors.first_name = "Le prénom est requis.";
+    if (!formData.last_name) newErrors.last_name = "Le nom est requis.";
+    if (!formData.sexe) newErrors.sexe = "Le sexe est requis.";
+    if (!formData.role) newErrors.role = "Le rôle est requis.";
+    if (!formData.dt_Embauche) newErrors.dt_Embauche = "La date d'embauche est requise.";
+    if (!formData.position) newErrors.position = "La position est requise.";
+    if (!formData.status) newErrors.status = "Le statut est requis.";
+    return newErrors;
+  };
+
 
   const [managers, setManagers] = useState([]);
   const [collaborateurs, setCollaborateurs] = useState([]);
@@ -108,60 +124,67 @@ const PersonForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
-    try {
-      const formDataToSend = new FormData();
-      
-      // Ajouter tous les champs au FormData
-      Object.keys(formData).forEach(key => {
-        if (key === 'photo' || key === 'ddc') {
-          if (formData[key] instanceof File) {
+
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length === 0) {
+      setLoading(true);
+
+      try {
+
+        const formDataToSend = new FormData();
+        
+        // Ajouter tous les champs au FormData
+        Object.keys(formData).forEach(key => {
+          if (key === 'photo' || key === 'ddc') {
+            if (formData[key] instanceof File) {
+              formDataToSend.append(key, formData[key]);
+            }
+          }else if (key === 'manager' || key === 'backup' || key === 'projet') {
+            formDataToSend.append(key, formData[key] ?? '');
+          }else if(formData[key] !== null && formData[key] !== undefined) {
             formDataToSend.append(key, formData[key]);
           }
-        }else if (key === 'manager' || key === 'backup' || key === 'projet') {
-          if (formData[key]) {
-            formDataToSend.append(key, formData[key]);
-          }
-        }else if(formData[key] !== null && formData[key] !== undefined) {
-          formDataToSend.append(key, formData[key]);
+        });
+
+        let response;
+        if (isEditMode) {
+          response = await api.put(`/personne/personnes/${matricule}/`, formDataToSend, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          toast.success('Personne mise à jour avec succès');
+        } else {
+          // Création
+          response = await api.post('/personne/personnes/', formDataToSend, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          toast.success('Personne créée avec succès');
         }
-      });
 
-      let response;
-      if (isEditMode) {
-        response = await api.put(`/personne/personnes/${matricule}/`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        toast.success('Personne mise à jour avec succès');
-      } else {
-        // Création
-        response = await api.post('/personne/personnes/', formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        toast.success('Personne créée avec succès');
+        navigate('/collaborateurs');
+      } catch (error) {
+        console.error(error);
+        if (error.response) {
+          // Afficher les erreurs de validation
+          const errors = error.response.data;
+          Object.keys(errors).forEach(key => {
+            toast.error(`${key}: ${errors[key].join(' ')}`);
+          });
+        } else {
+          toast.error('Une erreur est survenue');
+        }
+      } finally {
+        setLoading(false);
       }
+    }};
 
-      navigate('/collaborateurs');
-    } catch (error) {
-      console.error(error);
-      if (error.response) {
-        // Afficher les erreurs de validation
-        const errors = error.response.data;
-        Object.keys(errors).forEach(key => {
-          toast.error(`${key}: ${errors[key].join(' ')}`);
-        });
-      } else {
-        toast.error('Une erreur est survenue');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -176,68 +199,55 @@ const PersonForm = () => {
             <h2 className="text-xl font-semibold mb-4">Informations de base</h2>
             
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Matricule*</label>
+              <label className="block text-gray-700 mb-2">Matricule<span style={{ color: 'red' }}> *</span></label>
               <input
                 type="text"
                 name="matricule"
                 value={formData.matricule}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
+                className={`w-full px-3 py-2 border rounded ${errors.matricule ? 'border-danger' : ''}`}
                 disabled={isEditMode}
               />
+              {errors.matricule && <p className="text-red-500 text-sm text-danger">{errors.matricule}</p>}
             </div>
 
-            {!isEditMode && (
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Mot de passe*</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded"
-                  required={!isEditMode}
-                />
-              </div>
-            )}
-
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Prénom*</label>
+              <label className="block text-gray-700 mb-2">Prénom<span style={{ color: 'red' }}> *</span></label>
               <input
                 type="text"
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
+                className={`w-full px-3 py-2 border rounded ${errors.first_name ? 'border-danger' : ''}`}
               />
+              {errors.first_name && <p className="text-red-500 text-sm text-danger">{errors.first_name}</p>}
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Nom*</label>
+              <label className="block text-gray-700 mb-2">Nom<span style={{ color: 'red' }}> *</span></label>
               <input
                 type="text"
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
+                className={`w-full px-3 py-2 border rounded ${errors.last_name ? 'border-danger' : ''}`}
               />
+              {errors.last_name && <p className="text-red-500 text-sm text-danger">{errors.last_name}</p>}
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Sexe</label>
+              <label className="block text-gray-700 mb-2">Sexe<span style={{ color: 'red' }}> *</span></label>
               <select
                 name="sexe"
                 value={formData.sexe}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
+                className={`w-full px-3 py-2 border rounded ${errors.sexe ? 'border-danger' : ''}`}
               >
                 <option value="">Sélectionner</option>
                 <option value="Homme">Homme</option>
                 <option value="Femme">Femme</option>
               </select>
+              {errors.sexe && <p className="text-red-500 text-sm text-danger">{errors.sexe}</p>}
             </div>
 
             <div className="mb-4">
@@ -288,19 +298,19 @@ const PersonForm = () => {
             <h2 className="text-xl font-semibold mb-4">Informations professionnelles</h2>
             
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Rôle*</label>
+              <label className="block text-gray-700 mb-2">Rôle<span style={{ color: 'red' }}> *</span></label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
+                className={`w-full px-3 py-2 border rounded ${errors.role ? 'border-danger' : ''}`}
               >
                 <option value="">-- Choisir un rôle --</option>
                 <option value="COLLABORATEUR">Collaborateur</option>
                 <option value="TL1">Team Leader N1</option>
                 <option value="TL2">Team Leader N2</option>
               </select>
+              {errors.role && <p className="text-red-500 text-sm text-danger">{errors.role}</p>}
             </div>
 
             <div className="mb-4">
@@ -315,41 +325,42 @@ const PersonForm = () => {
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Date embauche*</label>
+              <label className="block text-gray-700 mb-2">Date embauche<span style={{ color: 'red' }}> *</span></label>
               <input
                 type="date"
                 name="dt_Embauche"
                 value={formData.dt_Embauche}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
+                className={`w-full px-3 py-2 border rounded ${errors.dt_Embauche ? 'border-danger' : ''}`}
               />
+              {errors.dt_Embauche && <p className="text-red-500 text-sm text-danger">{errors.dt_Embauche}</p>}
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Position*</label>
+              <label className="block text-gray-700 mb-2">Position<span style={{ color: 'red' }}> *</span></label>
               <select
                 name="position"
                 value={formData.position}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
+                className={`w-full px-3 py-2 border rounded ${errors.position ? 'border-danger' : ''}`}
               >
+                <option value="">-- Choisir une position --</option>
                 {['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6'].map(pos => (
                   <option key={pos} value={pos}>{pos}</option>
                 ))}
               </select>
+              {errors.position && <p className="text-red-500 text-sm text-danger">{errors.position}</p>}
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Diplôme*</label>
+              <label className="block text-gray-700 mb-2">Diplôme</label>
               <select
                 name="diplome"
                 value={formData.diplome}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border rounded"
-                required
               >
+                <option value="">-- Choisir le diplôme --</option>
                 <option value="Bac+2">Bac+2</option>
                 <option value="Bac+3">Bac+3</option>
                 <option value="Bac+5">Bac+5</option>
@@ -368,14 +379,14 @@ const PersonForm = () => {
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Statut*</label>
+              <label className="block text-gray-700 mb-2">Statut<span style={{ color: 'red' }}> *</span></label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                required
+                className={`w-full px-3 py-2 border rounded ${errors.status ? 'border-danger' : ''}`}
               >
+                <option value="">-- Choisir le statut --</option>
                 <option value="En cours">En cours</option>
                 <option value="En formation">En formation</option>
                 <option value="Bench">Bench</option>
@@ -383,6 +394,7 @@ const PersonForm = () => {
                 <option value="Management">Management</option>
                 <option value="Stage">Stage</option>
               </select>
+              {errors.status && <p className="text-red-500 text-sm text-danger">{errors.status}</p>}
             </div>
 
             <div className="mb-4">
@@ -402,7 +414,7 @@ const PersonForm = () => {
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
                   >
-                    Voir le document actuel
+                    Télécharger le document
                   </a>
                 </div>
               )}
@@ -472,7 +484,7 @@ const PersonForm = () => {
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-xl font-semibold mb-4">Paramètres administrateur</h2>
               
-              <div className="mb-4 flex items-center">
+              <div className="mb-4 flex items-center d-none">
                 <input
                   type="checkbox"
                   name="is_staff"
@@ -484,7 +496,7 @@ const PersonForm = () => {
                 <label htmlFor="is_staff" className="text-gray-700">Staff</label>
               </div>
 
-              <div className="mb-4 flex items-center">
+              <div className="mb-4 flex items-center d-none">
                 <input
                   type="checkbox"
                   name="is_superuser"

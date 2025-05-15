@@ -276,3 +276,8 @@ class PersonneUpdateSerializer(serializers.ModelSerializer):
         # Sauvegarder les modifications
         instance.save()
         return instance
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
