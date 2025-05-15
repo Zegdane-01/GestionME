@@ -1,13 +1,12 @@
 import logging
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
+from django.contrib.auth import update_session_auth_hash
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Personne
-from manager.models import Manager
-from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer, PersonneCreateSerializer,PersonneUpdateSerializer
-from manager.serializers import ManagerSerializer
+from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
@@ -115,4 +114,24 @@ class LogoutView(APIView):
                return Response(status=status.HTTP_205_RESET_CONTENT)
           except Exception as e:
                return Response(status=status.HTTP_400_BAD_REQUEST)
-          
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    serializer = ChangePasswordSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        user = request.user
+        if not user.check_password(serializer.data.get('old_password')):
+            return Response(
+                {"detail": "Ancien mot de passe incorrect."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user.set_password(serializer.data.get('new_password'))
+        user.save()
+        update_session_auth_hash(request, user)
+        return Response({"detail": "Password updated successfully"}, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

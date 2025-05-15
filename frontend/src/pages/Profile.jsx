@@ -5,7 +5,7 @@ import { mediaApi } from '../api/api';
 import '../assets/styles/Profile.css'; // Fichier CSS personnalisé
 import defaultAvatar from '../assets/images/default-avatar.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-hot-toast';
 const Profile = () => {
   const handleLogout = () => {
@@ -26,9 +26,14 @@ const Profile = () => {
     position: '',
     specialite_diplome: '',
     diplome: '',
-    specialite: '',
     ddc: '',
     photo: '',
+  });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    old_password: '',
+    new_password: '',
+    confirm_password: ''
   });
 
   const token = localStorage.getItem('accessToken');
@@ -51,7 +56,6 @@ const Profile = () => {
           position: parsedUser.position || '',
           specialite_diplome: parsedUser.specialite_diplome || '',
           diplome: parsedUser.diplome || '',
-          specialite: parsedUser.specialite || '',
           ddc: parsedUser.ddc || '',
           photo: parsedUser.photo || '',
         });
@@ -134,7 +138,6 @@ const handleSave = () => {
         position: profile.position || '',
         specialite_diplome: profile.specialite_diplome || '',
         diplome: profile.diplome || '',
-        specialite: profile.specialite || '',
         ddc: profile.ddc || '',
         photo: profile.photo || '',
       });
@@ -170,26 +173,54 @@ const handleSave = () => {
     return String(val);
   };
 
-    const getExperienceText = (totalMonths) => {
-        if (typeof totalMonths !== 'number' || isNaN(totalMonths) || totalMonths < 0) {
-            return '0 ans, 0 mois';
+  const getExperienceText = (totalMonths) => {
+      if (typeof totalMonths !== 'number' || isNaN(totalMonths) || totalMonths < 0) {
+          return '0 ans, 0 mois';
+      }
+      
+      const years = Math.floor(totalMonths / 12);
+      const months = totalMonths % 12;
+      
+      return `${years} an${years > 1 ? 's' : ''}, ${months} mois`;
+  };
+  const handlePasswordChange = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      toast.error("Les nouveaux mots de passe ne correspondent pas");
+      return;
+    }
+
+    try {
+      await api.post('/personne/change-password/', {
+        old_password: passwordData.old_password,
+        new_password: passwordData.new_password
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        
-        const years = Math.floor(totalMonths / 12);
-        const months = totalMonths % 12;
-        
-        return `${years} an${years > 1 ? 's' : ''}, ${months} mois`;
-    };
+      });
+      
+      toast.success("Mot de passe changé avec succès");
+      setShowPasswordModal(false);
+      setPasswordData({
+        old_password: '',
+        new_password: '',
+        confirm_password: ''
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Erreur lors du changement de mot de passe");
+    }
+  };
 
   return (
     <div className="container profile-container my-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 className="profile-title">Profil Collaborateur</h1>
-        {!editMode && (
-          <button className="btn btn-primary" onClick={handleEditToggle}>
-            <i className="bi bi-pencil me-2"></i> Modifier
-          </button>
-        )}
         <button className="btn btn-danger" onClick={handleLogout}>
             <i className="bi bi-box-arrow-right me-2"></i> Déconnexion
         </button>
@@ -228,16 +259,20 @@ const handleSave = () => {
             </div>
             <div className="col-md-9">
               <div className="text-center text-md-start">
-                <small className="opacity-75">Matricule: {safeStr(profile.matricule) || '---'}</small>
-                <h2 className="fw-bold mb-2">{safeStr(profile.last_name)} {safeStr(profile.first_name)}</h2>
-                
+                <small className="opacity-75">
+                  Matricule: {safeStr(profile.matricule) || '---'}
+                </small>
+                <h2 className="fw-bold mb-2">
+                  {safeStr(profile.last_name)} {safeStr(profile.first_name)}
+                </h2>
+
                 <div className="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-2 mb-2">
                   <div className="d-flex align-items-center">
-                    <i className="bi bi-envelope me-2"></i>
+                    <FontAwesomeIcon icon={faEnvelope} className="me-2" />
                     <span>{safeStr(profile.email)}</span>
                   </div>
                   <div className="d-flex align-items-center ms-md-4">
-                    <i className="bi bi-telephone me-2"></i>
+                    <FontAwesomeIcon icon={faPhone} className="me-2" />
                     <span>{safeStr(profile.telephone)}</span>
                   </div>
                 </div>
@@ -309,30 +344,31 @@ const handleSave = () => {
 
                     <div className="col-md-6">
                       <div className="form-group">
-                        <label htmlFor="specialite" className="form-label">Spécialité</label>
+                        <label htmlFor="specialite_diplome" className="form-label">Spécialité</label>
                         <input
-                          id="specialite"
-                          name="specialite"
+                          type="text"
+                          id="specialite_diplome"
+                          name="specialite_diplome"
                           className="form-control"
-                          value={formData.specialite}
+                          value={formData.specialite_diplome || ""}
                           onChange={handleChange}
                         />
                       </div>
                     </div>
 
                     <div className="col-md-6">
-                    <div className="form-group">
-                    <label htmlFor="dt_Embauche" className="form-label">Date d'embauche</label>
-                    <input
-                        id="dt_Embauche"
-                        name="dt_Embauche"
-                        type="date"
-                        className="form-control"
-                        value={formData.dt_Embauche?.split('T')[0] || ''}
-                        onChange={handleChange}
-                    />
+                      <div className="form-group">
+                      <label htmlFor="dt_Embauche" className="form-label">Date d'embauche</label>
+                      <input
+                          id="dt_Embauche"
+                          name="dt_Embauche"
+                          type="date"
+                          className="form-control"
+                          value={formData.dt_Embauche?.split('T')[0] || ''}
+                          onChange={handleChange}
+                      />
+                      </div>
                     </div>
-                </div>
 
                 <div className="col-md-6">
                     <div className="form-group">
@@ -467,7 +503,7 @@ const handleSave = () => {
                     <div className="col-md-6">
                       <div className="info-group">
                         <label className="info-label">Spécialité</label>
-                        <p className="info-value">{safeStr(profile.specialite) || '---'}</p>
+                        <p className="info-value">{safeStr(profile.specialite_diplome) || '---'}</p>
                       </div>
                     </div>
                     
@@ -521,9 +557,87 @@ const handleSave = () => {
                 </div>
               </div>
             </div>
+            {!editMode && (
+              <>
+                <button className="btn btn-primary me-2" onClick={handleEditToggle}>
+                  <i className="bi bi-pencil me-2"></i> Modifier
+                </button>
+                <button 
+                  className="btn btn-warning me-2" 
+                  onClick={() => setShowPasswordModal(true)}
+                >
+                  <i className="bi bi-lock me-2"></i> Changer mot de passe
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
+      {showPasswordModal && (
+        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Changer le mot de passe</h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setShowPasswordModal(false)}
+                ></button>
+              </div>
+              <form onSubmit={handlePasswordSubmit}>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label">Ancien mot de passe</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      name="old_password"
+                      value={passwordData.old_password}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Nouveau mot de passe</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      name="new_password"
+                      value={passwordData.new_password}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Confirmer le nouveau mot de passe</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      name="confirm_password"
+                      value={passwordData.confirm_password}
+                      onChange={handlePasswordChange}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => setShowPasswordModal(false)}
+                  >
+                    Annuler
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Enregistrer
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -9,7 +9,7 @@ const PersonDetail = ({ person }) => {
     <>
       <div className="row">
         <div className="col-sm-6 text-secondary fw-bold">{label} :</div>
-        <div className="col-sm-6 text-break">{value ?? '—'}</div>
+        <div className="col-sm-6 text-break">{value ? value : '—'}</div>
       </div>
       <hr className="my-2" />
     </>
@@ -34,7 +34,14 @@ const PersonDetail = ({ person }) => {
           <img
             src={person.photo}
             alt="Photo"
-            style={{ maxWidth: '150px', borderRadius: '50%', objectFit: 'cover' }}
+            style={{
+              width: '150px',
+              height: '150px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              display: 'block',
+              margin: '0 auto'
+            }}
           />
         </div>
       )}
@@ -54,14 +61,19 @@ const PersonDetail = ({ person }) => {
       
       <FieldRow label="Expérience totale" value={getExperienceText(person.experience_total)} />
       <FieldRow label="Expérience Expleo" value={getExperienceText(person.experience_expleo)}  />
-      <FieldRow label="Manager" value={`${person.manager_info.first_name} ${person.manager_info.last_name}`} />
-      <FieldRow label="Backup" value={`${person.backup_info.first_name} ${person.backup_info.last_name}`} />
-      <FieldRow label="Projet" value={person.projet} />
+      <FieldRow label="Manager" value={`${person.manager_info?.first_name || "—"} ${person.manager_inf?.last_name || ''}`} />
+      <FieldRow label="Backup" value={`${person.backup_info?.first_name || "—"} ${person.backup_info?.last_name || ''}`} />
+      <FieldRow label="Projet" value={person.projet_info?.nom || "—"} />
       <>
         <div className="row">
           <div className="col-sm-6 text-secondary fw-bold">DDC :</div>
           <div className="col-sm-6">
-            <a href={person.ddc} rel="noopener noreferrer" download>Télécharger le document</a>
+            {person.ddc && 
+              <a href={person.ddc} rel="noopener noreferrer" download>Télécharger le document</a>
+            }
+            {!person.ddc &&
+              <label>—</label>
+            }
           </div>
         </div>
         <hr className="my-2" />
