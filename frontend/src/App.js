@@ -7,6 +7,7 @@ import HomePage from './components/Public/HomePage/HomePage';
 import Apropos from './components/Public/Apropos/Apropos';
 import Login from './components/Personne/Login/Login';
 import Profile from './pages/Profile.jsx';
+import ProjetForm from './pages/Projet/ProjetForm.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
@@ -26,6 +27,8 @@ function App() {
             <Route path="/collaborateurs" element={<PersonList />} />
             <Route path="/collaborateurs/add" element={<PersonForm />} />
             <Route path="/collaborateurs/edit/:id" element={<PersonForm />} />
+
+            <Route path="/Projets/add" element={<ProjetForm />} />
           </Routes>
         </main>
         <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 2000 }} />
