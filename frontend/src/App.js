@@ -28,7 +28,7 @@ function App() {
             <Route path="/collaborateurs/edit/:id" element={<PersonForm />} />
           </Routes>
         </main>
-        <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 5000 }} />
+        <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 2000 }} />
       </div>
     </Router>
   );

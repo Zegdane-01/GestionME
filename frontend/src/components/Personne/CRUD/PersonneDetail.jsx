@@ -1,4 +1,5 @@
 import React from 'react';
+import defaultAvatar from '../../../assets/images/default-avatar.png';
 
 const PersonDetail = ({ person }) => {
   if (!person) {
@@ -29,23 +30,26 @@ const PersonDetail = ({ person }) => {
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto' }} className="p-4 border rounded shadow-sm bg-white">
-      {person.photo && (
-        <div className="text-center mb-4">
-          <img
-            src={person.photo}
-            alt="Photo"
-            style={{
-              width: '150px',
-              height: '150px',
-              borderRadius: '50%',
-              objectFit: 'cover',
-              display: 'block',
-              margin: '0 auto'
-            }}
-          />
-        </div>
-      )}
 
+      <div className="text-center mb-4">
+        <img
+          src={person.photo? person.photo : defaultAvatar}
+          alt="Photo"
+          onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = defaultAvatar;
+          }}
+          style={{
+            width: '150px',
+            height: '150px',
+            borderRadius: '50%',
+            objectFit: 'cover',
+            display: 'block',
+            margin: '0 auto',
+            border: '4px solid rgb(98, 98, 255)',
+          }}
+        />
+      </div>
       <FieldRow label="Matricule" value={person.matricule} />
       <FieldRow label="Nom" value={person.last_name} />
       <FieldRow label="Prénom" value={person.first_name} />
