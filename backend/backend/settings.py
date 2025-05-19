@@ -49,11 +49,7 @@ INSTALLED_APPS = [
     
     # Mes applications
     'personne',
-    'equipe',
     'projet',
-    'client',
-    'manager',
-    'fonction',
 ]
 
 MIDDLEWARE = [

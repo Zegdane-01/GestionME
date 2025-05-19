@@ -40,7 +40,6 @@ const PersonForm = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.matricule) newErrors.matricule = "Le matricule est requis.";
-    if (!isEditMode && !formData.password) newErrors.password = "Le mot de passe est requis.";
     if (!formData.first_name) newErrors.first_name = "Le prénom est requis.";
     if (!formData.last_name) newErrors.last_name = "Le nom est requis.";
     if (!formData.sexe) newErrors.sexe = "Le sexe est requis.";
@@ -48,6 +47,12 @@ const PersonForm = () => {
     if (!formData.dt_Embauche) newErrors.dt_Embauche = "La date d'embauche est requise.";
     if (!formData.position) newErrors.position = "La position est requise.";
     if (!formData.status) newErrors.status = "Le statut est requis.";
+    if (formData.email) {
+    const emailRegex = /^[a-zA-Z0-9._-]+@expleogroup\.com$/;
+    if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Veuillez entrer une adresse email valide se terminant par @expleogroup.com";
+    }
+  }
     return newErrors;
   };
 
@@ -127,6 +132,7 @@ const PersonForm = () => {
 
 
     const validationErrors = validateForm();
+    console.log(validationErrors)
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
@@ -257,8 +263,9 @@ const PersonForm = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
+                className={`w-full px-3 py-2 border rounded ${errors.email ? 'border-danger' : ''}`}
               />
+              {errors.email && <p className="text-red-500 text-sm text-danger">{errors.email}</p>}
             </div>
 
             <div className="mb-4">
