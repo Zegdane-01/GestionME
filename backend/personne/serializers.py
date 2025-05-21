@@ -11,7 +11,7 @@ class MiniPersonneSerializer(serializers.ModelSerializer):
 class MiniProjetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projet
-        fields = ('code', 'nom', 'wo')
+        fields = ('projet_id','code', 'nom',)
 
 class PersonneSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(

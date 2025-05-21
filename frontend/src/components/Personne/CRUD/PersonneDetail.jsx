@@ -60,8 +60,24 @@ const PersonDetail = ({ person }) => {
       <FieldRow label="Status" value={person.status} />
       <FieldRow label="Diplôme" value={person.diplome} />
       <FieldRow label="Spécialité diplôme" value={person.specialite_diplome} />
-      <FieldRow label="Date début carrière" value={person.dt_Debut_Carriere} />
-      <FieldRow label="Date embauche" value={person.dt_Embauche} />
+      <FieldRow 
+        label="Date début carrière"
+        value={new Date(person.dt_Debut_Carriere).toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })} 
+        icon="calendar-date" 
+      />
+      <FieldRow 
+        label="Date d'embauche"
+        value={new Date(person.dt_Embauche).toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })} 
+        icon="calendar-date" 
+      />
       
       <FieldRow label="Expérience totale" value={getExperienceText(person.experience_total)} />
       <FieldRow label="Expérience Expleo" value={getExperienceText(person.experience_expleo)}  />

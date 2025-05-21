@@ -1,0 +1,90 @@
+.projetDetailContainer {
+  font-family: 'Open Sans', sans-serif;
+}
+
+.noProjectSelected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #6c757d;
+}
+
+.noProjectSelected i {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  color: #0063af;
+}
+
+.projetHeader {
+  display: flex;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f2f2f2;
+  align-items: center;
+  justify-content: space-between;
+}
+.projetTitle {
+  font-size: 3rem;
+  font-weight: 600;
+  color: #0063af;
+  margin: 0px;
+  margin-left: 20px;
+}
+
+.projetCode {
+  font-size: 1.5rem;
+  font-weight: 500;
+  background-color: #eef5fc;
+  color: #0063af;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-right: 20px;
+}
+
+.fieldRow {
+  display: flex;
+  padding: 10px 15px;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.fieldRow:last-child {
+  border-bottom: none;
+}
+
+.fieldLabel {
+  flex: 0 0 40%;
+  font-weight: 600;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+}
+
+.fieldIcon {
+  margin-right: 8px;
+  color: #0063af;
+}
+
+.fieldValue {
+  flex: 0 0 60%;
+  word-break: break-word;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.statusActif {
+  background-color: #e6ffed;
+  color: #33b679;
+}
+
+.statusInactif {
+  background-color: #ffe6e6;
+  color: #e53e3e;
+}

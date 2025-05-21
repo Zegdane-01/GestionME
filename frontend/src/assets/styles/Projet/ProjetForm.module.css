@@ -1,0 +1,140 @@
+/* ProjetForm.module.css */
+
+/* General Form Card Styling */
+.projetFormCard {
+  background-color: #ffffff; /* White background */
+  padding: 40px; /* More padding inside the card */
+  border-radius: 12px; /* Slightly more rounded corners */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Softer, more pronounced shadow */
+  border: 1px solid #e0e0e0; /* Subtle border */
+  max-width: 900px; /* Max width to keep the form readable on very wide screens */
+  margin: 0 auto; /* Center the form card */
+}
+
+/* Form Title */
+.formTitle {
+  font-size: 2.5rem; /* Larger title */
+  font-weight: 700; /* Bolder */
+  color: #212529; /* Darker text */
+  margin-bottom: 2.5rem; /* More space below title */
+}
+
+/* Form Section Header (Optional subtle divider) */
+.formSectionHeader {
+  background-color: #f8f9fa; /* Light grey background */
+  padding: 12px 20px;
+  border-radius: 8px; /* Slightly rounded corners */
+  margin-bottom: 2rem; /* Space below the header */
+  border-left: 5px solid #007bff; /* Blue accent bar */
+}
+
+.formSectionHeader p {
+  font-weight: 600;
+  color: #343a40;
+  font-size: 1.1rem;
+}
+
+/* Form Group (Label + Input) */
+.formGroup {
+  margin-bottom: 1.5rem; /* Standard vertical spacing for form groups */
+}
+
+.formLabel {
+  display: block;
+  font-weight: 500; /* Slightly bolder labels */
+  color: #343a40; /* Darker label color */
+  margin-bottom: 0.75rem; /* More space between label and input */
+  font-size: 0.95rem;
+}
+
+/* Form Control (Input, Select, Textarea) */
+.formControl {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem; /* More padding for a taller input */
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #f0f3f6; /* Lighter background for inputs */
+  background-clip: padding-box;
+  border: 1px solid #ced4da; /* Standard border */
+  border-radius: 8px; /* More rounded input fields */
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  appearance: none; /* Remove default styling for select/textarea */
+}
+
+.formControl:focus {
+  color: #495057;
+  background-color: #ffffff;
+  border-color: #80bdff; /* Standard blue focus border */
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25); /* Bootstrap-like focus shadow */
+}
+
+/* Error Styling */
+.inputError {
+  border-color: #dc3545 !important; /* Red border for errors */
+}
+
+.errorText {
+  color: #dc3545; /* Red text for errors */
+  font-size: 0.875em;
+  margin-top: 0.5rem; /* More space below input for error message */
+}
+
+/* Buttons */
+.buttonGroup {
+  padding-top: 1.5rem; /* Space above buttons */
+  border-top: 1px solid #e9ecef; /* Subtle border above buttons */
+}
+
+.actionButton {
+  padding: 10px 25px; /* More padding for larger buttons */
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px; /* Rounded button corners */
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.cancelButton {
+  background-color: #f8f9fa; /* Light background for cancel */
+  color: #6c757d; /* Grey text */
+  border: 1px solid #adb5bd; /* Grey border */
+}
+
+.cancelButton:hover {
+  background-color: #e2e6ea;
+  color: #343a40;
+  border-color: #dae0e5;
+}
+
+.submitButton {
+  background-color: #007bff; /* Primary blue for submit */
+  color: #ffffff;
+  border: 1px solid #007bff;
+}
+
+.submitButton:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+  border-color: #004085;
+}
+
+.submitButton:disabled {
+  background-color: #a0c4ff; /* Lighter blue when disabled */
+  border-color: #a0c4ff;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .projetFormCard {
+    padding: 20px; /* Less padding on smaller screens */
+  }
+
+  .formTitle {
+    font-size: 2rem;
+  }
+}
