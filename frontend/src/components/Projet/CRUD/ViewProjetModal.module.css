@@ -1,0 +1,42 @@
+.customModal {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.modalHeader {
+  background-color: #0063af; /* Bleu Expleo */
+  color: white;
+  border-bottom: none;
+  padding: 15px 20px;
+  border-radius: 8px 8px 0 0;
+}
+
+.titleIcon {
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+.modalBody {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modalFooter {
+  border-top: 1px solid #e9ecef;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+.btnClose {
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-color: #0063af;
+  color: #0063af;
+}
+
+.btnClose:hover {
+  background-color: #0063af;
+  color: white;
+}

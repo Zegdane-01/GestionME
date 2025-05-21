@@ -477,7 +477,7 @@ const PersonForm = () => {
                 >
                   <option value="">Aucun projet</option>
                   {projets.map(projet => (
-                    <option key={projet.code} value={projet.code}>
+                    <option key={projet.projet_id} value={projet.projet_id}>
                       {projet.nom}
                     </option>
                   ))}

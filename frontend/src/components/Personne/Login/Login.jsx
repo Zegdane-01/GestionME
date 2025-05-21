@@ -1,10 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Form, Button, Alert, Card, Row, Col } from 'react-bootstrap';
+import { login } from '../../../services/auth';
+import { toast } from 'react-hot-toast';
 import api from '../../../api/api';
-import Navbar from '../../Public/Navbar/Navbar';
 import './Login.css'
 import logo from '../../../assets/images/logo.png'
+
 
 const Login = () => {
   const [formData, setFormData] = useState({ matricule: '', password: '' });
@@ -23,18 +25,14 @@ const Login = () => {
         password: formData.password,
       });
       const data = response.data; // Récupération des données de la réponse
-      // Gestion de la réponse
-      localStorage.setItem('accessToken', data.access);
-      localStorage.setItem('refreshToken', data.refresh);
-      
-      // Stockage des données utilisateur
-      localStorage.setItem('userData', JSON.stringify(data.user));
+      // Utiliser la fonction login du service d'authentification
+      login(data.access, data.refresh, data.user);
 
-      // Rediriger l'utilisateur en fonction de son rôle (exemple)
+      // Rediriger l'utilisateur
       navigate('/profile');
 
    } catch (error) {
-      console.error('Erreur de connexion:', error);
+      toast.error('Erreur de connexion:', error);
       
       // Nettoyage en cas d'erreur
       localStorage.removeItem('accessToken');
@@ -54,7 +52,6 @@ const Login = () => {
  // Ajouter ces modifications dans votre JSX
 return (
   <section>
-      <Navbar />
         <Container fluid className="login-container">
             <Card className="login-card ">
                 <Card.Body className="p-0">

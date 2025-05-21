@@ -1,0 +1,197 @@
+:root {
+  /* Couleurs Expleo Group (d'après leur site web - peuvent nécessiter un ajustement précis) */
+  --expleo-blue: rgb(0, 122, 252); /* Bleu principal */
+  --expleo-light-blue: #ADD8E6; /* Bleu clair */
+  --expleo-grey: #6c757d; /* Gris moyen */
+  --expleo-light-grey: #f7f7f7; /* Gris très clair (fond) */
+  --expleo-accent: #ffc107; /* Jaune accent (peut-être utilisé pour l'interactivité) */
+  --expleo-text-dark: #343a40; /* Texte foncé */
+  --expleo-text-light: #ffffff; /* Texte clair */
+  --expleo-border: #0000005b; /* Couleur de bordure */
+  --expleo-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre légère */
+  --expleo-hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Ombre au survol */
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --error-color: #dc3545;
+  --info-color: #17a2b8;
+}
+
+.futuristicLightContainer {
+  width: 100%;
+  overflow-x: auto;
+  margin: 20px 0;
+  background: var(--expleo-light-grey);
+  border-radius: 20px; /* Adoucissement des angles */
+  box-shadow: var(--expleo-shadow);
+  border: 1px solid var(--expleo-border);
+  padding: 7px; /* Augmentation du padding intérieur */
+}
+
+.futuristicLightTable {
+  width: 100%;
+  border-collapse: collapse; /* Utilisation de collapse pour des bordures unifiées */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--expleo-text-dark);
+  background: var(--expleo-text-light);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--expleo-border); /* Ajout d'une bordure globale au tableau */
+}
+
+.futuristicLightTable th {
+  background: var(--expleo-blue);
+  color: var(--expleo-text-light);
+  font-size: large;
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 1px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 2px solid var(--expleo-light-blue); /* Bordure inférieure plus visible */
+}
+
+.futuristicLightTable td {
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--expleo-border);
+  background: var(--expleo-text-light);
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Transition plus douce */
+  vertical-align: middle; 
+}
+
+/* Supprimer la bordure de la dernière cellule de chaque ligne */
+.futuristicLightTable tr:last-child td{
+  border-bottom: none;
+}
+
+.dataRow:hover td {
+  background-color: #f0f8ff; /* Léger changement de couleur au survol */
+  cursor: pointer; /* Indiquer l'interactivité */
+}
+
+.codeCell {
+  color: var(--expleo-blue);
+  font-weight: 500;
+  font-family: 'Consolas', monospace; /* Police de type code */
+}
+
+.dateCell {
+  color: var(--expleo-grey);
+  font-size: 0.9rem;
+}
+
+.headerIcon {
+  margin-right: 8px;
+  color: var(--expleo-light-blue);
+}
+
+.actionsCell {
+  display: flex;
+  justify-content: start;
+  padding: 10px 15px;
+  align-items: center; 
+}
+.futuristicLightTable td,
+.actionsCell {
+  height: 60px;
+  min-height: 100%; /* Hauteur minimale */
+}
+
+
+.actionGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  border: 1px solid var(--expleo-border);
+  background: var(--expleo-text-light);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out;
+  color: var(--expleo-grey);
+  font-size: 14px;
+  box-shadow: var(--expleo-shadow);
+}
+
+.actionBtn:hover {
+  background-color: var(--expleo-accent); /* Couleur d'accent au survol */
+  color: var(--expleo-text-light);
+  transform: scale(1.05); /* Léger agrandissement au survol */
+  box-shadow: var(--expleo-hover-shadow);
+}
+
+.view {
+  color: var(--info-color);
+  border-color: var(--info-color);
+}
+
+.view:hover {
+  background: var(--info-color);
+  color: var(--expleo-text-light);
+}
+
+.edit {
+  color: var(--warning-color);
+  border-color: var(--warning-color);
+}
+
+.edit:hover {
+  background: var(--warning-color);
+  color: var(--expleo-text-light);
+}
+
+.delete {
+  color: var(--error-color);
+  border-color: var(--error-color);
+}
+
+.delete:hover {
+  background: var(--error-color);
+  color: var(--expleo-text-light);
+}
+
+.noData {
+  text-align: center;
+  padding: 20px;
+  background: var(--expleo-text-light);
+  border-bottom: 1px solid var(--expleo-border);
+}
+
+.noDataContent {
+  color: var(--expleo-grey);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.noDataIcon {
+  color: var(--expleo-blue);
+  font-size: 1.2rem;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.statusActif {
+  background-color: #e6ffed;
+  color: #33b679;
+}
+
+.statusInactif {
+  background-color: #ffe6e6;
+  color: #e53e3e;
+}

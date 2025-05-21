@@ -1,6 +1,5 @@
 import React from 'react';
 import './Apropos.css';
-import NavBar from '../Navbar/Navbar';
 import FlipCard from './FlipCard/FlipCard';
 import Footer from '../Footer/Footer';
 import { BiBrain, BiUserCheck, BiRocket, BiShield } from 'react-icons/bi';
@@ -36,7 +35,6 @@ const Apropos = () => {
 
   return (
     <div className="about-page">
-      <NavBar />
       
       {/* Bannière Hero */}
       <section className="about-hero position-relative overflow-hidden">
