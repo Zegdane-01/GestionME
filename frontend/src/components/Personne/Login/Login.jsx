@@ -91,22 +91,24 @@ return (
                       </Form.Group>
                       <Form.Group className="mb-4">
                         <Form.Label>Mot de passe</Form.Label>
-                        <Form.Control
-                          className="form-control" 
-                          placeholder="Entrez votre mot de passe"
-                          type={showPassword ? "text" : "password"}
-                          value={formData.password}
-                          onChange={(e) => setFormData({...formData, password: e.target.value})}
-                          required
-                        />
-                        <span
-                          className="toggle-password"
-                          onClick={() => setShowPassword(!showPassword)}
-                          role="button"
-                          tabIndex={0}
-                        >
-                          {showPassword ? 'Cacher' : 'Afficher'}
-                        </span>
+                        <div className="password-input-wrapper">
+                          <Form.Control
+                            className="form-control"
+                            placeholder="Entrez votre mot de passe"
+                            type={showPassword ? "text" : "password"}
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            required
+                          />
+                          <span
+                            className="toggle-password"
+                            onClick={() => setShowPassword(!showPassword)}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            {showPassword ? 'Cacher' : 'Afficher'}
+                          </span>
+                        </div>
                       </Form.Group>
                       <div className='text-center m-0'>
                       <Button

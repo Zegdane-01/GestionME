@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { isAuthenticated, getUserRole, logout } from '../../../services/auth';
 import logo from '../../../assets/images/logo.png';
 import './Navbar.css';
+import {API_URL_MEDIA} from '../../../api/api'
 
 const Navbar = ({ onHeightChange }) => {
   const navRef = useRef(null);
@@ -165,7 +166,7 @@ const Navbar = ({ onHeightChange }) => {
       <div className="user-profile-container" ref={userMenuRef}>
         <div className="user-avatar" onClick={toggleUserMenu}>
           {userData && userData.photo ? (
-            <img src={`http://localhost:8000${userData.photo}`} alt="Profil" />
+            <img src={`${API_URL_MEDIA}${userData.photo}`} alt="Profil" />
           ) : (
             <div className="avatar-initials">{getUserInitials()}</div>
           )}

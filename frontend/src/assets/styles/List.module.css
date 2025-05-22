@@ -84,6 +84,8 @@
 
 /* Search Container */
 .searchContainer {
+  position: relative;
+  width: 100%;
   background: var(--surface);
   border-radius: var(--border-radius);
   padding: 20px;
@@ -95,7 +97,6 @@
   flex-wrap: wrap;
   gap: 16px;
 }
-
 .searchStats {
   font-size: 14px;
   color: var(--gray);

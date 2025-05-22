@@ -8,15 +8,15 @@ const SearchBar = ({
   placeholder = "Rechercher..."
 }) => {
   return (
-    <div className={styles.positionRelative}>
+    <div className={styles.posRelative}>
       <Form.Control
-        className={`${styles['customSearch']} ps-5`}
+        className={`${styles.customSearch} ps-4`}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
       />
       <Search 
-        className={`${styles['searchIcon']}`}
+        className={styles.searchIcon}
         style={{ left: '0.5rem' }} 
         size={16} 
       />
