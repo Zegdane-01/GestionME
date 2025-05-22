@@ -9,9 +9,32 @@ class MiniPersonneSerializer(serializers.ModelSerializer):
         model = Personne
         fields = ('matricule', 'first_name', 'last_name')
 class MiniProjetSerializer(serializers.ModelSerializer):
+    tl = serializers.PrimaryKeyRelatedField(
+        queryset=Personne.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    tl_info = MiniPersonneSerializer(source='tl',read_only=True)
     class Meta:
         model = Projet
-        fields = ('projet_id','code', 'nom',)
+        fields =[
+            'projet_id',
+            'nom',
+            'code',
+            'ordre_travail',
+            'direct_client',
+            'final_client',
+            'sop',
+            'ibu',
+            'cbu',
+            'tl',
+            'date_demarrage',
+            'statut',
+            'descriptif',
+            'chef_de_projet',
+            'tl_info'
+        ]
+
 
 class PersonneSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(

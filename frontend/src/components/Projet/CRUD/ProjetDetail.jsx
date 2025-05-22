@@ -35,7 +35,7 @@ const ProjetDetail = ({ projet }) => {
       <FieldRow label="CBU" value={projet.cbu} icon="briefcase-fill" />
       <FieldRow 
         label="Team Leader" 
-        value={projet.tl ? `${projet.tl_info.first_name} ${projet.tl_info.last_name}` : '—'}
+        value={projet.tl_info?.first_name ? `${projet.tl_info?.first_name} ${projet.tl_info?.last_name}` : '—'}
         icon="person-fill" 
       />
       <FieldRow label="Chef de projet" value={projet.chef_de_projet} icon="person-badge" />
@@ -51,7 +51,7 @@ const ProjetDetail = ({ projet }) => {
       <FieldRow 
         label="Statut" 
         value={
-          <span className={`${styles.statusBadge} ${styles[`status${projet.statut.replace(/\s+/g, '')}`]}`}>
+          <span className={`${styles.statusBadge} ${styles[`status${projet.statut?.replace(/\s+/g, '')}`]}`}>
             {projet.statut}
           </span>
         } 

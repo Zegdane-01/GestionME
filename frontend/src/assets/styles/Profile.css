@@ -19,9 +19,22 @@
 }
 
 .profile-title {
+  font-size: 28px;
   font-weight: 700;
-  color: var(--text-color);
-  margin-bottom: 0;
+  color: var(--dark);
+  position: relative;
+  display: inline-block;
+}
+
+.profile-title::after{
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 4px;
 }
 
 /* Profile Card */

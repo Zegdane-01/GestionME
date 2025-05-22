@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import ProjetDetail from './ProjetDetail';
-import styles from './ViewProjetModal.module.css';
+import styles from '../../../assets/styles/ViewModal.module.css';
 
 const ViewProjetModal = ({ show, onHide, projet }) => {
   return (
@@ -14,10 +14,7 @@ const ViewProjetModal = ({ show, onHide, projet }) => {
     >
       <Modal.Header closeButton className={styles.modalHeader}>
         <Modal.Title>
-          <span className={styles.titleIcon}>
-            <i className="bi bi-file-text"></i>
-          </span>
-          Détails du Projet
+          Projet
         </Modal.Title>
       </Modal.Header>
       <Modal.Body className={styles.modalBody}>
@@ -29,7 +26,6 @@ const ViewProjetModal = ({ show, onHide, projet }) => {
           onClick={onHide}
           className={styles.btnClose}
         >
-          <i className="bi bi-x-circle me-2"></i>
           Fermer
         </Button>
       </Modal.Footer>

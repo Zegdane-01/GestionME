@@ -1,23 +1,22 @@
 import React from 'react';
 import { Form } from 'react-bootstrap';
 import { Search } from 'lucide-react';
-import './SearchBar.css'; 
-
+import styles from '../../assets/styles/SearchBar.module.css'; 
 const SearchBar = ({ 
   value, 
   onChange, 
   placeholder = "Rechercher..."
 }) => {
   return (
-    <div className="position-relative">
+    <div className={styles.positionRelative}>
       <Form.Control
-        className="ps-5 custom-search"
+        className={`${styles['customSearch']} ps-5`}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
       />
       <Search 
-        className="position-absolute top-50 translate-middle-y ms-2 search-icon"
+        className={`${styles['searchIcon']}`}
         style={{ left: '0.5rem' }} 
         size={16} 
       />

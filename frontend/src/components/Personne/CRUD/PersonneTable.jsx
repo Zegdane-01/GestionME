@@ -1,12 +1,11 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import './PersonneTable.css';
-
+import { faEye, faTrash, faPencilAlt, faRocket } from '@fortawesome/free-solid-svg-icons';
+import styles from '../../../assets/styles/Table.module.css';
 const PersonTable = ({ people, onView, onEdit, onDelete }) => {
   return (
-    <div className="table-container">
-      <table className="simple-table">
+    <div className={styles.tableContainer}>
+      <table className={styles.simpleTable}>
         <thead>
           <tr>
             <th>Matricule</th>
@@ -24,8 +23,8 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
         <tbody>
           {people.length > 0 ? (
             people.map((person) => (
-              <tr key={person.matricule}>
-                <td>{person.matricule}</td>
+              <tr key={person.matricule} className={styles.dataRow}>
+                <td className={styles.codeCell}>{person.matricule}</td>
                 <td>{person.last_name}</td>
                 <td>{person.first_name}</td>
                 <td>{person.role}</td>
@@ -44,22 +43,29 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
                   }}
                   title={person.is_active ? 'Actif' : 'Inactif'}
                 /></td>
-                <td>
-                  <button onClick={() => onView(person)} title="Voir" className="action-btn view">
-                    <FontAwesomeIcon icon={faEye} />
-                  </button>
-                  <button onClick={() => onEdit(person.matricule)} title="Modifier" className="action-btn edit">
-                    <FontAwesomeIcon icon={faPencilAlt} />
-                  </button>
-                  <button onClick={() => onDelete(person.matricule)} title="Supprimer" className="action-btn delete">
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
+                <td className={styles.actionsCell}>
+                  <div className={styles.actionGroup}>
+                    <button onClick={() => onView(person)} title="Voir" className={`${styles['actionBtn']} ${styles.view}`}>
+                      <FontAwesomeIcon icon={faEye} />
+                    </button>
+                    <button onClick={() => onEdit(person.matricule)} title="Modifier" className={`${styles['actionBtn']} ${styles.edit}`}>
+                      <FontAwesomeIcon icon={faPencilAlt} />
+                    </button>
+                    <button onClick={() => onDelete(person.matricule)} title="Supprimer" className={`${styles['actionBtn']} ${styles.delete}`}>
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={8} className="no-data">Aucune personne trouvée.</td>
+              <td colSpan={9} className={styles.noData}>
+                <div className={styles.noDataContent}>
+                  <FontAwesomeIcon icon={faRocket} className={styles.noDataIcon} />
+                  Aucun projet trouvé
+                </div>
+              </td>
             </tr>
           )}
         </tbody>

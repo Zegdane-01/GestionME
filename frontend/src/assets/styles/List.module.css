@@ -1,6 +1,4 @@
 /* PersonList.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 :root {
   --primary: #6366f1;
   --primary-hover: #4f46e5;
@@ -20,17 +18,6 @@
   --transition: all 0.2s ease;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  color: var(--dark);
-  background-color: #f1f5f9;
-}
 
 /* Dashboard Layout */
 .dashboard {
@@ -41,14 +28,14 @@ body {
   min-height: 100vh;
 }
 
-.dashboard-header {
+.dashboardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
 }
 
-.dashboard-title {
+.dashboardTitle {
   font-size: 28px;
   font-weight: 700;
   color: var(--dark);
@@ -56,7 +43,7 @@ body {
   display: inline-block;
 }
 
-.dashboard-title::after {
+.dashboardTitle::after {
   content: '';
   position: absolute;
   bottom: -8px;
@@ -68,7 +55,7 @@ body {
 }
 
 /* Add Button */
-.add-button {
+.addButton {
   background: var(--primary);
   color: white;
   border: none;
@@ -85,18 +72,18 @@ body {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.add-button:hover {
+.addButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 15px 20px -3px rgba(99, 102, 241, 0.4);
   background: var(--primary-hover);
 }
 
-.add-button .add-icon {
+.addButton .add-icon {
   font-size: 14px;
 }
 
 /* Search Container */
-.search-container {
+.searchContainer {
   background: var(--surface);
   border-radius: var(--border-radius);
   padding: 20px;
@@ -109,50 +96,14 @@ body {
   gap: 16px;
 }
 
-.search-wrapper {
-  display: flex;
-  align-items: center;
-  background: var(--light);
-  border: 1px solid var(--gray-light);
-  border-radius: 8px;
-  padding: 0 16px;
-  flex: 1;
-  min-width: 300px;
-  transition: var(--transition);
-}
-
-.search-wrapper:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.search-icon {
-  color: var(--gray);
-  margin-right: 12px;
-}
-
-.search-input {
-  border: none;
-  background: transparent;
-  padding: 12px 0;
-  width: 100%;
-  font-size: 15px;
-  outline: none;
-  color: var(--dark);
-}
-
-.search-input::placeholder {
-  color: var(--gray);
-}
-
-.search-stats {
+.searchStats {
   font-size: 14px;
   color: var(--gray);
   font-weight: 500;
 }
 
 /* Content Container */
-.content-container {
+.contentContainer {
   background: var(--surface);
   border-radius: var(--border-radius);
   padding: 24px;
@@ -161,9 +112,19 @@ body {
 }
 
 /* Loading State */
-.loading-container {
+.loadingContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.loadingSpinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--primary-color);
+  border-top: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 0.8rem;
 }
