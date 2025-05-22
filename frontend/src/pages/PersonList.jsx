@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import SearchBar from '../components/Personne/CRUD/SearchBar';
+import SearchBar from '../components/Personne_Projet/SearchBar';
 import PersonTable from '../components/Personne/CRUD/PersonneTable';
 import ViewPersonModal from '../components/Personne/CRUD/ViewPersonneModal';
 import DeletePersonModal from '../components/Personne/CRUD/DeletePersonneModal';
-import '../assets/styles/PersonList.css'; 
+import styles from '../assets/styles/List.module.css'; 
 import api from '../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -89,26 +89,26 @@ const PersonList = () => {
   };
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <h1 className="dashboard-title">Collaborateurs</h1>
-        <button className="add-button" onClick={handleAdd}>
-          <FontAwesomeIcon icon={faPlus} className="add-icon" />
+    <div className={styles.dashboard}>
+      <div className={styles.dashboardHeader}>
+        <h1 className={styles.dashboardTitle}>Collaborateurs</h1>
+        <button className={styles.addButton} onClick={handleAdd}>
+          <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
           <span>Nouveau Collaborateur</span>
         </button>
       </div>
 
-      <div className="search-container">
-      <SearchBar value={searchTerm} onChange={handleSearch} placeholder="Rechercher par nom, matricule, email..." />
-        <div className="search-stats">
+      <div className={styles.searchContainer}>
+        <SearchBar value={searchTerm} onChange={handleSearch} placeholder="Rechercher par nom, matricule, email..." />
+        <div className={styles.searchStats}>
           {filteredPeople.length} collaborateur{filteredPeople.length !== 1 ? 's' : ''} trouvé{filteredPeople.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      <div className="content-container">
+      <div className={styles.contentContainer}>
         {isLoading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner}></div>
             <p>Chargement des collaborateurs...</p>
           </div>
         ) : (

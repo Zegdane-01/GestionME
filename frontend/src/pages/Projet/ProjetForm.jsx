@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from "../../api/api";
-import styles from '../../assets/styles/Projet/ProjetForm.module.css';
+import styles from '../../assets/styles/Form.module.css';
 
 const ProjetForm = () => {
   const params = useParams();
@@ -139,17 +139,13 @@ const ProjetForm = () => {
 
   return (
     <div className="container py-5">
-      <h1 className={`${styles.formTitle} mb-5 text-center`}> {/* Added text-center for a more prominent title */}
+      <h1 className={`${styles.formTitle} mb-5 text-center`}>
         {isEditMode ? 'Modifier un projet' : 'Créer un nouveau projet'}
       </h1>
 
-      <form onSubmit={handleSubmit} className={styles.projetFormCard}> {/* Changed to projetFormCard for a distinct look */}
-        {/* Optional: A subtle header for the form content */}
-        <div className={styles.formSectionHeader}>
-          <p className="mb-0">Détails du projet</p> {/* mb-0 to remove default margin-bottom */}
-        </div>
+      <form onSubmit={handleSubmit} className={styles.projetFormCard}>
 
-        <div className="row g-4 mb-4"> {/* g-4 for consistent spacing, mb-4 for section margin */}
+        <div className="row g-4 mb-4"> 
           
           <div className="col-md-12">
             <div className={styles.formGroup}>
@@ -369,7 +365,7 @@ const ProjetForm = () => {
           </div>
         </div>
 
-        <div className={`${styles.buttonGroup} d-flex justify-content-end`}> {/* Removed mt-5 as mb-5 on last row handles spacing */}
+        <div className={`${styles.buttonGroup} d-flex justify-content-end`}>
           <button
             type="button"
             onClick={() => navigate('/projets')}

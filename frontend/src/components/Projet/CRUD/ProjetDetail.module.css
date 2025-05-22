@@ -1,5 +1,7 @@
 .projetDetailContainer {
-  font-family: 'Open Sans', sans-serif;
+  border: 0.05rem solid rgba(0, 0, 0, 0.135);
+  border-radius: 7px;
+  padding: 15px 30px;
 }
 
 .noProjectSelected {
@@ -19,9 +21,8 @@
 
 .projetHeader {
   display: flex;
-  margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #f2f2f2;
+  border-bottom: 1px solid #cecdcd;
   align-items: center;
   justify-content: space-between;
 }
@@ -46,7 +47,7 @@
 .fieldRow {
   display: flex;
   padding: 10px 15px;
-  border-bottom: 1px solid #f2f2f2;
+  border-bottom: 1px solid #cecdcd;
 }
 
 .fieldRow:last-child {

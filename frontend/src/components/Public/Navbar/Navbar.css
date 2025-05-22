@@ -17,7 +17,7 @@
     background: var(--bg-color);
     backdrop-filter: blur(10px);
     border-bottom: 2px solid var(--neon-blue);
-    
+    justify-content: space-between;
     
 }
   
@@ -33,7 +33,9 @@
   .cyber-links {
     display: flex;
     gap: 2rem;
-    position: relative;
+    position: absolute;
+    width: 100%;
+    justify-content: center;
     
   }
   
@@ -70,7 +72,7 @@
   .cyber-button {
     position: relative;
     color: #ffffff;
-    margin:0rem 1rem;
+    margin:0rem;
     padding: 0.4rem 1.5rem;
     border-radius: 30px;
     font-weight: 600;
@@ -89,7 +91,6 @@
     left: -100%;
   }
   .cyber-logo {
-    margin-left: 1rem;
     display: flex;
     align-items: center;
     height: 40px; /* Hauteur du logo */
@@ -247,18 +248,19 @@
   @media (max-width: 768px) {
     .cyber-nav {
       position: relative;
-      flex-direction: column;
-      gap: 0.5rem;
-      padding: 0.5rem;
+      gap: 0;
+      padding: 5px;
     }
     
+    .cyber-link{
+      padding: 0;
+    }
     .cyber-links {
       flex-wrap: wrap;
       justify-content: center;
     }
-    
-    .cyber-button {
-      margin-right: 1rem;
+    .logo-image{
+      height: 15px;
     }
     
   }

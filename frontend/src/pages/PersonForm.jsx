@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from "../api/api";
-import '../assets/styles/PersonForm.css'
-
+import styles from '../../src/assets/styles/Form.module.css'
 const PersonForm = () => {
   const params = useParams();
   const matricule = params.matricule || params.id;
@@ -193,224 +192,312 @@ const PersonForm = () => {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">
-        {isEditMode ? 'Modifier une personne' : 'Créer une nouvelle personne'}
+    <div className="container py-5">
+      <h1 className={`${styles.formTitle} mb-5 text-center`}>
+        {isEditMode ? 'Modifier un projet' : 'Créer un nouveau collaborateur'}
       </h1>
-      
-      <form onSubmit={handleSubmit} className="personne-form">
-        <div className="form-group">
-          {/* Section Informations de base */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Informations de base</h2>
+
+      <form onSubmit={handleSubmit} className={styles.projetFormCard}>
+
+        <div className="row g-4 mb-4"> 
             
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Matricule<span style={{ color: 'red' }}> *</span></label>
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Matricule<span style={{ color: 'red' }}> *</span></label>
               <input
                 type="text"
                 name="matricule"
                 value={formData.matricule}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.matricule ? 'border-danger' : ''}`}
+                className={`${styles.formControl} ${errors.matricule ? styles.inputError : ''}`}
                 disabled={isEditMode}
               />
-              {errors.matricule && <p className="text-red-500 text-sm text-danger">{errors.matricule}</p>}
+              {errors.matricule && <p className={styles.errorText}>{errors.matricule}</p>}
             </div>
+          </div>
 
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Prénom<span style={{ color: 'red' }}> *</span></label>
-              <input
-                type="text"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.first_name ? 'border-danger' : ''}`}
-              />
-              {errors.first_name && <p className="text-red-500 text-sm text-danger">{errors.first_name}</p>}
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Nom<span style={{ color: 'red' }}> *</span></label>
-              <input
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.last_name ? 'border-danger' : ''}`}
-              />
-              {errors.last_name && <p className="text-red-500 text-sm text-danger">{errors.last_name}</p>}
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Sexe<span style={{ color: 'red' }}> *</span></label>
+          <div className="col-md-6">
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Sexe<span style={{ color: 'red' }}> *</span></label>
               <select
                 name="sexe"
                 value={formData.sexe}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.sexe ? 'border-danger' : ''}`}
+                className={`${styles.formControl} ${errors.sexe ? styles.inputError : ''}`}
               >
                 <option value="">Sélectionner</option>
                 <option value="Homme">Homme</option>
                 <option value="Femme">Femme</option>
               </select>
-              {errors.sexe && <p className="text-red-500 text-sm text-danger">{errors.sexe}</p>}
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.email ? 'border-danger' : ''}`}
-              />
-              {errors.email && <p className="text-red-500 text-sm text-danger">{errors.email}</p>}
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Téléphone</label>
-              <input
-                type="text"
-                name="telephone"
-                value={formData.telephone}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Photo</label>
-              <input
-                type="file"
-                name="photo"
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-                accept="image/*"
-              />
-              {isEditMode && formData.photo && (
-                <div className="mt-2">
-                  <img 
-                    src={formData.photo} 
-                    alt="Photo actuelle" 
-                    className="h-20 w-20 object-cover rounded"
-                  />
-                </div>
-              )}
+              {errors.sexe && <p className={styles.errorText}>{errors.sexe}</p>}
             </div>
           </div>
 
-          {/* Section Carrière */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Informations professionnelles</h2>
-            
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Rôle<span style={{ color: 'red' }}> *</span></label>
+        </div>
+
+        <div className="row g-4 mb-4"> 
+          <div className="col-md-6">
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Prénom<span style={{ color: 'red' }}> *</span></label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className={`${styles.formControl} ${errors.first_name ? styles.inputError : ''}`}
+              />
+              {errors.first_name && <p className={styles.errorText}>{errors.first_name}</p>}
+            </div>
+         </div>
+
+        <div className="col-md-6">
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Nom<span style={{ color: 'red' }}> *</span></label>
+            <input
+              type="text"
+              name="last_name"
+              value={formData.last_name}
+              onChange={handleChange}
+              className={`${styles.formControl} ${errors.last_name ? styles.inputError : ''}`}
+            />
+            {errors.last_name && <p className={styles.errorText}>{errors.last_name}</p>}
+          </div>
+        </div>
+      </div>
+
+        <div className="row g-4 mb-4"> 
+
+            <div className="col-md-6">
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`${styles.formControl} ${errors.email ? styles.inputError : ''}`}
+                />
+                {errors.email && <p className={styles.errorText}>{errors.email}</p>}
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Téléphone</label>
+                <input
+                  type="text"
+                  name="telephone"
+                  value={formData.telephone}
+                  onChange={handleChange}
+                  className={styles.formControl}
+                />
+              </div>
+            </div>
+
+        </div>
+
+        <div className="row g-4 mb-4"> 
+
+          <div className="col-md-6">
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Date d'embauche<span style={{ color: 'red' }}> *</span></label>
+                <input
+                  type="date"
+                  name="dt_Embauche"
+                  value={formData.dt_Embauche}
+                  onChange={handleChange}
+                  className={`${styles.formControl} ${errors.dt_Embauche ? styles.inputError : ''}`}
+                />
+                {errors.dt_Embauche && <p className={styles.errorText}>{errors.dt_Embauche}</p>}
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Date début de carrière</label>
+                <input
+                  type="date"
+                  name="dt_Debut_Carriere"
+                  value={formData.dt_Debut_Carriere}
+                  onChange={handleChange}
+                  className={styles.formControl}
+                />
+              </div>
+            </div>
+
+        </div>
+
+        <div className="row g-4 mb-4"> 
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Diplôme</label>
+                <select
+                  name="diplome"
+                  value={formData.diplome}
+                  onChange={handleChange}
+                  className={styles.formControl}
+                >
+                  <option value="">-- Choisir le diplôme --</option>
+                  <option value="Bac+2">Bac+2</option>
+                  <option value="Bac+3">Bac+3</option>
+                  <option value="Bac+5">Bac+5</option>
+                </select>
+              </div>
+            </div>
+
+          <div className="col-md-6">
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Spécialité diplôme</label>
+              <input
+                type="text"
+                name="specialite_diplome"
+                value={formData.specialite_diplome}
+                onChange={handleChange}
+                className={styles.formControl}
+              />
+            </div>
+          </div>
+
+        </div>
+
+        <div className="row g-4 mb-4"> 
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Statut<span style={{ color: 'red' }}> *</span></label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className={`${styles.formControl} ${errors.status ? styles.inputError : ''}`}
+                >
+                  <option value="">-- Choisir le statut --</option>
+                  <option value="En cours">En cours</option>
+                  <option value="En formation">En formation</option>
+                  <option value="Bench">Bench</option>
+                  <option value="Out">Out</option>
+                  <option value="Management">Management</option>
+                  <option value="Stage">Stage</option>
+                </select>
+                {errors.status && <p className={styles.errorText}>{errors.status}</p>}
+              </div>
+            </div>
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Position<span style={{ color: 'red' }}> *</span></label>
+                <select
+                  name="position"
+                  value={formData.position}
+                  onChange={handleChange}
+                  className={`${styles.formControl} ${errors.position ? styles.inputError : ''}`}
+                >
+                  <option value="">-- Choisir une position --</option>
+                  {['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6'].map(pos => (
+                    <option key={pos} value={pos}>{pos}</option>
+                  ))}
+                </select>
+                {errors.position && <p className={styles.errorText}>{errors.position}</p>}
+              </div>
+            </div>
+
+        </div>
+
+        <div className="row g-4 mb-4"> 
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Manager</label>
+                <select
+                  name="manager"
+                  value={formData.manager || ''}
+                  onChange={handleSelectChange}
+                  className={styles.formControl}
+                >
+                  <option value="">Aucun manager</option>
+                  {managers.map(manager => (
+                    <option key={manager.matricule} value={manager.matricule}>
+                      {manager.first_name} {manager.last_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Backup</label>
+              <select
+                name="backup"
+                value={formData.backup || ''}
+                onChange={handleSelectChange}
+                className={styles.formControl}
+              >
+                <option value="">Aucun backup</option>
+                {collaborateurs.map(collab => (
+                  <option key={collab.matricule} value={collab.matricule}>
+                    {collab.first_name} {collab.last_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+        </div>
+
+        <div className="row g-4 mb-4"> 
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Projet</label>
+              <select
+                name="projet"
+                value={formData.projet || ''}
+                onChange={handleSelectChange}
+                className={styles.formControl}
+              >
+                <option value="">Aucun projet</option>
+                {projets.map(projet => (
+                  <option key={projet.projet_id} value={projet.projet_id}>
+                    {projet.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Rôle<span style={{ color: 'red' }}> *</span></label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.role ? 'border-danger' : ''}`}
+                className={`${styles.formControl} ${errors.role ? styles.inputError : ''}`}
               >
                 <option value="">-- Choisir un rôle --</option>
                 <option value="COLLABORATEUR">Collaborateur</option>
                 <option value="TL1">Team Leader N1</option>
                 <option value="TL2">Team Leader N2</option>
               </select>
-              {errors.role && <p className="text-red-500 text-sm text-danger">{errors.role}</p>}
+              {errors.role && <p className={styles.errorText}>{errors.role}</p>}
             </div>
+          </div>
+            
 
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Date début carrière</label>
-              <input
-                type="date"
-                name="dt_Debut_Carriere"
-                value={formData.dt_Debut_Carriere}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-              />
-            </div>
+        </div>
 
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Date embauche<span style={{ color: 'red' }}> *</span></label>
-              <input
-                type="date"
-                name="dt_Embauche"
-                value={formData.dt_Embauche}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.dt_Embauche ? 'border-danger' : ''}`}
-              />
-              {errors.dt_Embauche && <p className="text-red-500 text-sm text-danger">{errors.dt_Embauche}</p>}
-            </div>
+        <div className="row g-4 mb-4"> 
 
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Position<span style={{ color: 'red' }}> *</span></label>
-              <select
-                name="position"
-                value={formData.position}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.position ? 'border-danger' : ''}`}
-              >
-                <option value="">-- Choisir une position --</option>
-                {['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6'].map(pos => (
-                  <option key={pos} value={pos}>{pos}</option>
-                ))}
-              </select>
-              {errors.position && <p className="text-red-500 text-sm text-danger">{errors.position}</p>}
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Diplôme</label>
-              <select
-                name="diplome"
-                value={formData.diplome}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-              >
-                <option value="">-- Choisir le diplôme --</option>
-                <option value="Bac+2">Bac+2</option>
-                <option value="Bac+3">Bac+3</option>
-                <option value="Bac+5">Bac+5</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Spécialité diplôme</label>
-              <input
-                type="text"
-                name="specialite_diplome"
-                value={formData.specialite_diplome}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Statut<span style={{ color: 'red' }}> *</span></label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded ${errors.status ? 'border-danger' : ''}`}
-              >
-                <option value="">-- Choisir le statut --</option>
-                <option value="En cours">En cours</option>
-                <option value="En formation">En formation</option>
-                <option value="Bench">Bench</option>
-                <option value="Out">Out</option>
-                <option value="Management">Management</option>
-                <option value="Stage">Stage</option>
-              </select>
-              {errors.status && <p className="text-red-500 text-sm text-danger">{errors.status}</p>}
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Document DDC</label>
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Document DDC</label>
               <input
                 type="file"
                 name="ddc"
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded"
+                className={styles.formControl}
                 accept=".doc,.docx"
               />
               {isEditMode && formData.ddc && (
@@ -428,120 +515,88 @@ const PersonForm = () => {
             </div>
           </div>
 
-          {/* Section Relations */}
-          <div className="bg-white p-6 rounded-lg shadow md:col-span-2">
-            <h2 className="text-xl font-semibold mb-4">Relations</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Manager</label>
-                <select
-                  name="manager"
-                  value={formData.manager || ''}
-                  onChange={handleSelectChange}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  <option value="">Aucun manager</option>
-                  {managers.map(manager => (
-                    <option key={manager.matricule} value={manager.matricule}>
-                      {manager.first_name} {manager.last_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Backup</label>
-                <select
-                  name="backup"
-                  value={formData.backup || ''}
-                  onChange={handleSelectChange}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  <option value="">Aucun backup</option>
-                  {collaborateurs.map(collab => (
-                    <option key={collab.matricule} value={collab.matricule}>
-                      {collab.first_name} {collab.last_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Projet</label>
-                <select
-                  name="projet"
-                  value={formData.projet || ''}
-                  onChange={handleSelectChange}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  <option value="">Aucun projet</option>
-                  {projets.map(projet => (
-                    <option key={projet.projet_id} value={projet.projet_id}>
-                      {projet.nom}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Photo</label>
+              <input
+                type="file"
+                name="photo"
+                onChange={handleChange}
+                className={styles.formControl}
+                accept="image/*"
+              />
+              {isEditMode && formData.photo && (
+                <div className="mt-2">
+                  <img 
+                    src={formData.photo} 
+                    alt="Photo actuelle" 
+                    className="h-20 w-20 object-cover rounded"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Section Admin */}
-          
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4">Paramètres administrateur</h2>
-              
-              <div className="mb-4 flex items-center d-none">
-                <input
-                  type="checkbox"
-                  name="is_staff"
-                  checked={formData.is_staff}
-                  onChange={handleChange}
-                  className="mr-2"
-                  id="is_staff"
-                />
-                <label htmlFor="is_staff" className="text-gray-700">Staff</label>
-              </div>
-
-              <div className="mb-4 flex items-center d-none">
-                <input
-                  type="checkbox"
-                  name="is_superuser"
-                  checked={formData.is_superuser}
-                  onChange={handleChange}
-                  className="mr-2"
-                  id="is_superuser"
-                />
-                <label htmlFor="is_superuser" className="text-gray-700">Superutilisateur</label>
-              </div>
-
-              <div className="mb-4 flex items-center">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  checked={formData.is_active}
-                  onChange={handleChange}
-                  className="mr-2"
-                  id="is_active"
-                />
-                <label htmlFor="is_active" className="text-gray-700">Compte actif</label>
-              </div>
-            </div>
-          
         </div>
 
-        <div className="flex justify-end space-x-4">
+        <div className="row g-4 mb-4"> 
+
+            <div className="col-md-6 flex items-center d-none">
+              <input
+                type="checkbox"
+                name="is_staff"
+                checked={formData.is_staff}
+                onChange={handleChange}
+                className="mr-2"
+                id="is_staff"
+              />
+              <label htmlFor="is_staff" className="text-gray-700">Staff</label>
+            </div>
+            
+
+            <div className="col-md-6 flex items-center d-none">
+              <input
+                type="checkbox"
+                name="is_superuser"
+                checked={formData.is_superuser}
+                onChange={handleChange}
+                className="mr-2"
+                id="is_superuser"
+              />
+              <label htmlFor="is_superuser" className="text-gray-700">Superutilisateur</label>
+            </div>
+
+        </div>
+
+        <div className="row g-4 mb-4"> 
+
+          <div className="col-md-6 flex items-center">
+            <div className={styles.formGroup}>
+              <input
+                type="checkbox"
+                name="is_active"
+                checked={formData.is_active}
+                onChange={handleChange}
+                className="mr-2"
+                id="is_active"
+              />
+              <label htmlFor="is_active" className="text-gray-700">Compte actif</label>
+             </div>
+          </div>
+        </div>
+
+        <div className={`${styles.buttonGroup} d-flex justify-content-end`}> 
           <button
             type="button"
             onClick={() => navigate('/collaborateurs')}
-            className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+            className={`${styles.actionButton} ${styles.cancelButton} me-3`} 
           >
             Annuler
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400"
+            className={`${styles.actionButton} ${styles.submitButton}`}
           >
             {loading ? 'Enregistrement...' : isEditMode ? 'Mettre à jour' : 'Créer'}
           </button>

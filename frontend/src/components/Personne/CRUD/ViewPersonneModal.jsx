@@ -1,19 +1,29 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import PersonDetail from './PersonneDetail';
-import './ViewPersonneModal.css';
+import styles from '../../../assets/styles/ViewModal.module.css';
 
 const ViewPersonModal = ({ show, onHide, person }) => {
   return (
-    <Modal className='modal-lg custem-modal' show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Détails de la Personne</Modal.Title>
+    <Modal
+          className={styles.customModal}
+          show={show}
+          onHide={onHide}
+          centered
+          size="lg"
+        >
+      <Modal.Header closeButton className={styles.modalHeader}>
+        <Modal.Title>Collaborateur</Modal.Title>
       </Modal.Header>
-      <Modal.Body className='modal-body'>
+      <Modal.Body className={styles.modalBody}>
         <PersonDetail person={person} />
       </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
+      <Modal.Footer className={styles.modalFooter}>
+        <Button 
+          variant="outline-secondary" 
+          onClick={onHide}
+          className={styles.btnClose}
+        >
           Fermer
         </Button>
       </Modal.Footer>

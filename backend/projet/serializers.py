@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from .models import Projet
 from personne.models import Personne
-from personne.serializers import MiniPersonneSerializer
+
 
 class ProjetSerializer(serializers.ModelSerializer):
+    from personne.serializers import MiniPersonneSerializer
+
     tl = serializers.PrimaryKeyRelatedField(
         queryset=Personne.objects.all(),
         allow_null=True,
@@ -12,4 +14,21 @@ class ProjetSerializer(serializers.ModelSerializer):
     tl_info = MiniPersonneSerializer(source='tl',read_only=True)
     class Meta:
         model = Projet
-        fields = '__all__'
+        fields = [
+            'projet_id',
+            'nom',
+            'code',
+            'ordre_travail',
+            'direct_client',
+            'final_client',
+            'sop',
+            'ibu',
+            'cbu',
+            'tl',
+            'date_demarrage',
+            'statut',
+            'descriptif',
+            'chef_de_projet',
+            'tl_info'
+        ]
+

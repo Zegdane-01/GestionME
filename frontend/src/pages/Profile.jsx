@@ -1,19 +1,16 @@
-import { logout } from '../services/auth';
 import React, { useEffect, useState } from 'react';
 import api from '../api/api';
 import { mediaApi } from '../api/api';
 import '../assets/styles/Profile.css'; // Fichier CSS personnalisé
 import defaultAvatar from '../assets/images/default-avatar.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faPhone, faEye } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-hot-toast';
+import ViewProjetModal from '../components/Projet/CRUD/ViewProjetModal';
+
 const Profile = () => {
-  const handleLogout = () => {
-    logout(); // Appel de la fonction de déconnexion
-  };
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('personnelle');
   const [formData, setFormData] = useState({
     matricule:'',
     first_name: '',
@@ -30,13 +27,24 @@ const Profile = () => {
     diplome: '',
     ddc: '',
     photo: '',
+    projet_info:'',
   });
+
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
     old_password: '',
     new_password: '',
     confirm_password: ''
   });
+
+  const [showView, setShowView] = useState(false);
+  const [selectedProjet, setSelectedProjet] = useState(null);
+
+  const handleProjetClick = () => {
+    console.log(formData);
+    setSelectedProjet(formData.projet_info);
+    setShowView(true);
+  };
 
   const token = localStorage.getItem('accessToken');
   const storedUser = localStorage.getItem('userData');
@@ -49,6 +57,7 @@ const Profile = () => {
         setFormData({
           ...parsedUser,
         });
+        console.log('projet of user:', parsedUser.projet_info);
       } catch (error) {
         toast.error("Erreur d'analyse des données utilisateur:", error);
       }
@@ -126,15 +135,6 @@ const handleSave = () => {
 
   
 
-  const formatDateString = (dateString) => {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
-    } catch (error) {
-      return '-';
-    }
-  };
 
   if (!profile) return (
     <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: '300px' }}>
@@ -144,12 +144,6 @@ const handleSave = () => {
     </div>
   );
 
-  // Vérification des valeurs pour s'assurer qu'elles sont bien des chaînes ou des valeurs primitives
-  const safeStr = (val) => {
-    if (val === null || val === undefined) return '';
-    if (typeof val === 'object') return JSON.stringify(val);
-    return String(val);
-  };
 
   const getExperienceText = (totalMonths) => {
       if (typeof totalMonths !== 'number' || isNaN(totalMonths) || totalMonths < 0) {
@@ -242,10 +236,7 @@ const handleSave = () => {
   return (
     <div className="container profile-container my-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="profile-title">Profil Collaborateur</h1>
-        <button className="btn btn-danger" onClick={handleLogout}>
-            <i className="bi bi-box-arrow-right me-2"></i> Déconnexion
-        </button>
+        <h1 className="profile-title">Profil</h1>
       </div>
 
       <div className="card profile-card mb-4">
@@ -325,17 +316,22 @@ const handleSave = () => {
               {renderInputDisabled('position', 'Position', 'text')}
               {renderInputDisabled('status', 'Statut','text')}
               <div className="col-md-6 mb-3">
-                <label htmlFor="manager" className="form-label">Projet</label>
-                <input
-                  type="text"
-                  id="manager"
-                  name="manager"
-                  value={formData.projet_info?.nom || ''}
-                  readOnly
-                  className="form-control"
-                  disabled
-                />
-              </div>  
+                <label htmlFor="projet" className="form-label">Projet</label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    id="projet"
+                    name="projet"
+                    value={formData.projet_info?.nom || ''}
+                    readOnly
+                    className="form-control"
+                    disabled
+                  />
+                  <span className="input-group-text" onClick={handleProjetClick} style={{ cursor: 'pointer' }}>
+                    <FontAwesomeIcon icon={faEye} />
+                  </span>
+                </div>
+              </div>
               <div className="col-md-6 mb-3">
                 <label htmlFor="manager" className="form-label">Manager</label>
                 <input
@@ -509,6 +505,11 @@ const handleSave = () => {
           </div>
         </div>
       )}
+      <ViewProjetModal
+        show={showView}
+        onHide={() => setShowView(false)}
+        projet={selectedProjet}
+      />
     </div>
   );
 };

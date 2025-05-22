@@ -1,0 +1,183 @@
+:root {
+  /* Couleurs Expleo Group (d'après leur site web - peuvent nécessiter un ajustement précis) */
+  --expleo-blue: rgb(0, 122, 252); /* Bleu principal */
+  --expleo-grey: #6c757d; /* Gris moyen */
+  --expleo-accent: #ffc107; /* Jaune accent (peut-être utilisé pour l'interactivité) */
+  --expleo-text-light: #ffffff; /* Texte clair */
+  --expleo-border: #0000005b; /* Couleur de bordure */
+  --expleo-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre légère */
+  --expleo-hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Ombre au survol */
+  --warning-color: #ffc107;
+  --error-color: #dc3545;
+  --info-color: #17a2b8;
+}
+
+
+
+.tableContainer {
+  overflow-x: auto;
+  margin: 0px;
+}
+
+.simpleTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  
+}
+
+.simpleTable th, .simpleTable td {
+  padding: 10px;
+  text-align: center;
+}
+
+.simpleTable thead {
+  background-color: #2c3e50;
+  color: white;
+}
+
+.simpleTable tbody tr {
+  border-bottom: 1px solid #ddd;
+}  
+.simpleTable tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+.simpleTable tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+.simpleTable tbody tr:hover{
+  background-color: #acacac;
+}
+
+
+.codeCell {
+  color: var(--expleo-blue);
+  font-weight: 500;
+  font-family: 'Consolas', monospace; /* Police de type code */
+}
+
+.dateCell {
+  color: var(--expleo-grey);
+  font-size: 0.9rem;
+}
+
+
+.noData {
+  text-align: center;
+  padding: 20px;
+  background: var(--expleo-text-light);
+  border-bottom: 1px solid var(--expleo-border);
+}
+
+.noDataContent {
+  color: var(--expleo-grey);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.noDataIcon {
+  color: var(--expleo-blue);
+  font-size: 1.2rem;
+}
+
+.noData {
+  text-align: center;
+  padding: 15px;
+  color: #888;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.statusActif {
+  background-color: #e6ffed;
+  color: #33b679;
+}
+
+.statusInactif {
+  background-color: #ffe6e6;
+  color: #e53e3e;
+}
+
+
+
+
+  .actionsCell {
+  display: flex;
+  justify-content: center;
+  padding: 10px 15px;
+  align-items: center; 
+}
+
+.simpleTable td,
+.actionsCell {
+  height: 60px;
+  min-height: 100%; /* Hauteur minimale */
+}
+
+.actionGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  border: 1px solid var(--expleo-border);
+  background: var(--expleo-text-light);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out;
+  color: var(--expleo-grey);
+  font-size: 14px;
+  box-shadow: var(--expleo-shadow);
+}
+
+.actionBtn:hover {
+  background-color: var(--expleo-accent); /* Couleur d'accent au survol */
+  color: var(--expleo-text-light);
+  transform: scale(1.05); /* Léger agrandissement au survol */
+  box-shadow: var(--expleo-hover-shadow);
+}
+
+.view {
+  color: var(--info-color);
+  border-color: var(--info-color);
+}
+
+.view:hover {
+  background: var(--info-color);
+  color: var(--expleo-text-light);
+}
+
+.edit {
+  color: var(--warning-color);
+  border-color: var(--warning-color);
+}
+
+.edit:hover {
+  background: var(--warning-color);
+  color: var(--expleo-text-light);
+}
+
+.delete {
+  color: var(--error-color);
+  border-color: var(--error-color);
+}
+
+.delete:hover {
+  background: var(--error-color);
+  color: var(--expleo-text-light);
+}

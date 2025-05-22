@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import SearchBar from '../../components/Projet/CRUD/SearchBar';
+import SearchBar from '../../components/Personne_Projet/SearchBar';
 import ProjetTable from '../../components/Projet/CRUD/ProjetTable';
 import ViewProjetModal from '../../components/Projet/CRUD/ViewProjetModal';
 import DeleteProjetModal from '../../components/Projet/CRUD/DeleteProjetModal';
-import styles from '../../assets/styles/Projet/ProjetList.module.css';
+import styles from '../../assets/styles/List.module.css';
 import api from '../../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -74,26 +74,26 @@ const ProjetList = () => {
         <div className={styles.dashboardHeader}>
             <h1 className={styles.dashboardTitle}>Projets</h1>
             <button className={styles.addButton} onClick={handleAdd}>
-          <FontAwesomeIcon icon={faPlus} /> <span>Nouveau Projet</span>
+          <FontAwesomeIcon icon={faPlus} className={styles.addIcon} /> <span>Nouveau Projet</span>
         </button>
       </div>
 
-      <div className="search-container">
+      <div className={styles.searchContainer}>
         <SearchBar
           value={searchTerm}
           onChange={handleSearch}
           placeholder="Rechercher par nom, code, client..."
         />
-        <div className="search-stats">
+        <div className={styles.searchStats}>
           {filtered.length} projet{filtered.length !== 1 ? 's' : ''} trouvé
           {filtered.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      <div className="content-container">
+      <div className={styles.contentContainer}>
         {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner" />
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner} />
             <p>Chargement des projets…</p>
           </div>
         ) : (
