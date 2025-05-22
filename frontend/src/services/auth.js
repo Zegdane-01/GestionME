@@ -1,3 +1,19 @@
+import { jwtDecode } from 'jwt-decode';
+
+export const getAccessToken = () => localStorage.getItem('accessToken');
+
+export const isTokenExpired = () => {
+  const token = getAccessToken();
+  if (!token) return true;
+
+  try {
+    const { exp } = jwtDecode(token);
+    const now = Math.floor(Date.now() / 1000);
+    return exp < now;
+  } catch {
+    return true;
+  }
+};
 // Vérifie uniquement si l'utilisateur est connecté
 export const isAuthenticated = () => {
   const token = localStorage.getItem('accessToken');

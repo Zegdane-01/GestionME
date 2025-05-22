@@ -1,8 +1,11 @@
-import React, { useState, useCallback } from "react";
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Public/Navbar/Navbar.jsx';
+import React, { useEffect, useState, useCallback } from "react";
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import { isTokenExpired, logout } from './services/auth';
+
 import { Toaster } from 'react-hot-toast';
+
+import Navbar from './components/Public/Navbar/Navbar.jsx';
 import PersonList from './pages/PersonList.jsx';
 import PersonForm from './pages/PersonForm.jsx';
 import HomePage from './components/Public/HomePage/HomePage';
@@ -17,12 +20,24 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 function App() {
   const [navHeight, setNavHeight] = useState(0);
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Ignorer les pages publiques (login, home, etc.)
+    const publicRoutes = ['/', '/login', '/A_Propos'];
+    if (!publicRoutes.includes(location.pathname) && isTokenExpired()) {
+      logout();
+      navigate('/login');
+    }
+  }, [location.pathname, navigate]);
+
+
   // Pour éviter un rerender infini
   const handleHeightChange = useCallback((height) => {
     setNavHeight(height);
   }, []);
   return (
-    <Router>
       <div className="App">
         <Navbar onHeightChange={handleHeightChange}/>
         <main style={{ paddingTop: `${navHeight}px` }}>
@@ -47,7 +62,6 @@ function App() {
         </main>
         <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 2000 }} />
       </div>
-    </Router>
   );
 }
 

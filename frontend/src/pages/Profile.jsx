@@ -41,7 +41,6 @@ const Profile = () => {
   const [selectedProjet, setSelectedProjet] = useState(null);
 
   const handleProjetClick = () => {
-    console.log(formData);
     setSelectedProjet(formData.projet_info);
     setShowView(true);
   };
@@ -57,7 +56,6 @@ const Profile = () => {
         setFormData({
           ...parsedUser,
         });
-        console.log('projet of user:', parsedUser.projet_info);
       } catch (error) {
         toast.error("Erreur d'analyse des données utilisateur:", error);
       }
@@ -96,6 +94,10 @@ const handleSave = () => {
     const formDataToSend = new FormData();
     // Ajouter tous les champs au FormData
       Object.keys(formData).forEach(key => {
+         if (key === 'projet') {
+          // Ne rien faire pour ne pas envoyer projet
+          return;
+        }
         if (formData[key] === null || formData[key] === '') {
           formDataToSend.append(key, ''); // Envoie une chaîne vide pour les valeurs null
         } 

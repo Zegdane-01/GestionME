@@ -81,40 +81,6 @@ class PersonneLoginView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
-logger = logging.getLogger(__name__)
-class PersonneLogoutView(APIView):
-    serializer_class = LogoutSerializer
-
-    def post(self, request):
-        logger.info(f"Requête de déconnexion reçue : {request.data}")
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            refresh_token = serializer.validated_data['refresh']
-            logger.info(f"Token de rafraîchissement reçu et validé : '{refresh_token}'")
-            try:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-                return Response({"detail": "Déconnexion réussie."}, status=status.HTTP_205_RESET_CONTENT)
-            except Exception as e:
-                logger.error(f"Erreur lors de la mise sur liste noire du token : {e}")
-                return Response({"detail": "Le token refresh est invalide ou a déjà expiré."}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            logger.error(f"Erreurs du sérialiseur : {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-
-class LogoutView(APIView):
-     permission_classes = (IsAuthenticated,)
-     def post(self, request):
-          
-          try:
-               refresh_token = request.data["refresh_token"]
-               token = RefreshToken(refresh_token)
-               token.blacklist()
-               return Response(status=status.HTTP_205_RESET_CONTENT)
-          except Exception as e:
-               return Response(status=status.HTTP_400_BAD_REQUEST)
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password(request):

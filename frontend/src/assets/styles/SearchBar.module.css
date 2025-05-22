@@ -1,23 +1,14 @@
-.searchContainer {
-  width: 100%;
-  display: flex;
-  justify-content: center; 
-  margin-bottom: 1rem;
-}
-
-.positionRelative {
+.posRelative {
   position: relative;
-  width: 20%;
   display: flex;
   align-items: center;
 }
 
-.customSearch {
+input.customSearch {
   background-color: #ffffff;
   border: 1px solid #5d3f98;
   color: black; 
   border-radius: 25px;
-  padding-left: 2rem;
   width: 100%;
 }
 
