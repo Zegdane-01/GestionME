@@ -51,10 +51,10 @@
 }
 
 
-.codeCell {
+.nomCell {
   color: var(--expleo-blue);
   font-weight: 500;
-  font-family: 'Consolas', monospace; /* Police de type code */
+  font-family: 'Consolas', monospace; 
 }
 
 .dateCell {
@@ -90,6 +90,25 @@
   color: #888;
 }
 
+.sopBadge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: capitalize; /* Optional: for consistent capitalization */
+}
+
+.sopInterne {
+  background-color: #e0e0ff; /* Example: light purple/blue */
+  color: #6a008a; /* Example: darker purple */
+}
+
+.sopExterne {
+  background-color: #fff0e0; /* Example: light orange */
+  color: #a0522d; /* Example: darker orange/brown */
+}
+
 .statusBadge {
   display: inline-block;
   padding: 5px 10px;
@@ -98,16 +117,20 @@
   font-weight: 500;
 }
 
-.statusActif {
-  background-color: #e6ffed;
-  color: #33b679;
+.statusInProgress {
+  background-color: #e6ffed; /* Light green */
+  color: #33b679; /* Darker green */
 }
 
-.statusInactif {
-  background-color: #ffe6e6;
-  color: #e53e3e;
+.statusOnHold {
+  background-color: #fff9e6; /* Light yellow/orange */
+  color: #e68a00; /* Darker yellow/orange */
 }
 
+.statusClosed {
+  background-color: #e6f7ff; /* Light blue */
+  color: #1890ff; /* Darker blue */
+}
 
 
 

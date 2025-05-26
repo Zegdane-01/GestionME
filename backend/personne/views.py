@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Personne
-from .serializers import PersonneSerializer, PersonneLoginSerializer, LogoutSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
+from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
@@ -61,6 +61,13 @@ class PersonneViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class HierarchieView(APIView):
+    def get(self, request):
+        # Prendre les personnes au sommet (sans manager)
+        leaders = Personne.objects.filter(manager__isnull=True)
+        serializer = PersonneHierarchieSerializer(leaders, many=True)
+        return Response(serializer.data)
 
 class PersonneLoginView(APIView):
     permission_classes = [AllowAny]
