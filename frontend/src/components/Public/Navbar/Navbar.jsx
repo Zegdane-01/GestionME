@@ -129,7 +129,8 @@ const Navbar = ({ onHeightChange }) => {
         {role === 'TeamLead' && 
           [
             { path: '/projets', label: 'PROJETS' },
-            { path: '/collaborateurs', label: 'COLLABORATEURS' }
+            { path: '/collaborateurs', label: 'COLLABORATEURS' },
+            { path: '/trainings', label: 'FORMATIONS' }
           ].map(({ path, label }, index) => (
             <Link
               key={path}
@@ -147,7 +148,8 @@ const Navbar = ({ onHeightChange }) => {
         {role === 'COLLABORATEUR' && 
           [
             { path: '/', label: '' },
-            { path: '/profile', label: 'PROFILE' }
+            { path: '/profile', label: 'PROFILE' },
+            { path: '/trainings', label: 'FORMATIONS' }
           ].map(({ path, label }, index) => (
             <Link
               key={path}

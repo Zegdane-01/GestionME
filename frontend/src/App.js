@@ -6,15 +6,22 @@ import { isTokenExpired, logout } from './services/auth';
 import { Toaster } from 'react-hot-toast';
 
 import Navbar from './components/Public/Navbar/Navbar.jsx';
-import PersonList from './pages/PersonList.jsx';
-import PersonForm from './pages/PersonForm.jsx';
 import HomePage from './components/Public/HomePage/HomePage';
 import Apropos from './components/Public/Apropos/Apropos';
+
 import Login from './components/Personne/Login/Login';
+
+import PersonList from './pages/PersonList.jsx';
+import PersonForm from './pages/PersonForm.jsx';
 import Profile from './pages/Profile.jsx';
+import Hierarchie from './pages/Hierarchie/Hierarchie.jsx'
 
 import ProjetList from './pages/Projet/ProjetList.jsx';
 import ProjetForm from './pages/Projet/ProjetForm.jsx';
+
+import TrainingList from './pages/Training/TrainingList';
+import TrainingDetail from './pages/Training/TrainingDetail';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
@@ -53,10 +60,14 @@ function App() {
             <Route path="/collaborateurs" element={<PersonList />} />
             <Route path="/collaborateurs/add" element={<PersonForm />} />
             <Route path="/collaborateurs/edit/:id" element={<PersonForm />} />
+            <Route path="/hierarchie" element={<Hierarchie />} />
 
             <Route path="/Projets" element={<ProjetList />} />
             <Route path="/Projets/add" element={<ProjetForm />} />
             <Route path="/Projets/edit/:id" element={<ProjetForm />} />
+
+            <Route path="/trainings" element={<TrainingList />} />
+            <Route path="/trainings/:id" element={<TrainingDetail />} />
             
           </Routes>
         </main>

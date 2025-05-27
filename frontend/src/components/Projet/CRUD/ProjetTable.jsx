@@ -13,26 +13,39 @@ const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
       <table className={styles.simpleTable}>
         <thead>
           <tr>
-            <th>Code</th>
             <th>Nom</th>
+            <th>Code</th>
+            <th>Chef de projet</th>
             <th>Client direct</th>
             <th>Client final</th>
             <th>SOP</th>
-            <th>Date démarrage</th>
+            <th>Date de démarrage</th>
+            <th>Nb. Collaborateurs</th>
             <th>Statut</th>
             <th>Actions</th>
+        
           </tr>
         </thead>
         <tbody>
           {projets.length > 0 ? (
             projets.map(projet => (
               <tr key={projet.projet_id} className={styles.dataRow}>
-                <td className={styles.codeCell}>{projet.code}</td>
-                <td>{projet.nom}</td>
+                <td className={styles.nomCell}>{projet.nom}</td>
+                <td>{projet.code}</td>
+                <td>{projet.chef_de_projet}</td>
                 <td>{projet.direct_client}</td>
                 <td>{projet.final_client}</td>
-                <td>{projet.sop}</td>
+                <td>
+                  <span className={`${styles.sopBadge} ${styles[`sop${projet.sop.replace(/\s+/g, '')}`]}`}>
+                    {projet.sop}
+                  </span>
+                </td>
                 <td className={styles.dateCell}>{new Date(projet.date_demarrage).toLocaleDateString()}</td>
+                <td>
+                  {projet.collaborators_count !== undefined && projet.collaborators_count !== null
+                    ? projet.collaborators_count
+                    : '—'}
+                </td> {/* Displaying the count */}
                 <td>
                   <span className={`${styles.statusBadge} ${styles[`status${projet.statut.replace(/\s+/g, '')}`]}`}>
                     {projet.statut}

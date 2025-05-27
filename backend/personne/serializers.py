@@ -37,6 +37,7 @@ class MiniProjetSerializer(serializers.ModelSerializer):
 
 
 class PersonneSerializer(serializers.ModelSerializer):
+
     manager = serializers.PrimaryKeyRelatedField(
         queryset=Personne.objects.all(),
         allow_null=True,
@@ -88,6 +89,17 @@ class PersonneSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['is_superuser', 'is_staff', 'is_active']
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
+
+class PersonneHierarchieSerializer(serializers.ModelSerializer):
+    subordinates=serializers.SerializerMethodField()
+
+    class Meta:
+        model = Personne
+        fields = ['matricule', 'first_name', 'last_name', 'role', 'subordinates']
+    
+    def get_subordinates(self, obj):
+        subordinates = obj.manager_persons.all()
+        return PersonneHierarchieSerializer(subordinates, many=True).data
 
 class PersonneLoginSerializer(serializers.Serializer):
     matricule = serializers.CharField(max_length=50)

@@ -12,6 +12,7 @@ class ProjetSerializer(serializers.ModelSerializer):
         required=False
     )
     tl_info = MiniPersonneSerializer(source='tl',read_only=True)
+    collaborators_count = serializers.IntegerField(source='count_collaborators', read_only=True)
     class Meta:
         model = Projet
         fields = [
@@ -29,6 +30,7 @@ class ProjetSerializer(serializers.ModelSerializer):
             'statut',
             'descriptif',
             'chef_de_projet',
-            'tl_info'
+            'tl_info',
+            'collaborators_count'
         ]
 

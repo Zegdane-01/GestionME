@@ -35,13 +35,13 @@ const ProjetForm = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.nom) newErrors.nom = "Le nom du projet est requis.";
-    if (!formData.code) newErrors.code = "Le code du projet est requis.";
+
     if (!formData.direct_client) newErrors.direct_client = "Le client direct est requis.";
     if (!formData.final_client) newErrors.final_client = "Le client final est requis.";
+    if (!formData.cbu) newErrors.cbu = "Le cbu est requis.";
     if (!formData.sop) newErrors.sop = "Le SOP est requis.";
     if (!formData.statut) newErrors.statut = "Le statut est requis.";
     if (!formData.date_demarrage) newErrors.date_demarrage = "La date de démarrage est requise.";
-    if (!formData.descriptif) newErrors.descriptif = "Le descriptif est requis.";
     
     return newErrors;
   };
@@ -164,16 +164,15 @@ const ProjetForm = () => {
 
           <div className="col-md-6">
             <div className={styles.formGroup}>
-                <label htmlFor="code" className={styles.formLabel}>Code projet<span className="text-danger"> *</span></label>
+                <label htmlFor="code" className={styles.formLabel}>Code projet</label>
                 <input
                   type="text"
                   id="code"
                   name="code"
                   value={formData.code}
                   onChange={handleChange}
-                  className={`${styles.formControl} ${errors.code ? styles.inputError : ''}`}
+                  className={styles.formControl}
                 />
-                {errors.code && <p className={styles.errorText}>{errors.code}</p>}
               </div>
           </div>
           <div className="col-md-6">
@@ -225,15 +224,16 @@ const ProjetForm = () => {
         <div className="row g-4 mb-4">
           <div className="col-md-6">
             <div className={styles.formGroup}>
-              <label htmlFor="cbu" className={styles.formLabel}>CBU (ex: ME/PCPR)</label>
+              <label htmlFor="cbu" className={styles.formLabel}>CBU (ex: ME/PCPR)<span className="text-danger"> *</span></label>
               <input
                 type="text"
                 id="cbu"
                 name="cbu"
                 value={formData.cbu}
                 onChange={handleChange}
-                className={styles.formControl}
+                className={`${styles.formControl} ${errors.cbu ? styles.inputError : ''}`}
               />
+              {errors.cbu && <p className={styles.errorText}>{errors.cbu}</p>}
             </div>
           </div>
           <div className="col-md-6">
@@ -340,8 +340,9 @@ const ProjetForm = () => {
                 className={`${styles.formControl} ${errors.statut ? styles.inputError : ''}`}
               >
                 <option value="">-- Sélectionner --</option>
-                <option value="Actif">Actif</option>
-                <option value="Inactif">Inactif</option>
+                <option value="In Progress">In Progress</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Closed">Closed</option>
               </select>
               {errors.sop && <p className={styles.errorText}>{errors.statut}</p>}
             </div>
@@ -351,16 +352,15 @@ const ProjetForm = () => {
         <div className="row mb-5">
           <div className="col-12">
             <div className={styles.formGroup}>
-              <label htmlFor="descriptif" className={styles.formLabel}>Descriptif<span className="text-danger"> *</span></label>
+              <label htmlFor="descriptif" className={styles.formLabel}>Descriptif</label>
               <textarea
                 id="descriptif"
                 name="descriptif"
                 value={formData.descriptif}
                 onChange={handleChange}
-                className={`${styles.formControl} ${errors.descriptif ? styles.inputError : ''}`}
+                className={styles.formControl}
                 rows="5"
               ></textarea>
-              {errors.descriptif && <p className={styles.errorText}>{errors.descriptif}</p>}
             </div>
           </div>
         </div>

@@ -30,7 +30,14 @@ const ProjetDetail = ({ projet }) => {
       <FieldRow label="Ordre de travail" value={projet.ordre_travail} icon="clipboard-check" />
       <FieldRow label="Client direct" value={projet.direct_client} icon="building" />
       <FieldRow label="Client final" value={projet.final_client} icon="building-fill" />
-      <FieldRow label="SOP" value={projet.sop} icon="diagram-2" />
+      <FieldRow
+        label="SOP"
+        value={
+          <span className={`${styles.sopBadge} ${styles[`sop${projet.sop.replace(/\s+/g, '')}`]}`}>
+            {projet.sop}
+          </span>
+        }
+        icon="diagram-2" />
       <FieldRow label="IBU" value={projet.ibu} icon="briefcase" />
       <FieldRow label="CBU" value={projet.cbu} icon="briefcase-fill" />
       <FieldRow 

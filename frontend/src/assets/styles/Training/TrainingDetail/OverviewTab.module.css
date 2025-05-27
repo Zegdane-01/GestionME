@@ -1,0 +1,74 @@
+.box {
+  border: 1px solid #e5e7eb;       /* cadre gris */
+  border-radius: 6px;
+  margin-top: 20px;
+}
+
+/* Icônes “Contenu” et “Ressources” (ligne de titre) */
+.iconPlay::before,
+.iconFile::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  background-size: cover;
+}
+/* Ligne interne (chapitre ou ressource) */
+.line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  margin-bottom: .75rem;
+}
+
+/* Pastilles rondes (numéro ou extension) */
+.roundBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: .8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #628cff;             /* blue-800 */
+  background: #dbeafe;        /* blue-100 */
+}
+.resBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;                  /* arrondi plus carré */
+  font-size: .75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;           /* fin contour gris */
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.6) 0%, var(--bg) 100%);
+  /* ↓ variables couleur injectées via .extBadge-xxx */
+}
+
+/* Palette par extension (on définit aussi --bg pour le gradient) */
+.extBadge_pdf { --bg:#fee2e2; color:#b91c1c; background:radial-gradient(circle at 30% 30%, #fff 0%, #fee2e2 100%); }
+.extBadge_xls,
+.extBadge_xlsx { --bg:#dcfce7; color:#065f46; background:radial-gradient(circle at 30% 30%, #fff 0%, #dcfce7 100%); }
+.extBadge_ppt { --bg:#ffedd5; color:#c2410c; background:radial-gradient(circle at 30% 30%, #fff 0%, #ffedd5 100%); }
+
+/* Bouton “↓” de téléchargement */
+.dlBtn {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: .25rem .5rem;
+  font-size: .9rem;
+  line-height: 1;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.dlBtn:hover { background:#f1f5f9; }

@@ -1,0 +1,18 @@
+.active {                          /* carte chapitre sélectionnée */
+  background: #e0e7ff !important;  /* indigo-100 */
+  border-color: #c7d2fe !important;
+}
+
+.badge {                           /* numéro de chapitre */
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #cbd5e1;            /* slate-300 */
+  color: #1e293b;                 /* slate-800 */
+  font-size: .75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: .5rem;
+}

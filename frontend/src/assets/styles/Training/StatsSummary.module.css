@@ -1,0 +1,16 @@
+.card {
+  min-width: 230px;                /* même largeur mini pour chaque tuile */
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.iconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #0f172a;                 /* icône sombre */
+}
