@@ -1,0 +1,48 @@
+/* Conteneur : fine bordure de séparation */
+.tabs {
+  border-bottom: 1px solid #e5e7eb;      /* slate-200 */
+}
+
+/* Boutons */
+.tabs .nav-link {
+  border: none;
+  background: transparent;
+  color: #334155;                        /* slate-700 */
+  font-weight: 600;
+  position: relative;
+  padding: .5rem 1.5rem;
+  transition: color .2s;
+}
+
+/* Trait animé sous chaque onglet (invisible par défaut) */
+.tabs .nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;                /* pleine largeur */
+  right: 0;
+  bottom: -1px;           /* chevauche la bordure du conteneur */
+  height: 3px;
+  background: transparent;
+  transform: scaleX(0);
+  transition: transform .2s ease, background .2s ease;
+}
+
+/* Survol : couleur plus claire + trait gris clair */
+.tabs .nav-link:hover:not(.active) {
+  color: #1e293b;                         /* slate-800 */
+}
+
+.tabs .nav-link:hover:not(.active)::after {
+  background: #cbd5e1;                    /* slate-300 */
+  transform: scaleX(1);
+}
+
+/* Onglet actif : couleur principale + trait plein */
+.tabs .nav-link.active {
+  color: #0f172a;                         /* slate-900 */
+}
+
+.tabs .nav-link.active::after {
+  background: #0f172a;                    /* même couleur que le texte actif */
+  transform: scaleX(1);
+}

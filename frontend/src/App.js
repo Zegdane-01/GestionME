@@ -18,6 +18,10 @@ import Hierarchie from './pages/Hierarchie/Hierarchie.jsx'
 
 import ProjetList from './pages/Projet/ProjetList.jsx';
 import ProjetForm from './pages/Projet/ProjetForm.jsx';
+
+import TrainingList from './pages/Training/TrainingList';
+import TrainingDetail from './pages/Training/TrainingDetail';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
@@ -61,6 +65,9 @@ function App() {
             <Route path="/Projets" element={<ProjetList />} />
             <Route path="/Projets/add" element={<ProjetForm />} />
             <Route path="/Projets/edit/:id" element={<ProjetForm />} />
+
+            <Route path="/trainings" element={<TrainingList />} />
+            <Route path="/trainings/:id" element={<TrainingDetail />} />
             
           </Routes>
         </main>
