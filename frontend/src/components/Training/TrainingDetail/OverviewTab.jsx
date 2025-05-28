@@ -1,14 +1,13 @@
-// components/training/OverviewTab.jsx
 import React from 'react';
-import { Play, FileText, Download } from 'lucide-react';
+import { Play, FileText, Download, CheckCircle } from 'lucide-react';
 import styles from '../../../assets/styles/Training/TrainingDetail/OverviewTab.module.css';
 
-const OverviewTab = ({ training }) => {
+const OverviewTab = ({ training, onComplete, isCompleted }) => {
   /* Indicateurs de présence */
   const hasContent   = training.chapters.length  > 0;
   const hasResources = training.resources.length > 0;
 
-  /* Utilitaire : récupérer l’extension en toute circonstance */
+  /* Utilitaire : récupérer l'extension en toute circonstance */
   const getExt = r =>
     (r.ext ??
      r.name?.split('.').pop() ??
@@ -20,7 +19,7 @@ const OverviewTab = ({ training }) => {
     <>
       {/* ─── Introduction ───────────────────────────────────────────── */}
       {training.intro && (
-        <div className={`card h-100 p-3 ${styles.box} mb-4`}>
+        <div className={`card h-100 p-3 ${styles.box}`}>
           <h4>Introduction</h4>
           <p>{training.introLong ?? training.intro}</p>
         </div>
@@ -43,6 +42,7 @@ const OverviewTab = ({ training }) => {
                     <h6 className="mb-0">{c.title}</h6>
                     <small className="text-muted">{c.duration} min</small>
                   </div>
+                  {c.completed && <CheckCircle size={16} className="text-success" />}
                 </div>
               ))}
             </div>
@@ -96,6 +96,24 @@ const OverviewTab = ({ training }) => {
           <p>{training.conclusion}</p>
         </>
       )}
+
+      {/* ─── Bouton de validation ──────────────────────────────────── */}
+      <div className="d-flex justify-content-center mt-4 pt-4">
+        {!isCompleted ? (
+          <button 
+            className="btn btn-success btn-lg"
+            onClick={onComplete}
+          >
+            <CheckCircle size={20} className="me-2" />
+            Valider la lecture de cette section
+          </button>
+        ) : (
+          <div className="alert alert-success d-flex align-items-center">
+            <CheckCircle size={20} className="me-2" />
+            Section terminée ! Vous pouvez passer au contenu suivant.
+          </div>
+        )}
+      </div>
     </>
   );
 };

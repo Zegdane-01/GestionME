@@ -16,3 +16,17 @@
   justify-content: center;
   margin-right: .5rem;
 }
+
+.sidebarCard,
+.playerCard {
+  margin-top: 1.3rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;            /* → étirées identiquement */
+  overflow: hidden;        /* évite le débordement du player */
+}
+
+.item + .item { margin-top: .75rem; }
