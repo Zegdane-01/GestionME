@@ -22,6 +22,9 @@ import ProjetForm from './pages/Projet/ProjetForm.jsx';
 import TrainingList from './pages/Training/TrainingList';
 import TrainingDetail from './pages/Training/TrainingDetail';
 
+import TrainingListManager from './pages/Training/Manager/TrainingListManager.jsx';
+import TrainingForm from "./pages/Training/Manager/TrainingForm.jsx";
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
@@ -68,6 +71,9 @@ function App() {
 
             <Route path="/trainings" element={<TrainingList />} />
             <Route path="/trainings/:id" element={<TrainingDetail />} />
+
+            <Route path="/manager/trainings" element={<TrainingListManager />} />
+            <Route path="/manager/trainings/add" element={<TrainingForm />} />
             
           </Routes>
         </main>

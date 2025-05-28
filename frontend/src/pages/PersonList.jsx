@@ -8,7 +8,7 @@ import DeletePersonModal from '../components/Personne/CRUD/DeletePersonneModal';
 import styles from '../assets/styles/List.module.css'; 
 import api from '../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 const PersonList = () => {
   const [searchTerm, setSearchTerm] = useState('');
