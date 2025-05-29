@@ -19,8 +19,8 @@ const loadTrainings = () => {
       cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
 
       chapters: [
-        { id: 1011, title: 'Principe des 5S',           videoUrl: '/assets/videos/5s_principes.mp4',      description: 'Origines et objectifs de la démarche 5S.',                     completed: false },
-        { id: 1012, title: 'Mise en œuvre sur le terrain', videoUrl: '/assets/videos/5s_mise_en_oeuvre.mp4', description: 'Étapes pratiques pour déployer 5S dans l’atelier.',       completed: false }
+        { id: 1011, title: 'Principe des 5S',           videoUrl: 'https://ardianet.sharepoint.com/:v:/r/sites/Group_EquipeAUTMaroc/Documents%20partages/General/02%20Resource%20management/03-Catalogue%20de%20formation/26%20Cybers%C3%A9curit%C3%A9%20en%20Automatismes/Cybersecurity_20240621_153549%20(1).mp4?csf=1&web=1&e=ybiZDt',      description: 'Origines et objectifs de la démarche 5S.',                     completed: false },
+        { id: 1012, title: 'Mise en œuvre sur le terrain', videoUrl: 'https://ardianet.sharepoint.com/:v:/r/sites/Group_EquipeAUTMaroc/Documents%20partages/General/02%20Resource%20management/03-Catalogue%20de%20formation/26%20Cybers%C3%A9curit%C3%A9%20en%20Automatismes/Cybersecurity_20240621_153549%20(1).mp4?csf=1&web=1&e=ybiZDt', description: 'Étapes pratiques pour déployer 5S dans l’atelier.',       completed: false }
       ],
 
       resources: [
