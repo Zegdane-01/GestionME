@@ -114,6 +114,26 @@
   opacity: 0.7;
 }
 
+/* Section Groups: Chapitres, Ressources, Quiz */
+.sectionGroup {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 1rem;
+}
+
+.sectionItem {
+  border: 1px solid #ced4da;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  background-color: #f8f9fa;
+}
+
 /* Responsive adjustments */
 @media (max-width: 767.98px) {
   .projetFormCard {
