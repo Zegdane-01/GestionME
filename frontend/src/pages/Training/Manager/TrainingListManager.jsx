@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 // 🗂️ Données mock (pas d'appel API)
-import { trainings as mockTrainings } from '../../../data/trainings';
+import { trainingCatalog as mockTrainings } from '../../../data/trainingCatalog';
 // → si tu as des helpers (updateTrainingProgress, etc.) importe‑les aussi
 
 // Composants réutilisables du projet
@@ -64,10 +64,6 @@ const TrainingListManager = () => {
   /* -------------------------------------------------- */
   /*                      ACTIONS CRUD                  */
   /* -------------------------------------------------- */
-  const handleView = training => {
-    setSelectedTraining(training);
-    setShowViewModal(true);
-  };
 
   const handleDeleteConfirm = id => {
     setTrainingToDelete(id);
@@ -91,7 +87,7 @@ const TrainingListManager = () => {
     setTrainingToDelete(null);
   };
 
-  const handleEdit = id => navigate(`/formations/edit/${id}`);
+  const handleEdit = id => navigate(`/manager/trainings/edit/${id}`);
   const handleAdd  = () => navigate('/manager/trainings/add');
 
   /* -------------------------------------------------- */
@@ -130,7 +126,6 @@ const TrainingListManager = () => {
         ) : (
           <TrainingTable
             trainings={filteredTrainings}
-            onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDeleteConfirm}
           />

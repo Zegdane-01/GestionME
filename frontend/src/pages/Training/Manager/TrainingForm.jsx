@@ -163,17 +163,13 @@ const TrainingForm = () => {
             <label className={styles.formLabel}>
               Département <span style={{ color: 'red' }}> *</span>
             </label>
-            <select
+            <input
+              type="text"
               name="department"
               value={formData.department}
               onChange={handleChange}
               className={`${styles.formControl} ${errors.department ? styles.inputError : ''}`}
-            >
-              <option value="">-- Choisir --</option>
-              {['ME', 'IT', 'HR', 'OPS'].map(dep => (
-                <option key={dep} value={dep}>{dep}</option>
-              ))}
-            </select>
+            />
             {errors.department && <p className={styles.errorText}>{errors.department}</p>}
           </div>
         </div>

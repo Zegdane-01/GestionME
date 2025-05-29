@@ -131,7 +131,6 @@ const PersonForm = () => {
 
 
     const validationErrors = validateForm();
-    console.log(validationErrors)
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
