@@ -53,4 +53,4 @@ frontend/build/
 requirements.txt
 
 # 
-frontend/public/assets/videos/*.mp4
+#frontend/public/assets/videos/*.mp4
