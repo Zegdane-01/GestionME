@@ -7,6 +7,44 @@ const LOCAL_STORAGE_KEY = 'trainingsProgress';
 const loadTrainings = () => {
   const savedTrainings = localStorage.getItem(LOCAL_STORAGE_KEY);
   return savedTrainings ? JSON.parse(savedTrainings) : [
+    
+ {
+      id: 100,
+      title: 'Conduite d\'affaires AUT',
+      createdBy: 'EL MASBAHI Hamza',
+      department: 'ME',
+      intro:
+        'Pilotage d\'affaires des projets dans le périmètre des Automatismes ',
+      duration: 90,
+      cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
+
+      chapters: [
+        { id: 1011, title: 'Business Conduct (phases 1-7)', videoUrl: '/assets/videos/Business_Conduct.mp4',      description: 'Processus pilotage d\'affaires des projets dans le périmètre des Automatismes',                     completed: false },
+    
+      ],
+
+      resources: [
+        { id: 9991, name: 'Présentation détaillée sur l\'activité AUT 1.7.pdf', url: '/assets/docs/Présentation détaillée sur l\'activité AUT 1.7.pdf', ext: 'pdf', read: false },
+        { id: 9992, name: 'Processus pilotage d\'affaires des projets dans le périmètre des Automatismes - V1.6.pdf', url: '/assets/docs/Processus pilotage d\'affaires des projets dans le périmètre des Automatismes - V1.6 (1).pdf', ext: 'pdf', read: false }
+],
+
+      quiz: {
+        totalScore: 4,
+        completed:  false,
+        questions: [
+          { id: 1015, text: 'Conduite d’affaires-Qu’est-ce que la conduite d’affaire dans un contexte industriel ?',                             points:1, options:['Une méthode de recrutement de techniciens','Une technique de négociation commerciale','L’organisation et le pilotage d’un projet client, de l’étude à la réalisation','La maintenance après-vente d’une machine'],                   correctIndex:2 },
+          { id: 1016, text: 'Conduite d’affaires-Quelle est la première étape d’une affaire industrielle réussie ?',                 points:1, options:['Le paiement d’un acompte','La planification des livraisons','L’analyse et la formalisation du besoin du client','Le montage sur site'],           correctIndex:2 },
+          { id: 1017, text: 'Conduite d’affaires-Que contient typiquement la phase de réalisation dans une conduite d’affaire ?',                 points:1, options:['L’étude technique, les achats, la fabrication et l\'installation','La communication marketing','Le contrôle qualité uniquement','La formation des équipes commerciales'],           correctIndex:0 },
+          { id: 1018, text: 'Conduite d’affaires-Qu’est-ce que la réception dans le cadre d’une affaire ?',                 points:1, options:['L\'arrivée des pièces en stock','La validation officielle par le client que la solution livrée est conforme','Le début de l’étude technique','Le moment où le client signe le contrat'],           correctIndex:1 }
+
+        ]
+      },
+
+      progress: 0,
+      status: 'new',
+      tabsCompleted: { overview:false, chapters:false, resources:false, quiz:false }
+    },
+
     /* 1. Introduction 5S -------------------------------------------------- */
     {
       id: 101,
@@ -45,11 +83,11 @@ const loadTrainings = () => {
     /* 2. Lean Manufacturing Avancé ---------------------------------------- */
     {
       id: 102,
-      title: 'Lean Manufacturing – Niveau Avancé',
+      title: 'Cahiers de charge (CdC)',
       createdBy: 'EL MASBAHI Hamza',
       department: 'ME',
       intro:
-        'Approfondir les outils Lean (Kaizen, VSM, SMED) pour réduire les gaspillages et accroître l’efficience.',
+        'édaction du cahier des charges d’Automatismes ',
       duration: 180,
       cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
 
@@ -79,11 +117,11 @@ const loadTrainings = () => {
     /* 3. Sécurité Machine & Ergonomie ------------------------------------- */
     {
       id: 103,
-      title: 'Sécurité Machine & Ergonomie',
+      title: 'Analyse offre fournisseur (ATE)',
       createdBy: 'ZEGDANE Ahmed',
       department: 'ME',
       intro:
-        'Identifier les risques machine, appliquer les normes CE et améliorer l’ergonomie des postes.',
+        'Analyse offre fournisseur (ATE)',
       duration: 150,
       cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
 
@@ -111,11 +149,11 @@ const loadTrainings = () => {
     /* 4. Process FMEA ------------------------------------------------------ */
     {
       id: 104,
-      title: 'Process FMEA : Méthode et Application',
+      title: 'Phases Etudes & Réalisation',
       createdBy: 'ELHICHAMI Yassine',
       department: 'ME',
       intro:
-        'Apprendre à construire un PFMEA pour anticiper et réduire les défaillances de process.',
+        'Phases Etudes & Réalisation Study Phases & Realization Phases',
       duration: 120,
       cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
 
@@ -145,11 +183,11 @@ const loadTrainings = () => {
     /* 5. Gestion des flux Kanban ------------------------------------------ */
     {
       id: 105,
-      title: 'Gestion des flux Kanban',
+      title: 'Controle programme automate Etats des lieux',
       createdBy: 'EL MASBAHI Hamza',
       department: 'ME',
       intro:
-        'Mettre en place un système Kanban pour lisser la production et réduire le WIP.',
+        'PLC program verification Inventory control',
       duration: 100,
       cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
 
@@ -172,39 +210,6 @@ const loadTrainings = () => {
       status: 'new',
       tabsCompleted: { overview:false, chapters:false, resources:false, quiz:false }
     },
-
-    /* 6. Maintenance Autonome (TPM) --------------------------------------- */
-    {
-      id: 106,
-      title: 'Maintenance Autonome (TPM)',
-      createdBy: 'ELHICHAMI Yassine',
-      department: 'ME',
-      intro:
-        'Former les opérateurs à l’entretien de premier niveau pour fiabiliser les équipements.',
-      duration: 110,
-      cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
-
-      chapters: [
-        { id:1061, title:'Piliers du TPM', videoUrl:'/assets/videos/tpm_piliers.mp4', description:'Les 8 piliers et leur impact sur la performance.', completed:false }
-      ],
-
-      resources: [
-        { id:1062, name:'Checklist Daily Maintenance.pdf', url:'/assets/docs/checklist_tpm.pdf', ext:'pdf', read:false }
-      ],
-
-      quiz: {
-        totalScore: 10,
-        completed:  false,
-        questions: [
-          { id:1063, text:'Quelle est la toute première étape de la maintenance autonome ?', points:10, options:['Inspection','Nettoyage initial','Lubrification'], correctIndex:1 },
-          { id:1064, text:'Objectif principal du TPM ?',                                     points:10, options:['Disponibilité 100 %','Zéro panne','Zéro défaut'], correctIndex:1 }
-        ]
-      },
-
-      progress: 0,
-      status: 'new',
-      tabsCompleted: { overview:false, chapters:false, resources:false, quiz:false }
-    }
   ];
 };
 

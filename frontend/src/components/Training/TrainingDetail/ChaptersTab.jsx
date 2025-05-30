@@ -87,7 +87,7 @@ const ChaptersTab = ({ training, onChapterComplete, onTabComplete, isTabComplete
 
           <video
             key={current.id}           /* force reload */
-            src={current.videoUrl}
+            src={encodeURI(current.videoUrl)}
             controls
             style={{ width: '100%', borderRadius: 6, background: '#0f172a' }}
             className="mb-4"

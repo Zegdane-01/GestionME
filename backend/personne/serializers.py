@@ -87,7 +87,6 @@ class PersonneSerializer(serializers.ModelSerializer):
             'experience_expleo',
             'experience_total',
         ]
-        read_only_fields = ['is_superuser', 'is_staff', 'is_active']
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
 
 class PersonneHierarchieSerializer(serializers.ModelSerializer):
@@ -251,9 +250,9 @@ class PersonneUpdateSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'password': {'write_only': True, 'required': False},
-            'manager': {'required': False}, # Ensure they are not explicitly read_only
-            'backup': {'required': False},  # Ensure they are not explicitly read_only
-            'projet': {'required': False},  # Ensure they are not explicitly read_only
+            'manager': {'required': False},
+            'backup': {'required': False},
+            'projet': {'required': False},
             'diplome': {'allow_null': True}
         }
 

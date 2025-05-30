@@ -25,6 +25,7 @@ import TrainingDetail from './pages/Training/TrainingDetail';
 import TrainingListManager from './pages/Training/Manager/TrainingListManager.jsx';
 import TrainingForm from "./pages/Training/Manager/TrainingForm.jsx";
 
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
@@ -74,6 +75,9 @@ function App() {
 
             <Route path="/manager/trainings" element={<TrainingListManager />} />
             <Route path="/manager/trainings/add" element={<TrainingForm />} />
+            <Route path="/manager/trainings/edit/:id" element={<TrainingForm />} />
+
+            {/* Routes protégées */}
             
           </Routes>
         </main>

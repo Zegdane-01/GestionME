@@ -37,6 +37,7 @@ class PersonneViewSet(viewsets.ModelViewSet):
         serializer = PersonneUpdateSerializer(personne, data=request.data)
 
         if serializer.is_valid():
+            print("✅ Mise à jour réussie :", serializer.validated_data)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
     

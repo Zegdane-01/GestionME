@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faTrash, faPencilAlt, faRocket } from '@fortawesome/free-solid-svg-icons';
 import styles from '../../../assets/styles/Table.module.css';
@@ -8,7 +9,8 @@ import styles from '../../../assets/styles/Table.module.css';
  * — Affiche les colonnes principales + actions CRUD
  * — Utilise les mêmes styles que PersonTable pour la cohérence UI
  */
-const TrainingTable = ({ trainings = [], onView, onEdit, onDelete }) => {
+const TrainingTable = ({ trainings = [], onEdit, onDelete }) => {
+  const navigate = useNavigate();
   // Petite fonction utilitaire pour formater la durée en "HH h MM".
   const formatDuration = minutes => {
     const h = Math.floor(minutes / 60);
@@ -26,8 +28,6 @@ const TrainingTable = ({ trainings = [], onView, onEdit, onDelete }) => {
             <th>Département</th>
             <th>Durée</th>
             <th>Créateur</th>
-            <th>Statut</th>
-            <th>Progression</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -40,24 +40,12 @@ const TrainingTable = ({ trainings = [], onView, onEdit, onDelete }) => {
                 <td>{training.department}</td>
                 <td>{formatDuration(training.duration)}</td>
                 <td>{training.createdBy}</td>
-                <td>{training.status}</td>
-
-                {/* Colonne progression simple barre + pourcentage */}
-                <td>
-                  <div className={styles.progressWrapper}>
-                    <div
-                      className={styles.progressBar}
-                      style={{ width: `${training.progress}%` }}
-                    />
-                  </div>
-                  <span className={styles.progressLabel}>{training.progress}%</span>
-                </td>
 
                 {/* ACTIONS */}
                 <td className={styles.actionsCell}>
                   <div className={styles.actionGroup}>
                     <button
-                      onClick={() => onView(training)}
+                      onClick={() => navigate(`/trainings/${training.id}`)}
                       title="Voir"
                       className={`${styles.actionBtn} ${styles.view}`}
                     >

@@ -128,9 +128,10 @@ const Navbar = ({ onHeightChange }) => {
       <div className="cyber-links">
         {role === 'TeamLead' && 
           [
-            { path: '/projets', label: 'PROJETS' },
             { path: '/collaborateurs', label: 'COLLABORATEURS' },
-            { path: '/trainings', label: 'FORMATIONS' }
+            { path: '/projets', label: 'PROJETS' },
+            { path: '/trainings', label: 'MES FORMATIONS' },
+            { path: '/manager/trainings', label: 'GERER FORMATIONS' },
           ].map(({ path, label }, index) => (
             <Link
               key={path}
@@ -149,7 +150,7 @@ const Navbar = ({ onHeightChange }) => {
           [
             { path: '/', label: '' },
             { path: '/profile', label: 'PROFILE' },
-            { path: '/trainings', label: 'FORMATIONS' }
+            { path: '/trainings', label: 'MES FORMATIONS' }
           ].map(({ path, label }, index) => (
             <Link
               key={path}
