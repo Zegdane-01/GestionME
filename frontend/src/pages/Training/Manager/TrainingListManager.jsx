@@ -2,10 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
-// 🗂️ Données mock (pas d'appel API)
-import { trainingCatalog as mockTrainings } from '../../../data/trainingCatalog';
-// → si tu as des helpers (updateTrainingProgress, etc.) importe‑les aussi
-
 // Composants réutilisables du projet
 import SearchBar from '../../../components/Personne_Projet/SearchBar';
 import TrainingTable from '../../../components/Training/CRUD/TrainingTable';
@@ -18,84 +14,87 @@ import styles from '../../../assets/styles/List.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
+// API
+import api from '../../../api/api';
+
 const TrainingListManager = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [trainings, setTrainings] = useState([]);
+  const [filteredTrainings, setFilteredTrainings] = useState([]);
+  const [selectedTraining, setSelectedTraining] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [trainingToDelete, setTrainingToDelete] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  /* -------------------------------------------------- */
-  /*                 STATES PRINCIPAUX                  */
-  /* -------------------------------------------------- */
-  const [searchTerm,        setSearchTerm]        = useState('');
-  const [trainings,         setTrainings]         = useState([]);          // toutes les formations
-  const [filteredTrainings, setFilteredTrainings] = useState([]);          // filtrées
-  const [selectedTraining,  setSelectedTraining]  = useState(null);        // pour View
-  const [showViewModal,     setShowViewModal]     = useState(false);
-  const [showDeleteModal,   setShowDeleteModal]   = useState(false);
-  const [trainingToDelete,  setTrainingToDelete]  = useState(null);
-  const [isLoading,         setIsLoading]         = useState(true);
-
-  /* -------------------------------------------------- */
-  /*           CHARGEMENT INITIAL (mock data)           */
-  /* -------------------------------------------------- */
-  useEffect(() => {
-    // Simuler un délai de chargement afin d'afficher le spinner
-    const timer = setTimeout(() => {
-      setTrainings([...mockTrainings]); // copie défensive
-      setFilteredTrainings([...mockTrainings]);
+  const fetchTrainings = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/formations/');
+      setTrainings(response.data);
+      setFilteredTrainings(response.data);
+    } catch (error) {
+      toast.error("Erreur lors de la récupération des formations.");
+      console.error(error);
+    } finally {
       setIsLoading(false);
-    }, 300); // 300 ms
-    return () => clearTimeout(timer);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrainings();
   }, []);
 
-  /* -------------------------------------------------- */
-  /*                  FILTRAGE RECHERCHE                */
-  /* -------------------------------------------------- */
   useEffect(() => {
-    const term = searchTerm.toLowerCase();
-    const results = trainings.filter(t =>
-      t.title.toLowerCase().includes(term) ||
-      t.department.toLowerCase().includes(term) ||
-      (t.createdBy || '').toLowerCase().includes(term)
+    const results = trainings.filter(training =>
+      training.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      training.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      training.statut.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredTrainings(results);
   }, [searchTerm, trainings]);
 
-  const handleSearch = e => setSearchTerm(e.target.value);
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
-  /* -------------------------------------------------- */
-  /*                      ACTIONS CRUD                  */
-  /* -------------------------------------------------- */
+  const handleView = (training) => {
+    setSelectedTraining(training);
+    setShowViewModal(true);
+  };
 
-  const handleDeleteConfirm = id => {
+  const handleDeleteConfirm = (id) => {
     setTrainingToDelete(id);
     setShowDeleteModal(true);
   };
 
-  const deleteTraining = () => {
-    if (!trainingToDelete) return;
-
-    // 🔸 Retirer la formation dans le state et dans le tableau mock
-    const updatedList = trainings.filter(t => t.id !== trainingToDelete);
-    setTrainings(updatedList);
-    setFilteredTrainings(updatedList);
-
-    // Facultatif : si tu veux refléter la suppression dans le tableau importé
-    const idx = mockTrainings.findIndex(t => t.id === trainingToDelete);
-    if (idx !== -1) mockTrainings.splice(idx, 1);
-
-    toast.success('Formation supprimée avec succès');
-    setShowDeleteModal(false);
-    setTrainingToDelete(null);
+  const deleteTraining = async () => {
+    if (trainingToDelete) {
+      try {
+        await api.delete(`/formations/${trainingToDelete}/`);
+        setTrainings(trainings.filter(t => t.id !== trainingToDelete));
+        toast.success("Formation supprimée avec succès !");
+      } catch (error) {
+        toast.error("Erreur lors de la suppression !");
+        console.error(error);
+      } finally {
+        setShowDeleteModal(false);
+        setTrainingToDelete(null);
+      }
+    }
   };
 
-  const handleEdit = id => navigate(`/manager/trainings/edit/${id}`);
-  const handleAdd  = () => navigate('/manager/trainings/add');
+  const handleEdit = (id) => {
+    navigate(`/manager/trainings/edit/${id}`);
+  };
 
-  /* -------------------------------------------------- */
-  /*                        RENDER                      */
-  /* -------------------------------------------------- */
+  const handleAdd = () => {
+    navigate('/manager/trainings/add/');
+  };
+
   return (
     <div className={styles.dashboard}>
-      {/* HEADER */}
       <div className={styles.dashboardHeader}>
         <h1 className={styles.dashboardTitle}>Formations</h1>
         <button className={styles.addButton} onClick={handleAdd}>
@@ -104,19 +103,13 @@ const TrainingListManager = () => {
         </button>
       </div>
 
-      {/* BARRE DE RECHERCHE */}
       <div className={styles.searchContainer}>
-        <SearchBar
-          value={searchTerm}
-          onChange={handleSearch}
-          placeholder="Rechercher par titre, département, créateur..."
-        />
+        <SearchBar value={searchTerm} onChange={handleSearch} placeholder="Rechercher par titre, description, statut..." />
         <div className={styles.searchStats}>
           {filteredTrainings.length} formation{filteredTrainings.length !== 1 ? 's' : ''} trouvée{filteredTrainings.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      {/* TABLEAU OU SPINNER */}
       <div className={styles.contentContainer}>
         {isLoading ? (
           <div className={styles.loadingContainer}>
@@ -126,13 +119,18 @@ const TrainingListManager = () => {
         ) : (
           <TrainingTable
             trainings={filteredTrainings}
+            onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDeleteConfirm}
           />
         )}
       </div>
-
-
+{/*
+      <ViewTrainingModal
+        show={showViewModal}
+        onHide={() => setShowViewModal(false)}
+        training={selectedTraining}
+      />*/}
 
       <DeleteTrainingModal
         show={showDeleteModal}

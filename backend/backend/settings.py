@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     # Mes applications
     'personne',
     'projet',
+    'formation',
 ]
 
 MIDDLEWARE = [
