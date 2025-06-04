@@ -11,6 +11,10 @@ const emptyOption    = () => ({ texte: '', is_correct: false });
 const emptyQuestion  = () => ({ texte: '', type: 'single_choice', point: 1, options: [emptyOption()], correct_raw:'', image: null });
 const emptyQuiz      = () => ({ estimated_time: '00:00:00', questions: [emptyQuestion()] });
 
+const userData = JSON.parse(localStorage.getItem('userData'));
+const accessToken = localStorage.getItem('accessToken');
+const userId = userData?.matricule; 
+
 const TrainingForm = () => {
   /* --- routing / mode --- */
   const { id } = useParams();
@@ -19,6 +23,7 @@ const TrainingForm = () => {
 
   /* --- général --- */
   const [domains, setDomains] = useState([]);
+  const [existingCover, setExistingCover] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors,  setErrors]  = useState({});
 
@@ -116,11 +121,13 @@ const TrainingForm = () => {
 
         if (isEditMode) {
           const { data: training } = await api.get(`/formations/${id}/`);
+          setExistingCover(training.image_cover);
           // L'API renvoie déjà modules / ressources / quiz imbriqués
           setFormData({
             ...training,
             domain: training.domain ?? '',
             image_cover: null, // pour ne pas ré-afficher le fichier
+
           });
           setShowModules(training.modules.length > 0);
           setShowResources(training.ressources.length > 0);
@@ -238,12 +245,14 @@ const TrainingForm = () => {
   /* ------------------------------------------------------------ */
   const validate = () => {
     const e = {};
+    const hasCover = existingCover || formData.image_cover;
 
     /* ---------- Formation (toujours obligatoires) ---------- */
     if (!formData.titre.trim())         e.titre        = 'Titre requis';
     if (!formData.description.trim())   e.description  = 'Description requise';
     if (!formData.domain)               e.domain       = 'Domaine requis';
-    if (!formData.image_cover) e.image_cover = 'Image de couverture requise';
+   
+    if (!hasCover) e.image_cover = 'Image de couverture requise';
 
 
     /* ---------- Modules (seulement si showModules = true) ---------- */
@@ -335,7 +344,15 @@ const TrainingForm = () => {
       const fd = new FormData();
       // simples
       ['titre','description','domain','statut'].forEach(k => fd.append(k, formData[k]));
-      if (formData.image_cover) fd.append('image_cover', formData.image_cover);
+      if(userId) fd.append('created_by', userId); // si utilisateur connecté
+      if (existingCover) {
+        // aucun changement : ne rien mettre dans FormData → on garde la même image
+      } else if (formData.image_cover) {
+        fd.append('image_cover', formData.image_cover);   // nouvelle image
+      } else {
+        // existingCover supprimée et pas de nouvelle → envoyer '' pour effacer
+        fd.append('image_cover', '');
+      }
 
       // modules
       const modMeta = formData.modules.map((m, i) => {
@@ -393,14 +410,17 @@ const TrainingForm = () => {
         await api.put(`/formations/${id}/`, fd, { headers:{'Content-Type':'multipart/form-data'} });
         toast.success('Formation mise à jour');
       } else {
-        await api.post('/formations/', fd, { headers:{'Content-Type':'multipart/form-data'} });
+        await api.post('/formations/', fd, { 
+          Authorization: `Bearer ${accessToken}`,
+          headers:{'Content-Type':'multipart/form-data'} 
+        });
         toast.success('Formation créée');
       }
       navigate('/manager/trainings');
     } catch (err) {
       if (err.response) {
         console.error('Validation errors →', err.response.data);
-        toast.error(JSON.stringify(err.response.data, null, 2), { duration: 8000 });
+        toast.error('Validation errors →', err.response.data);
       } else {
         console.error(err);
         toast.error('Erreur réseau');
@@ -476,18 +496,20 @@ const TrainingForm = () => {
 
         <div className="mb-4">
           <label className={styles.formLabel}>Image de couverture<span className="text-danger">*</span></label>
+
+          {existingCover && (
+            <div className="mb-2">
+              <img src={existingCover} alt="Couverture actuelle" className="img-thumbnail" style={{maxWidth:140}} />
+            </div>
+          )}
+
+
           <input
-
             id="image_cover"
-
             type="file"
-
             name="image_cover"
-
             onChange={handleSimpleChange}
-
             className={`${styles.formControl} ${getError('image_cover') ? styles.inputError : ''}`}
-
           />
 
           {getError('image_cover') && <p className={styles.errorText}>{getError('image_cover')}</p>}
@@ -608,6 +630,9 @@ const TrainingForm = () => {
 
                     <div className="col-md-12">
                       <label htmlFor={`res-${idx}-file`} className={styles.formLabel}>Fichier<span className="text-danger">*</span></label>
+                      {isEditMode && r.file && typeof r.file === 'string'  && (
+                        <a href={r.file} target="_blank" rel="noopener noreferrer">Fichier existant</a>
+                      )}
                       <input
                         id={`res-${idx}-file`}
                         type="file"
@@ -632,14 +657,15 @@ const TrainingForm = () => {
                   </div>
                   <div className="row mt-3 g-2 mb-4">
 
-                    <div className="col-md-3 d-flex align-items-center">
+                    <div className="col-md-3 d-flex align-items-center form-check form-switch">
                       <input
                         id={`res-${idx}-conf`}
                         type="checkbox"
                         checked={r.confidentiel}
                         onChange={e => handleResourceChange(idx, 'confidentiel', e.target.checked)}
+                        class="form-check-input"
                       />
-                      <label htmlFor={`res-${idx}-conf`} className="ms-2">Confidentiel</label>
+                      <label htmlFor={`res-${idx}-conf`} className="form-check-label ms-2">Confidentiel</label>
                     </div>
                   </div>
                   {modErr && <p className={styles.errorText}>{modErr}</p>}
