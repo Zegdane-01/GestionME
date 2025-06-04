@@ -1,3 +1,4 @@
+import os
 from rest_framework import viewsets
 from .models import *
 from .serializers import *
@@ -25,6 +26,32 @@ class FormationViewSet(viewsets.ModelViewSet):
         if self.request.method in ['POST', 'PUT', 'PATCH']:
             return FormationWriteSerializer   # écriture
         return FormationReadSerializer        # lecture détaillée
+    
+    def perform_destroy(self, instance):
+        # Supprimer image de couverture
+        if instance.image_cover and instance.image_cover.path and os.path.isfile(instance.image_cover.path):
+            os.remove(instance.image_cover.path)
+
+        # Supprimer fichiers et objets Resource liés
+        for res in instance.ressources.all():
+            if res.file and res.file.path and os.path.isfile(res.file.path):
+                os.remove(res.file.path)
+            res.delete()
+
+        # Supprimer fichiers et objets Module liés
+        for mod in instance.modules.all():
+            if mod.video and mod.video.path and os.path.isfile(mod.video.path):
+                os.remove(mod.video.path)
+            mod.delete()
+
+        # Supprimer fichiers image des questions du quiz
+        if hasattr(instance, 'quiz'):
+            for q in instance.quiz.questions.all():
+                if q.image and q.image.path and os.path.isfile(q.image.path):
+                    os.remove(q.image.path)
+
+        # Supprimer la formation elle-même (supprime aussi quiz/questions/options via CASCADE)
+        instance.delete()
 
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()

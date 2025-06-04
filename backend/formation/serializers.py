@@ -7,17 +7,12 @@ from django.utils.dateparse import parse_duration
 from datetime import timedelta
 
 def _parse_duration_or_none(value):
-    """
-    Convertit 'HH:MM:SS' → timedelta.
-    Retourne None si value est vide ou None.
-    Soulève ValidationError si le format est invalide.
-    """
-    if not value:
+    """Transforme une chaîne HH:MM:SS en timedelta"""
+    try:
+        h, m, s = map(int, s.strip().split(':'))
+        return timedelta(hours=h, minutes=m, seconds=s)
+    except:
         return None
-    td = parse_duration(value)
-    if td is None or not isinstance(td, timedelta):
-        raise serializers.ValidationError("Format de durée invalide (HH:MM:SS attendu).")
-    return td
 
 class EquipeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -88,8 +83,8 @@ class FormationReadSerializer(serializers.ModelSerializer):
     created_by_info = MiniPersonneSerializer(source='created_by',read_only=True)
 
 
-    modules    = serializers.SerializerMethodField()
-    ressources = serializers.SerializerMethodField()
+    modules    = ModuleSerializer(many=True, read_only=True)
+    ressources = ResourceSerializer(many=True, read_only=True)
     quiz = serializers.SerializerMethodField( allow_null=True, required=False)
 
     class Meta:
@@ -133,7 +128,7 @@ class FormationWriteSerializer(serializers.ModelSerializer):
 
     created_by = serializers.PrimaryKeyRelatedField(
         queryset=Personne.objects.all(),
-        allow_null=True,
+        allow_null=False,
         required=False
     )
     domain = serializers.PrimaryKeyRelatedField(
@@ -242,6 +237,66 @@ class FormationWriteSerializer(serializers.ModelSerializer):
                 ])
 
         return formation
+
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        modules_data = json.loads(request.data.get('modules', '[]'))
+        ressources_data = json.loads(request.data.get('ressources', '[]'))
+
+        # Gestion des modules
+        instance.modules.clear()
+        for i, mod_data in enumerate(modules_data):
+            video_key = mod_data.get('video')
+            video_file = request.FILES.get(video_key) if video_key else None
+
+            if video_file:
+                # si un nouveau fichier a été envoyé, supprimer l'ancien (optionnel)
+                old_module = instance.modules.filter(titre=mod_data['titre']).first()
+                if old_module and old_module.video:
+                    old_module.video.delete(save=False)
+
+                mod = Module.objects.create(
+                    titre=mod_data['titre'],
+                    description=mod_data['description'],
+                    estimated_time=_parse_duration_or_none(mod_data.get('estimated_time')),
+                    video=video_file,
+                )
+            else:
+                # retrouver l'ancien module par titre ou ID
+                mod = Module.objects.filter(titre=mod_data['titre']).first()
+            if mod:
+                instance.modules.add(mod)
+
+        # Gestion des ressources
+        instance.ressources.clear()
+        for i, res_data in enumerate(ressources_data):
+            file_key = res_data.get('file')
+            file_obj = request.FILES.get(file_key) if file_key else None
+
+            if file_obj:
+                old_res = instance.ressources.filter(name=res_data['name']).first()
+                if old_res and old_res.file:
+                    old_res.file.delete(save=False)
+
+                res = Resource.objects.create(
+                    name=res_data['name'],
+                    estimated_time=_parse_duration_or_none(res_data.get('estimated_time')),
+                    confidentiel=res_data['confidentiel'],
+                    file=file_obj
+                )
+            else:
+                res = Resource.objects.filter(name=res_data['name']).first()
+            if res:
+                instance.ressources.add(res)
+
+        # Mettez à jour les champs simples
+        instance.titre = validated_data.get('titre', instance.titre)
+        instance.description = validated_data.get('description', instance.description)
+        instance.statut = validated_data.get('statut', instance.statut)
+        instance.domain = validated_data.get('domain', instance.domain)
+        instance.save()
+
+        return instance
 
 
 

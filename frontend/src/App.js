@@ -22,6 +22,9 @@ import ProjetForm from './pages/Projet/ProjetForm.jsx';
 import TrainingList from './pages/Training/TrainingList';
 import TrainingDetail from './pages/Training/TrainingDetail';
 
+import EquipeList from './pages/Equipe/EquipeList.jsx';
+import EquipeForm from './pages/Equipe/EquipeForm.jsx';
+
 import TrainingListManager from './pages/Training/Manager/TrainingListManager.jsx';
 import TrainingForm from "./pages/Training/Manager/TrainingForm.jsx";
 
@@ -72,6 +75,11 @@ function App() {
 
             <Route path="/trainings" element={<TrainingList />} />
             <Route path="/trainings/:id" element={<TrainingDetail />} />
+
+            <Route path="/equipes" element={<EquipeList />} />
+            <Route path="/equipes/add" element={<EquipeForm />} />
+            <Route path="/equipes/edit/:id" element={<EquipeForm />} />
+
 
             <Route path="/manager/trainings" element={<TrainingListManager />} />
             <Route path="/manager/trainings/add" element={<TrainingForm />} />

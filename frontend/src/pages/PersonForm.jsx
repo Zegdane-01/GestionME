@@ -570,16 +570,16 @@ const PersonForm = () => {
         <div className="row g-4 mb-4"> 
 
           <div className="col-md-6 flex items-center">
-            <div className={styles.formGroup}>
+            <div className={`${styles.formGroup}} form-check form-switch`}>
               <input
                 type="checkbox"
                 name="is_active"
                 checked={formData.is_active}
                 onChange={handleChange}
-                className="mr-2"
+                class="form-check-input"
                 id="is_active"
               />
-              <label htmlFor="is_active" className="text-gray-700">Compte actif</label>
+              <label htmlFor="is_active" class="text-gray-700 form-check-label">Compte actif</label>
              </div>
           </div>
         </div>

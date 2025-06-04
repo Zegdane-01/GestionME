@@ -1,0 +1,64 @@
+.equipeDetailContainer {
+  border: 0.05rem solid rgba(0, 0, 0, 0.135);
+  border-radius: 7px;
+  padding: 15px 30px;
+}
+
+.noEquipeSelected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #6c757d;
+}
+
+.noEquipeSelected i {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  color: #0063af;
+}
+
+.equipeHeader {
+  display: flex;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #cecdcd;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.equipeTitle {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #0063af;
+  margin: 0px;
+  margin-left: 20px;
+}
+
+.fieldRow {
+  display: flex;
+  padding: 10px 15px;
+  border-bottom: 1px solid #cecdcd;
+}
+
+.fieldRow:last-child {
+  border-bottom: none;
+}
+
+.fieldLabel {
+  flex: 0 0 40%;
+  font-weight: 600;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+}
+
+.fieldIcon {
+  margin-right: 8px;
+  color: #0063af;
+}
+
+.fieldValue {
+  flex: 0 0 60%;
+  word-break: break-word;
+}
