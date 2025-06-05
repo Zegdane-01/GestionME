@@ -4,14 +4,21 @@ import { toast } from 'react-hot-toast';
 import api from "../../api/api";
 import styles from '../../assets/styles/Form.module.css';
 
+
+
 const EquipeForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = id !== undefined;
 
+  const [userSearch, setUserSearch] = useState(''); 
+  const [searchDomain, setSearchDomain] = useState('');
+  const [allDomains, setAllDomains] = useState([]);
+
   const [formData, setFormData] = useState({
     name: '',
-    assigned_users: [],
+    assigned_users: [],   // collaborateurs cochés
+    domains: [],          // <-- nouveaux IDs de domaines cochés
   });
 
   const [errors, setErrors] = useState({});
@@ -30,11 +37,17 @@ const EquipeForm = () => {
         const usersRes = await api.get('/personne/personnes/');
         setAllUsers(usersRes.data);
 
+        const domainsRes = await api.get('/domains/');
+        setAllDomains(domainsRes.data);
+
         if (isEditMode) {
           const res = await api.get(`/equipes/${id}/`);
+
           setFormData({
             name: res.data.name,
             assigned_users: res.data.assigned_users || [],
+            // on extrait les IDs des domaines liés
+            domains: res.data.domains_info.map(d => d.id.toString()),
           });
         }
       } catch (err) {
@@ -46,6 +59,12 @@ const EquipeForm = () => {
     fetchData();
   }, [id, isEditMode]);
 
+  const filteredUsers = allUsers.filter(user =>
+    `${user.first_name} ${user.last_name} ${user.email}`
+        .toLowerCase()
+        .includes(userSearch.toLowerCase())
+  );
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -54,31 +73,26 @@ const EquipeForm = () => {
     }));
   };
 
-  const handleSelectChange = (e) => {
-    const { options } = e.target;
-    const selected = [];
-    for (let option of options) {
-      if (option.selected) selected.push(option.value);
-    }
-    setFormData(prev => ({
-      ...prev,
-      assigned_users: selected
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validateForm();
     setErrors(validationErrors);
 
+    const payload = {
+      ...formData,
+      name: formData.name,
+      assigned_users: formData.assigned_users,
+      domains: formData.domains.map(id => Number(id))
+    };
+
     if (Object.keys(validationErrors).length === 0) {
       setLoading(true);
       try {
         if (isEditMode) {
-          await api.put(`/equipes/${id}/`, formData);
+          await api.put(`/equipes/${id}/`, payload);
           toast.success("Équipe mise à jour avec succès");
         } else {
-          await api.post(`/equipes/`, formData);
+          await api.post(`/equipes/`, payload);
           toast.success("Équipe créée avec succès");
         }
         navigate('/equipes');
@@ -118,25 +132,78 @@ const EquipeForm = () => {
 
           <div className="col-md-12">
             <div className={styles.formGroup}>
-              <label htmlFor="assigned_users" className={styles.formLabel}>
-                Membres assignés
-              </label>
-              <select
-                id="assigned_users"
-                name="assigned_users"
-                multiple
-                value={formData.assigned_users}
-                onChange={handleSelectChange}
+            <label className={styles.formLabel}>Membres assignés</label>
+            <input
+                type="text"
+                placeholder="Rechercher un membre..."
                 className={styles.formControl}
-              >
-                {allUsers.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name} ({user.email})
-                  </option>
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+            />
+            <div className={styles.checkboxGrid}>
+                {filteredUsers.map(user => (
+                <label key={user.matricule} className={styles.checkboxItem}>
+                    <input
+                    type="checkbox"
+                    value={user.matricule}
+                    checked={formData.assigned_users.includes(user.matricule)}
+                    onChange={(e) => {
+                        const value = user.matricule;
+                        setFormData(prev => ({
+                        ...prev,
+                        assigned_users: e.target.checked
+                            ? [...prev.assigned_users, value]
+                            : prev.assigned_users.filter(id => id !== value)
+                        }));
+                    }}
+                    />
+                    {user.first_name} {user.last_name}
+                </label>
                 ))}
-              </select>
+            </div>
+            </div>
+
+          </div>
+
+          <div className="col-md-12">
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Domaines associés</label>
+              <input
+                type="text"
+                placeholder="Rechercher un domaine..."
+                className={styles.formControl}
+                value={searchDomain}
+                onChange={(e) => setSearchDomain(e.target.value.toLowerCase())}
+              />
+              <div className={styles.checkboxGrid}>
+                {allDomains
+                  .filter(domain =>
+                    domain.name.toLowerCase().includes(searchDomain)
+                  )
+                  .map((domain) => (
+                    <label key={domain.id} className={styles.checkboxItem}>
+                      <input
+                        type="checkbox"
+                        value={domain.id.toString()}
+                        checked={formData.domains.includes(domain.id.toString())}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            domains: e.target.checked
+                              ? [...prev.domains, value]
+                              : prev.domains.filter((id) => id !== value),
+                          }));
+                        }}
+                      />
+                      {domain.name}
+                    </label>
+                  ))}
+              </div>
             </div>
           </div>
+
+
         </div>
 
         <div className={`${styles.buttonGroup} d-flex justify-content-end`}>
