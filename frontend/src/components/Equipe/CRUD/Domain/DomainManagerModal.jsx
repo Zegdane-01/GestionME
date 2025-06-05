@@ -1,88 +1,165 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Form, ListGroup, InputGroup } from 'react-bootstrap';
+import { Trash, Pencil } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import api from '../../../../api/api';
-import styles from '../../../../assets/styles/Modal.module.css';
+import styles from '../../../../assets/styles/ViewModal.module.css';
+import DeleteDomainModal from './DeleteDomainModal';
 
-const DomainManagerModal = ({ show, onClose }) => {
+
+const DomainManagerModal = ({ show, onHide }) => {
   const [domains, setDomains] = useState([]);
-  const [newName, setNewName] = useState('');
-  const [editingDomain, setEditingDomain] = useState(null);
-
-  useEffect(() => {
-    if (show) fetchDomains();
-  }, [show]);
+  const [newDomain, setNewDomain] = useState('');
+  const [editDomainId, setEditDomainId] = useState(null);
+  const [editDomainName, setEditDomainName] = useState('');
+  const [domainToDelete, setDomainToDelete]   = useState(null);   // {id, name, formation_count}
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const fetchDomains = async () => {
     try {
       const res = await api.get('/domains/');
       setDomains(res.data);
-    } catch (err) {
-      console.error('Erreur lors du chargement des domaines:', err);
+    } catch (error) {
+      console.error('Erreur lors du chargement des domaines', error);
     }
   };
 
-  const handleAddOrEdit = async () => {
+  useEffect(() => {
+    if (show) fetchDomains();
+  }, [show]);
+
+  const handleAddDomain = async () => {
+    if (!newDomain.trim()) return;
     try {
-      if (editingDomain) {
-        await api.put(`/domains/${editingDomain.id}/`, { name: newName });
-      } else {
-        await api.post('/domains/', { name: newName });
-      }
-      setNewName('');
-      setEditingDomain(null);
+      await api.post('/domains/', { name: newDomain });
+      setNewDomain('');
       fetchDomains();
-    } catch (err) {
-      console.error("Erreur lors de l'enregistrement du domaine :", err);
+    } catch (error) {
+      console.error('Erreur ajout domaine', error);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Confirmer la suppression ?')) return;
+  const handleUpdateDomain = async (id) => {
+    if (!editDomainName.trim()) return;
+    try {
+      await api.put(`/domains/${id}/`, { name: editDomainName });
+      setEditDomainId(null);
+      setEditDomainName('');
+      fetchDomains();
+    } catch (error) {
+      console.error('Erreur modification domaine', error);
+    }
+  };
+
+  const handleDeleteDomain = async (id) => {
     try {
       await api.delete(`/domains/${id}/`);
-      fetchDomains();
+      setDomains(prev => prev.filter(domain => domain.id !== id));
+      toast.success('Domaine supprimé avec succès.');
     } catch (err) {
-      console.error("Erreur lors de la suppression :", err);
+      toast.error("Erreur lors de la suppression.");
+      console.error(err);
+    } finally {
+      setShowDeleteModal(false);
     }
   };
 
-  return show ? (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modal}>
-        <h2>Gestion des Domaines</h2>
+  return (
+    <Modal
+      className={styles.customModal}
+      show={show}
+      onHide={onHide}
+      centered
+      size="lg"
+    >
+      <Modal.Header closeButton className={styles.modalHeader}>
+        <Modal.Title>Gestion des domaines</Modal.Title>
+      </Modal.Header>
 
-        <div className={styles.formGroup}>
-          <input
-            type="text"
-            placeholder="Nom du domaine"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-          />
-          <button onClick={handleAddOrEdit}>
-            {editingDomain ? 'Modifier' : 'Ajouter'}
-          </button>
-        </div>
+      <Modal.Body className={styles.modalBody}>
+        <Form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAddDomain();
+          }}
+        >
+          <InputGroup className="mb-3">
+            <Form.Control
+              placeholder="Ajouter un nouveau domaine"
+              value={newDomain}
+              onChange={(e) => setNewDomain(e.target.value)}
+            />
+            <Button variant="primary" type="submit">Ajouter</Button>
+          </InputGroup>
+        </Form>
 
-        <ul className={styles.domainList}>
+        <ListGroup>
           {domains.map((domain) => (
-            <li key={domain.id} className={styles.domainItem}>
-              {domain.name}
-              <div>
-                <button onClick={() => {
-                  setEditingDomain(domain);
-                  setNewName(domain.name);
-                }}>✏️</button>
-                <button onClick={() => handleDelete(domain.id)}>🗑️</button>
-              </div>
-            </li>
+            <ListGroup.Item key={domain.id} className="d-flex justify-content-between align-items-center">
+              {editDomainId === domain.id ? (
+                <>
+                  <Form.Control
+                    value={editDomainName}
+                    onChange={(e) => setEditDomainName(e.target.value)}
+                    className="me-2"
+                  />
+                  <Button
+                    variant="success"
+                    onClick={() => handleUpdateDomain(domain.id)}
+                    size="sm"
+                  >
+                    Enregistrer
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span>{domain.name}</span>
+                  <div>
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => {
+                        setEditDomainId(domain.id);
+                        setEditDomainName(domain.name);
+                      }}
+                      className="me-2"
+                      size="sm"
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      onClick={() => {
+                        setDomainToDelete(domain);
+                        setShowDeleteModal(true);
+                      }}
+                      size="sm"
+                    >
+                      <Trash size={16} />
+                    </Button>
+                  </div>
+                </>
+              )}
+            </ListGroup.Item>
           ))}
-        </ul>
+        </ListGroup>
+      </Modal.Body>
 
-        <div className={styles.modalFooter}>
-          <button onClick={onClose}>Fermer</button>
-        </div>
-      </div>
-    </div>
-  ) : null;
+      <Modal.Footer className={styles.modalFooter}>
+        <Button variant="outline-secondary" onClick={onHide} className={styles.btnClose}>
+          Fermer
+        </Button>
+      </Modal.Footer>
+      <DeleteDomainModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        domain={domainToDelete}
+        onConfirm={async (id) => {
+          await handleDeleteDomain(id);  // ta fonction delete
+          setShowDeleteModal(false);
+        }}
+      />
+    </Modal>
+  );
 };
 
 export default DomainManagerModal;

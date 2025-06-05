@@ -51,7 +51,7 @@ const EquipeTable = ({ equipes, onView, onEdit, onDelete }) => {
                       <FontAwesomeIcon icon={faPencilAlt} />
                     </button>
                     <button
-                      onClick={() => onDelete(equipe.id)}
+                      onClick={() => onDelete(equipe)}
                       title="Supprimer"
                       className={`${styles['actionBtn']} ${styles.delete}`}
                     >
