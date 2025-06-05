@@ -35,10 +35,24 @@ class Resource(TimedContent):
     name = models.CharField(max_length=200)
     file = models.FileField(upload_to='resources/', blank=True, null=True)
     confidentiel = models.BooleanField(default=False)
-    allowed_users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='allowed_resources')
+    allowed_equipes = models.ManyToManyField(
+        Equipe,
+        blank=True,
+        related_name='resources_access'
+    )
+
+    estimated_time  = models.DurationField(default='00:00:00')
 
     def __str__(self):
         return self.name
+    
+    def clean(self):
+        """
+        Si confidentiel=False ➜ on vide automatiquement allowed_equipes
+        (évite de garder des relations inutiles en DB).
+        """
+        if not self.confidentiel and self.pk:       # instance déjà sauvegardée
+            self.allowed_equipes.clear()
 
 class Formation(models.Model):
     STATUS_CHOICES = [

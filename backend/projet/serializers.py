@@ -1,10 +1,9 @@
 from rest_framework import serializers
 from .models import Projet
 from personne.models import Personne
-
+from personne.serializers import MiniPersonneSerializer
 
 class ProjetSerializer(serializers.ModelSerializer):
-    from personne.serializers import MiniPersonneSerializer
 
     tl = serializers.PrimaryKeyRelatedField(
         queryset=Personne.objects.all(),

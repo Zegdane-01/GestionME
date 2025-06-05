@@ -19,6 +19,11 @@ def _parse_duration_or_none(value):
         raise serializers.ValidationError("Format de durée invalide (HH:MM:SS attendu).")
     return td
 
+class EquipeMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Equipe
+        fields = ['id', 'name']
+
 class MiniPersonneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Personne
@@ -86,9 +91,20 @@ class ModuleSerializer(serializers.ModelSerializer):
         fields = ['id', 'titre', 'video', 'description', 'estimated_time']
 
 class ResourceSerializer(serializers.ModelSerializer):
+    allowed_equipes = serializers.PrimaryKeyRelatedField(
+        queryset=Equipe.objects.all(),
+        many=True,
+        allow_null=True
+    )
+    allowed_equipes_info = EquipeMiniSerializer(source='allowed_equipes',read_only=True, many=True)
     class Meta:
-        model = Resource
-        fields = ['id','name', 'file', 'confidentiel', 'estimated_time']
+        model  = Resource
+        fields = [
+            'id', 'name', 'file', 'confidentiel',
+            'estimated_time',
+            'allowed_equipes',          # écrit
+            'allowed_equipes_info'      # lu
+        ]
 
 
 class FormationReadSerializer(serializers.ModelSerializer):
@@ -228,12 +244,15 @@ class FormationWriteSerializer(serializers.ModelSerializer):
         # ----- Ressources -----
         for idx, r in enumerate(ressources_data):
             file_obj = request.FILES.get(r.get('file'))
+            equipe_ids = r.get('allowed_equipes', [])
             resource = Resource.objects.create(
                 name           = r['name'],
                 file           = file_obj,
                 confidentiel   = r.get('confidentiel', False),
                 estimated_time = _parse_duration_or_none(r.get('estimated_time')),
             )
+            if resource.confidentiel and equipe_ids:
+                resource.allowed_equipes.set(Equipe.objects.filter(pk__in=equipe_ids))
             formation.ressources.add(resource)
 
         # ----- Quiz (+ questions / options) -----
@@ -296,34 +315,62 @@ class FormationWriteSerializer(serializers.ModelSerializer):
                 instance.modules.add(mod)
 
         # Gestion des ressources
-        instance.ressources.clear()
-        for i, res_data in enumerate(ressources_data):
-            file_key = res_data.get('file')
-            file_obj = request.FILES.get(file_key) if file_key else None
+        processed_resource_ids = []
+        for res_data in ressources_data:
+            resource_id = res_data.get('id')
+            is_confidentiel = res_data.get('confidentiel', False)
+            equipe_ids = res_data.get('allowed_equipes', [])
 
-            if file_obj:
-                old_res = instance.ressources.filter(name=res_data['name']).first()
-                if old_res and old_res.file:
-                    old_res.file.delete(save=False)
+            existing_resource = None
+            if resource_id:
+                try:
+                    existing_resource = Resource.objects.get(id=resource_id, formations=instance)
+                except Resource.DoesNotExist:
+                    pass
 
+            if existing_resource:
+                # --- Mise à jour de la ressource existante ---
+                res = existing_resource
+                res.name = res_data.get('name', res.name)
+                res.estimated_time = _parse_duration_or_none(res_data.get('estimated_time'))
+                res.confidentiel = is_confidentiel
+
+                # Gestion du fichier s'il est changé
+                file_key = res_data.get('file')
+                file_obj = request.FILES.get(file_key) if file_key else None
+                if file_obj:
+                    if res.file:
+                        res.file.delete(save=False)
+                    res.file = file_obj
+                
+                res.save()
+            else:
+                # --- Création d'une nouvelle ressource ---
+                file_key = res_data.get('file')
+                file_obj = request.FILES.get(file_key) if file_key else None
+                if not file_obj:
+                    continue # On ne crée pas une ressource sans fichier
                 res = Resource.objects.create(
-                    name=res_data['name'],
+                    name=res_data.get('name'),
                     estimated_time=_parse_duration_or_none(res_data.get('estimated_time')),
-                    confidentiel=res_data['confidentiel'],
+                    confidentiel=is_confidentiel,
                     file=file_obj
                 )
+            
+            # --- Gestion des équipes pour la ressource (nouvelle ou mise à jour) ---
+            if res.confidentiel:
+                res.allowed_equipes.set(Equipe.objects.filter(pk__in=equipe_ids))
             else:
-                res = Resource.objects.filter(name=res_data['name']).first()
-            if res:
-                instance.ressources.add(res)
+                res.allowed_equipes.clear()
 
-        # Mettez à jour les champs simples
-        instance.titre = validated_data.get('titre', instance.titre)
-        instance.description = validated_data.get('description', instance.description)
-        instance.statut = validated_data.get('statut', instance.statut)
-        instance.domain = validated_data.get('domain', instance.domain)
+            # On ajoute l'ID à notre liste
+            processed_resource_ids.append(res.id)
+
+        # Synchroniser la liste des ressources de la formation
+        instance.ressources.set(processed_resource_ids)
+
+        # ... le reste de votre fonction update
         instance.save()
-
         return instance
 
 

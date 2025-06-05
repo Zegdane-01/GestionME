@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Personne
+from formation.serializers import EquipeSerializer
 from projet.models import Projet
 from datetime import date
 
@@ -53,6 +54,7 @@ class PersonneSerializer(serializers.ModelSerializer):
         allow_null = True,
         required = False
     )
+    equipe_info = serializers.SerializerMethodField()
     manager_info =  MiniPersonneSerializer(source='manager',read_only=True)
     backup_info =  MiniPersonneSerializer(source='backup',read_only=True)
     projet_info = MiniProjetSerializer(source='projet',read_only=True)
@@ -86,9 +88,16 @@ class PersonneSerializer(serializers.ModelSerializer):
             'is_active',
             'experience_expleo',
             'experience_total',
+            'equipe_info',
         ]
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
-
+    def get_equipe_info(self, obj):
+        premiere_equipe = obj.equipes.first() 
+        if premiere_equipe:
+            # Si une équipe est trouvée, on la sérialise et on la retourne
+            return EquipeSerializer(premiere_equipe).data
+        # Si la personne n'a aucune équipe, on ne retourne rien
+        return None
 class PersonneHierarchieSerializer(serializers.ModelSerializer):
     subordinates=serializers.SerializerMethodField()
 

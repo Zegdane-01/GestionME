@@ -155,3 +155,5 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         self.experience_total = self.calcul_experience_total()
         
         super(Personne, self).save(*args, **kwargs)
+
+        
