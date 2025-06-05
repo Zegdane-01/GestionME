@@ -5,12 +5,14 @@ import SearchBar from '../../components/Personne_Projet/SearchBar';
 import EquipeTable from '../../components/Equipe/CRUD/EquipeTable';
 import ViewEquipeModal from '../../components/Equipe/CRUD/ViewEquipeModal';
 import DeleteEquipeModal from '../../components/Equipe/CRUD/DeleteEquipeModal';
+import DomainManagerModal from '../../components/Equipe/CRUD/Domain/DomainManagerModal';
 import styles from '../../assets/styles/List.module.css';
 import api from '../../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 const EquipeList = () => {
+  const [showDomainModal, setShowDomainModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [equipes, setEquipes] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -69,9 +71,17 @@ const EquipeList = () => {
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
         <h1 className={styles.dashboardTitle}>Équipes</h1>
-        <button className={styles.addButton} onClick={handleAdd}>
-          <FontAwesomeIcon icon={faPlus} className={styles.addIcon} /> <span>Nouvelle Équipe</span>
-        </button>
+         <div className="d-flex justify-content-end gap-2">
+            <button
+              className={`${styles.addButton}`}
+              onClick={() => setShowDomainModal(true)}
+            >
+              Gérer Domaines
+            </button>
+            <button className={styles.addButton} onClick={handleAdd}>
+              <FontAwesomeIcon icon={faPlus} className={styles.addIcon} /> <span>Nouvelle Équipe</span>
+            </button>
+        </div>
       </div>
 
       <div className={styles.searchContainer}>
@@ -112,6 +122,11 @@ const EquipeList = () => {
         show={showDelete}
         onHide={() => setShowDelete(false)}
         onConfirm={deleteEquipe}
+      />
+
+      <DomainManagerModal
+        show={showDomainModal}
+        onClose={() => setShowDomainModal(false)}
       />
     </div>
   );

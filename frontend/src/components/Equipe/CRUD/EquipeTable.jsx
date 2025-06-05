@@ -17,6 +17,7 @@ const EquipeTable = ({ equipes, onView, onEdit, onDelete }) => {
           <tr>
             <th>Nom</th>
             <th>Membres assignés</th>
+            <th>Domaines</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -28,6 +29,10 @@ const EquipeTable = ({ equipes, onView, onEdit, onDelete }) => {
                 <td>
                   <FontAwesomeIcon icon={faUsers} />{' '}
                   {equipe.assigned_users?.length ?? 0} membre(s)
+                </td>
+                <td>
+                    <FontAwesomeIcon icon={faRocket} />{' '}
+                    {equipe.domain_count ?? 0} domaine(s)
                 </td>
                 <td className={styles.actionsCell}>
                   <div className={styles.actionGroup}>

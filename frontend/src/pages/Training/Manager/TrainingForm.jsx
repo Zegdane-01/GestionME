@@ -663,7 +663,7 @@ const TrainingForm = () => {
                         type="checkbox"
                         checked={r.confidentiel}
                         onChange={e => handleResourceChange(idx, 'confidentiel', e.target.checked)}
-                        class="form-check-input"
+                        className="form-check-input"
                       />
                       <label htmlFor={`res-${idx}-conf`} className="form-check-label ms-2">Confidentiel</label>
                     </div>

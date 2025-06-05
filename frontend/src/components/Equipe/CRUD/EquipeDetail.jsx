@@ -33,15 +33,29 @@ const EquipeDetail = ({ equipe }) => {
         label="Membres assignés"
         icon="people-fill"
         value={
-          (equipe.assigned_users_info && equipe.assigned_users_info.length > 0) ? (
-            <ul style={{ paddingLeft: '1.2rem' }}>
+          (equipe.assigned_users_info?.length > 0) ? (
+            <ul className={styles.scrollList}>
               {equipe.assigned_users_info.map((user) => (
-                <li key={user.id}>
-                  {user.first_name} {user.last_name} — <i>{user.email}</i>
+                <li key={user.maticule}>
+                  {user.first_name} {user.last_name}
                 </li>
               ))}
             </ul>
           ) : 'Aucun membre assigné'
+        }
+      />
+
+      <FieldRow
+        label="Domaines liés"
+        icon="diagram-3-fill"
+        value={
+          (equipe.domains_info?.length > 0) ? (
+            <ul className={styles.scrollList}>
+              {equipe.domains_info.map((domain) => (
+                <li key={domain.id}>{domain.name}</li>
+              ))}
+            </ul>
+          ) : 'Aucun domaine lié'
         }
       />
     </div>

@@ -7,22 +7,44 @@ from django.utils.dateparse import parse_duration
 from datetime import timedelta
 
 def _parse_duration_or_none(value):
-    """Transforme une chaîne HH:MM:SS en timedelta"""
-    try:
-        h, m, s = map(int, s.strip().split(':'))
-        return timedelta(hours=h, minutes=m, seconds=s)
-    except:
+    """
+    Convertit 'HH:MM:SS' → timedelta.
+    Retourne None si value est vide ou None.
+    Soulève ValidationError si le format est invalide.
+    """
+    if not value:
         return None
+    td = parse_duration(value)
+    if td is None or not isinstance(td, timedelta):
+        raise serializers.ValidationError("Format de durée invalide (HH:MM:SS attendu).")
+    return td
 
-class EquipeSerializer(serializers.ModelSerializer):
+class MiniPersonneSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Equipe
-        fields = '__all__'
+        model = Personne
+        fields = ('matricule', 'first_name', 'last_name')
+
 
 class DomainSerializer(serializers.ModelSerializer):
     class Meta:
         model = Domain
         fields = '__all__'
+
+class EquipeSerializer(serializers.ModelSerializer):
+    assigned_users_info = MiniPersonneSerializer(source='assigned_users', many=True, read_only=True)
+    domains_info = DomainSerializer(source='domains', many=True, read_only=True)
+    domain_count = serializers.SerializerMethodField()
+    class Meta:
+        model = Equipe
+        fields = ['id', 'name', 'assigned_users', 'domains', 'domain_count', 'assigned_users_info', 'domains_info']
+
+    def get_domain_count(self, obj):
+        """
+        Retourne le nombre de domaines associés à cette équipe.
+        """
+        return obj.domains.count()
+
+
 class OptionSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Option
@@ -57,11 +79,6 @@ class ResourceSerializer(serializers.ModelSerializer):
         model = Resource
         fields = ['id','name', 'file', 'confidentiel', 'estimated_time']
 
-
-class MiniPersonneSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Personne
-        fields = ('matricule', 'first_name', 'last_name')
 
 class FormationReadSerializer(serializers.ModelSerializer):
     module_count = serializers.SerializerMethodField()
