@@ -26,17 +26,28 @@ class MiniPersonneSerializer(serializers.ModelSerializer):
 
 
 class DomainSerializer(serializers.ModelSerializer):
+    formation_count = serializers.SerializerMethodField()
     class Meta:
         model = Domain
-        fields = '__all__'
+        fields = ['id', 'name', 'formation_count']
+
+    def get_formation_count(self, obj):
+        return obj.formations.count()
 
 class EquipeSerializer(serializers.ModelSerializer):
     assigned_users_info = MiniPersonneSerializer(source='assigned_users', many=True, read_only=True)
+    assigned_users_count = serializers.SerializerMethodField()
     domains_info = DomainSerializer(source='domains', many=True, read_only=True)
     domain_count = serializers.SerializerMethodField()
     class Meta:
         model = Equipe
-        fields = ['id', 'name', 'assigned_users', 'domains', 'domain_count', 'assigned_users_info', 'domains_info']
+        fields = ['id', 'name', 'assigned_users', 'domains', 'domain_count', 'assigned_users_count' , 'assigned_users_info', 'domains_info']
+    
+    def get_assigned_users_count(self, obj):
+        """
+        Retourne le nombre d'utilisateurs assignés à cette équipe.
+        """
+        return obj.assigned_users.count()
 
     def get_domain_count(self, obj):
         """

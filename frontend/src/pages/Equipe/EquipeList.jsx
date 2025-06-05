@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 const EquipeList = () => {
-  const [showDomainModal, setShowDomainModal] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false); 
   const [searchTerm, setSearchTerm] = useState('');
   const [equipes, setEquipes] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -51,14 +51,15 @@ const EquipeList = () => {
 
   const handleSearch = e => setSearchTerm(e.target.value);
   const handleView = equipe => { setSelected(equipe); setShowView(true); };
-  const handleDeleteConfirm = id => { setToDelete(id); setShowDelete(true); };
+  const handleDeleteConfirm = equipe => { setToDelete(equipe); setShowDelete(true); };
   const handleEdit = id => navigate(`/Equipes/edit/${id}`);
   const handleAdd = () => navigate('/Equipes/add');
 
   const deleteEquipe = async () => {
+    if (!toDelete) return;
     try {
-      await api.delete(`/equipes/${toDelete}/`);
-      setEquipes(equipes.filter(e => e.id !== toDelete));
+      await api.delete(`/equipes/${toDelete.id}/`);
+      setEquipes(equipes.filter(e => e.id !== toDelete.id));
       toast.success("Équipe supprimée");
     } catch (err) {
       toast.error("Erreur lors de la suppression");
@@ -74,7 +75,7 @@ const EquipeList = () => {
          <div className="d-flex justify-content-end gap-2">
             <button
               className={`${styles.addButton}`}
-              onClick={() => setShowDomainModal(true)}
+              onClick={() => setModalOpen(true)}
             >
               Gérer Domaines
             </button>
@@ -122,12 +123,11 @@ const EquipeList = () => {
         show={showDelete}
         onHide={() => setShowDelete(false)}
         onConfirm={deleteEquipe}
+        equipe={toDelete}
       />
 
-      <DomainManagerModal
-        show={showDomainModal}
-        onClose={() => setShowDomainModal(false)}
-      />
+      <DomainManagerModal show={modalOpen} onHide={() => setModalOpen(false)} />
+
     </div>
   );
 };

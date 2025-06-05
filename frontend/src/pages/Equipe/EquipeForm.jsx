@@ -14,6 +14,8 @@ const EquipeForm = () => {
   const [userSearch, setUserSearch] = useState(''); 
   const [searchDomain, setSearchDomain] = useState('');
   const [allDomains, setAllDomains] = useState([]);
+  const [available, setAvailable] = useState([]); // utilisateurs disponibles
+  const [allEquipes,   setAllEquipes]   = useState([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -25,6 +27,14 @@ const EquipeForm = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const getAvailableUsers = (users, currentTeamId) =>
+    users.filter(u =>
+      // l'API doit renvoyer u.equipes = [id, …] ou []
+      !u.equipes ||                              // aucun rattachement
+      u.equipes.length === 0 ||
+      (currentTeamId && u.equipes.includes(Number(currentTeamId)))  // déjà dans l’équipe en cours d’édition
+    );
+
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Le nom de l'équipe est requis.";
@@ -34,20 +44,22 @@ const EquipeForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const usersRes = await api.get('/personne/personnes/');
-        setAllUsers(usersRes.data);
+        const [usersRes, equipesRes, domainsRes] = await Promise.all([
+          api.get('/personne/personnes/'),
+          api.get('/equipes/'),
+          api.get('/domains/')
+        ]);
 
-        const domainsRes = await api.get('/domains/');
+        setAllUsers(usersRes.data);
+        setAllEquipes(equipesRes.data);
         setAllDomains(domainsRes.data);
 
         if (isEditMode) {
-          const res = await api.get(`/equipes/${id}/`);
-
+          const team = await api.get(`/equipes/${id}/`);
           setFormData({
-            name: res.data.name,
-            assigned_users: res.data.assigned_users || [],
-            // on extrait les IDs des domaines liés
-            domains: res.data.domains_info.map(d => d.id.toString()),
+            name:            team.data.name,
+            assigned_users:  team.data.assigned_users || [],
+            domains:         team.data.domains_info.map(d => d.id.toString()),
           });
         }
       } catch (err) {
@@ -59,8 +71,32 @@ const EquipeForm = () => {
     fetchData();
   }, [id, isEditMode]);
 
-  const filteredUsers = allUsers.filter(user =>
-    `${user.first_name} ${user.last_name} ${user.email}`
+  useEffect(() => {
+    if (allUsers.length === 0) return;
+
+    /* --- matricules déjà pris dans d’autres équipes --- */
+    const busy = new Set();
+    allEquipes.forEach(eq => {
+      (eq.assigned_users || []).forEach(matricule => busy.add(matricule));
+    });
+
+    /* --- matricules déjà dans l’équipe qu’on édite (autorisé) --- */
+    const current = new Set();
+    if (isEditMode) {
+      const cur = allEquipes.find(e => e.id === Number(id));
+      cur?.assigned_users?.forEach(m => current.add(m));
+    }
+
+    /* --- filtrage final --- */
+    const free = allUsers.filter(u =>
+      !busy.has(u.matricule) || current.has(u.matricule)
+    );
+
+    setAvailable(free);
+  }, [allUsers, allEquipes, id, isEditMode]);
+
+  const filteredUsers = available.filter(user =>
+    `${user.first_name} ${user.last_name}`
         .toLowerCase()
         .includes(userSearch.toLowerCase())
   );
