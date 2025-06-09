@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faPhone, faEye } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-hot-toast';
 import ViewProjetModal from '../components/Projet/CRUD/ViewProjetModal';
+import ViewEquipeModal from '../components/Equipe/CRUD/ViewEquipeModal';
+import { Equal } from 'lucide-react';
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
@@ -27,7 +29,8 @@ const Profile = () => {
     diplome: '',
     ddc: '',
     photo: '',
-    projet_info:'',
+    projet_info: '',
+    Equipe_info: '',
   });
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -40,9 +43,22 @@ const Profile = () => {
   const [showView, setShowView] = useState(false);
   const [selectedProjet, setSelectedProjet] = useState(null);
 
+  const [showEquipeView, setShowEquipeView] = useState(false);
+  const [selectedEquipe, setSelectedEquipe] = useState(null);
+
   const handleProjetClick = () => {
     setSelectedProjet(formData.projet_info);
     setShowView(true);
+  };
+
+  const handleEquipeClick = () => {
+    // Vérifie si les informations de l'équipe existent dans formData
+    if (formData.equipe_info) {
+      setSelectedEquipe(formData.equipe_info); // On passe l'objet entier à la modale
+      setShowEquipeView(true); // On affiche la modale
+    } else {
+      toast.info("Ce collaborateur n'est assigné à aucune équipe.");
+    }
   };
 
   const token = localStorage.getItem('accessToken');
@@ -316,7 +332,25 @@ const handleSave = () => {
               {renderExperienceInput('experience_total','Expérience totale','experience_total')}
               {renderInputDisabled('role','Rôle','text')}
               {renderInputDisabled('position', 'Position', 'text')}
-              {renderInputDisabled('status', 'Statut','text')}
+              <div className="col-md-6 mb-3">
+                <label htmlFor="equipe" className="form-label">Équipe</label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    id="equipe"
+                    name="equipe"
+                    // L'optional chaining (?) est crucial si equipe_info peut être null
+                    value={formData.equipe_info?.name || 'Aucune équipe'}
+                    readOnly
+                    className="form-control"
+                    disabled
+                  />
+                  <span className="input-group-text" onClick={handleEquipeClick} style={{ cursor: 'pointer' }}>
+                    <FontAwesomeIcon icon={faEye} />
+                  </span>
+                </div>
+              </div>
+              
               <div className="col-md-6 mb-3">
                 <label htmlFor="projet" className="form-label">Projet</label>
                 <div className="input-group">
@@ -334,6 +368,7 @@ const handleSave = () => {
                   </span>
                 </div>
               </div>
+
               <div className="col-md-6 mb-3">
                 <label htmlFor="manager" className="form-label">Manager</label>
                 <input
@@ -358,8 +393,9 @@ const handleSave = () => {
                   disabled
                 />
               </div>
+              {renderInputDisabled('status', 'Statut','text')}
               {!editMode ? (
-                <div className="col-md-6">
+                <div className="col-md-12">
                   <div className="info-group">
                     <label className="info-label">DDC</label>
                     <p className="info-value">
@@ -511,6 +547,11 @@ const handleSave = () => {
         show={showView}
         onHide={() => setShowView(false)}
         projet={selectedProjet}
+      />
+      <ViewEquipeModal
+        show={showEquipeView}
+        onHide={() => setShowEquipeView(false)}
+        equipe={selectedEquipe}
       />
     </div>
   );

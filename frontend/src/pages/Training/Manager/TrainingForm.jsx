@@ -3,10 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../../api/api';
 import styles from '../../../assets/styles/Form.module.css';
-import { image } from 'framer-motion/client';
 
 const emptyModule    = () => ({ titre: '', description: '', video: null, estimated_time: '00:00:00' });
-const emptyResource  = () => ({ name: '', file: null, confidentiel: false, estimated_time: '00:00:00' });
+const emptyResource  = () => ({ name: '', file: null, confidentiel: false, estimated_time: '00:00:00', allowed_equipes: []  });
 const emptyOption    = () => ({ texte: '', is_correct: false });
 const emptyQuestion  = () => ({ texte: '', type: 'single_choice', point: 1, options: [emptyOption()], correct_raw:'', image: null });
 const emptyQuiz      = () => ({ estimated_time: '00:00:00', questions: [emptyQuestion()] });
@@ -24,6 +23,9 @@ const TrainingForm = () => {
   /* --- général --- */
   const [domains, setDomains] = useState([]);
   const [existingCover, setExistingCover] = useState(null);
+  const [allEquipes, setAllEquipes] = useState([]);
+  const [searchEquipe, setSearchEquipe] = useState('');
+  const [existingFiles, setExistingFiles] = useState({});
   const [loading, setLoading] = useState(false);
   const [errors,  setErrors]  = useState({});
 
@@ -119,12 +121,27 @@ const TrainingForm = () => {
         const { data } = await api.get('/domains/');
         setDomains(data);
 
+        const equipesRes = await api.get('/equipes/');   // GET /equipes/
+        setAllEquipes(equipesRes.data);
+
         if (isEditMode) {
           const { data: training } = await api.get(`/formations/${id}/`);
           setExistingCover(training.image_cover);
+          const filesMap = {};
+          training.ressources.forEach((r, idx) => {
+            if (r.file) {
+              filesMap[`resource_${idx}`] = r.file;
+            }
+          });
+          setExistingFiles(filesMap);
+          const ressources = training.ressources.map(r => ({
+            ...r,
+            allowed_equipes: (r.allowed_equipes ?? []).map(String),
+          }));
           // L'API renvoie déjà modules / ressources / quiz imbriqués
           setFormData({
             ...training,
+            ressources: ressources,
             domain: training.domain ?? '',
             image_cover: null, // pour ne pas ré-afficher le fichier
 
@@ -165,10 +182,14 @@ const TrainingForm = () => {
   };
 
   /* ---------- ressources ---------- */
-  const handleResourceChange = (index, field, value) => {
-    const updated = [...formData.ressources];
-    updated[index][field] = value;
-    setFormData(prev => ({ ...prev, ressources: updated }));
+  const handleResourceChange = (idx, field, value) => {
+    setFormData(prev => {
+      const ressources = [...prev.ressources];
+      // si field === 'file' on met directement le File
+      // → l’ancienne URL est écrasée, ce qui indique « nouveau fichier »
+      ressources[idx][field] = value;
+      return { ...prev, ressources };
+    });
   };
   const addResource    = () => setFormData(p => ({ ...p, ressources: [...p.ressources, emptyResource()] }));
   const removeResource = (idx) => {
@@ -273,7 +294,8 @@ const TrainingForm = () => {
         e.ressources = 'Ajouter au moins une ressource';
       }
       formData.ressources.forEach((r, i) => {
-        if (!r.name.trim() || !r.file || !r.estimated_time.trim()) {
+        const noFile = !(r.file instanceof File) && typeof r.file !== 'string';
+        if (!r.name.trim() || noFile || !r.estimated_time.trim()) {
           e[`ress${i}`] = 'Tous les champs de la ressource sont obligatoires';
         }
       });
@@ -365,8 +387,21 @@ const TrainingForm = () => {
       fd.append('modules', JSON.stringify(modMeta));
       // ressources : on envoie metadata + fichiers
       const resMeta = formData.ressources.map((r,i) => {
-        if (r.file instanceof File) fd.append(`ressource_file_${i}`, r.file);
-        return { ...r, file: r.file instanceof File ? `ressource_file_${i}` : r.file };
+        if (r.file instanceof File) {
+          const key = `ressource_file_${i}`;
+          fd.append(key, r.file);
+          return {
+            ...r,
+            file: key,
+            allowed_equipes: r.allowed_equipes.map(Number)   // tableau d'int
+          };
+        }
+        const {file, ...rest} = r; // si pas de fichier, on garde le reste
+        return {
+          ...rest,
+          allowed_equipes: r.allowed_equipes.map(Number)
+        };
+        
       });
       fd.append('ressources', JSON.stringify(resMeta));
 
@@ -407,6 +442,7 @@ const TrainingForm = () => {
         fd.append('quiz', JSON.stringify(quizCopy));
       }
       if (isEditMode) {
+        console.log(fd.get('ressources'));
         await api.put(`/formations/${id}/`, fd, { headers:{'Content-Type':'multipart/form-data'} });
         toast.success('Formation mise à jour');
       } else {
@@ -630,7 +666,7 @@ const TrainingForm = () => {
 
                     <div className="col-md-12">
                       <label htmlFor={`res-${idx}-file`} className={styles.formLabel}>Fichier<span className="text-danger">*</span></label>
-                      {isEditMode && r.file && typeof r.file === 'string'  && (
+                      {isEditMode && typeof r.file === 'string' && (
                         <a href={r.file} target="_blank" rel="noopener noreferrer">Fichier existant</a>
                       )}
                       <input
@@ -668,7 +704,48 @@ const TrainingForm = () => {
                       <label htmlFor={`res-${idx}-conf`} className="form-check-label ms-2">Confidentiel</label>
                     </div>
                   </div>
-                  {modErr && <p className={styles.errorText}>{modErr}</p>}
+
+                  {/* …à l’intérieur du bloc confidentiel … */}
+                  {r.confidentiel && (
+                    <div className="col-12 mt-3">
+                      <label className={styles.formLabel}>Équipes autorisées</label>
+
+                      {/* Champ de recherche */}
+                      <input
+                        type="text"
+                        placeholder="Rechercher une équipe…"
+                        className={styles.formControl + ' mb-2'}
+                        value={searchEquipe}
+                        onChange={e => setSearchEquipe(e.target.value.toLowerCase())}
+                      />
+
+                      {/* Grille de cases à cocher */}
+                      <div className={styles.checkboxGrid}>
+                        {allEquipes
+                          .filter(eq =>
+                            eq.name.toLowerCase().includes(searchEquipe)
+                          )
+                          .map(eq => (
+                            <label key={eq.id} className={styles.checkboxItem}>
+                              <input
+                                type="checkbox"
+                                value={eq.id.toString()}
+                                checked={r.allowed_equipes.includes(eq.id.toString())}
+                                onChange={e => {
+                                  const value = e.target.value;        // id (string)
+                                  handleResourceChange(idx, 'allowed_equipes',
+                                    e.target.checked
+                                      ? [...r.allowed_equipes, value]
+                                      : r.allowed_equipes.filter(id => id !== value)
+                                  );
+                                }}
+                              />
+                              {eq.name}
+                            </label>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                   <button type="button" className="btn btn-sm btn-danger mt-2" onClick={() => removeResource(idx)}>
                     Supprimer ressource
                   </button>
