@@ -1,86 +1,93 @@
-import React from 'react';
-import { Play, FileText, Download, CheckCircle } from 'lucide-react';
-import styles from '../../../assets/styles/Training/TrainingDetail/OverviewTab.module.css';
+import React from "react";
+import { Play, FileText, Download, CheckCircle } from "lucide-react";
+import styles from "../../../assets/styles/Training/TrainingDetail/OverviewTab.module.css";
 
+/**
+ * Onglet "Aperçu" / Introduction – affiche :
+ *  - intro
+ *  - liste des modules (chapitres)
+ *  - liste des ressources
+ *  - conclusion
+ */
 const OverviewTab = ({ training, onComplete, isCompleted }) => {
-  /* Indicateurs de présence */
-  const hasContent   = training.chapters.length  > 0;
-  const hasResources = training.resources.length > 0;
+  /* Présence */
+  const modules = training.modules ?? [];
+  const ressources = training.ressources ?? [];
+  const hasContent = modules.length > 0;
+  const hasResources = ressources.length > 0;
 
-  /* Utilitaire : récupérer l'extension en toute circonstance */
-  const getExt = r =>
-    (r.ext ??
-     r.name?.split('.').pop() ??
-     r.url?.split('.').pop() ??
-     ''
-    ).toLowerCase();
+  /* Helper ext */
+  const getExt = (r) => {
+    const raw = r.ext || r.name?.split(".").pop() || r.file?.split(".").pop() || "";
+    return raw.toLowerCase();
+  };
+
+  /* Helper duration minutes → "xh ymin" */
+  const fmtDuration = (d) => {
+    if (!d) return "";
+    // Backend en secondes ou 'PT1H30M'?  Ici on suppose minutes entier
+    const min = Number(d);
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return h ? `${h}h ${m}min` : `${m}min`;
+  };
 
   return (
     <>
-      {/* ─── Introduction ───────────────────────────────────────────── */}
+      {/* Intro */}
       {training.intro && (
-        <div className={`card h-100 p-3 ${styles.box}`}>
+        <div className={`card p-3 mb-4 ${styles.box}`}>
           <h4>Introduction</h4>
           <p>{training.introLong ?? training.intro}</p>
         </div>
       )}
 
-      {/* ─── Contenu + Ressources (même hauteur) ─────────────────── */}
+      {/* Contenu & Ressources */}
       <div className="row gx-4 gy-3 align-items-stretch">
-        {/* Contenu -------------------------------------------------- */}
         {hasContent && (
-          <div className={hasResources ? 'col-lg-6' : 'col-lg-12'}>
+          <div className={hasResources ? "col-lg-6" : "col-lg-12"}>
             <div className={`card h-100 p-4 ${styles.box}`}>
-              <h5 className="mb-3">
-                <Play size={14} /> Contenu
+              <h5 className="mb-3 d-flex align-items-center gap-2">
+                <Play size={16} /> Contenu
               </h5>
-
-              {training.chapters.map((c, idx) => (
-                <div key={c.id} className={styles.line}>
+              {modules.map((m, idx) => (
+                <div key={m.id} className={styles.line}>
                   <span className={styles.roundBadge}>{idx + 1}</span>
                   <div className="flex-grow-1">
-                    <h6 className="mb-0">{c.title}</h6>
-                    <small className="text-muted">{c.duration} min</small>
+                    <h6 className="mb-0">{m.titre}</h6>
+                    <small className="text-muted">{fmtDuration(m.duration)}</small>
                   </div>
-                  {c.completed && <CheckCircle size={16} className="text-success" />}
+                  {m.completed && <CheckCircle size={16} className="text-success" />}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Ressources ---------------------------------------------- */}
         {hasResources && (
-          <div className={hasContent ? 'col-lg-6' : 'col-lg-12'}>
+          <div className={hasContent ? "col-lg-6" : "col-lg-12"}>
             <div className={`card h-100 p-4 ${styles.box}`}>
-              <h5 className="mb-3">
-                <FileText size={14} /> Ressources
+              <h5 className="mb-3 d-flex align-items-center gap-2">
+                <FileText size={16} /> Ressources
               </h5>
-
-              {training.resources.map(r => {
-                const ext      = getExt(r);                          // pdf, xls…
-                const colorCls = styles[`extBadge_${ext}`] || '';    // existe ?
+              {ressources.map((r) => {
+                const ext = getExt(r);
+                const colorCls = styles[`extBadge_${ext}`] || "";
+                const dlUrl = r.url || r.file || "#";
                 return (
                   <div key={r.id} className={styles.line}>
-                    <span className={`${styles.resBadge} ${colorCls}`}>
-                      {(ext || '??').slice(0, 2).toUpperCase()}
-                    </span>
-
+                    <span className={`${styles.resBadge} ${colorCls}`}>{ext.slice(0, 2).toUpperCase()}</span>
                     <div className="flex-grow-1">
                       <strong className="d-block">{r.title ?? r.name}</strong>
-                      <small className="text-muted">{r.size ?? ''}</small>
                     </div>
-
-                    {r.url && (
-                      <a
-                        href={r.url}
-                        download
-                        className={styles.dlBtn}
-                        title="Télécharger"
-                      >
-                        <Download />
-                      </a>
-                    )}
+                    <a
+                      href={dlUrl}
+                      download
+                      className={styles.dlBtn}
+                      title="Télécharger"
+                    >
+                      <Download size={14} />
+                    </a>
                   </div>
                 );
               })}
@@ -89,28 +96,23 @@ const OverviewTab = ({ training, onComplete, isCompleted }) => {
         )}
       </div>
 
-      {/* ─── Conclusion ──────────────────────────────────────────── */}
+      {/* Conclusion */}
       {training.conclusion && (
-        <>
-          <h4 className="mt-4">Conclusion</h4>
+        <div className="mt-4">
+          <h4>Conclusion</h4>
           <p>{training.conclusion}</p>
-        </>
+        </div>
       )}
 
-      {/* ─── Bouton de validation ──────────────────────────────────── */}
+      {/* Bouton validation */}
       <div className="d-flex justify-content-center mt-4 pt-4">
         {!isCompleted ? (
-          <button 
-            className="btn btn-success btn-lg"
-            onClick={onComplete}
-          >
-            <CheckCircle size={20} className="me-2" />
-            Valider la lecture de cette section
+          <button className="btn btn-success" onClick={onComplete}>
+            <CheckCircle size={18} className="me-2" /> Valider la lecture de cette section
           </button>
         ) : (
           <div className="alert alert-success d-flex align-items-center">
-            <CheckCircle size={20} className="me-2" />
-            Section terminée ! Vous pouvez passer au contenu suivant.
+            <CheckCircle size={18} className="me-2" /> Section terminée ! Vous pouvez passer à la suite.
           </div>
         )}
       </div>

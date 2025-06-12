@@ -1,130 +1,189 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { trainings, updateTrainingProgress } from '../../data/trainings';
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import api from "../../api/api";
 
-import TrainingHeader from '../../components/Training/TrainingDetail/TrainingHeader';
-import Tabs          from '../../components/Training/TrainingDetail/Tabs';
-import OverviewTab   from '../../components/Training/TrainingDetail/OverviewTab';
-import ChaptersTab   from '../../components/Training/TrainingDetail/ChaptersTab';
-import ResourcesTab  from '../../components/Training/TrainingDetail/ResourcesTab';
-import QuizTab       from '../../components/Training/TrainingDetail/QuizTab';
+import TrainingHeader from "../../components/Training/TrainingDetail/TrainingHeader";
+import Tabs from "../../components/Training/TrainingDetail/Tabs";
+import OverviewTab from "../../components/Training/TrainingDetail/OverviewTab";
+import ChaptersTab from "../../components/Training/TrainingDetail/ChaptersTab";
+import ResourcesTab from "../../components/Training/TrainingDetail/ResourcesTab";
+import QuizTab from "../../components/Training/TrainingDetail/QuizTab";
 
+/* ------------------------------------------------------------- */
+/* Loader                                                         */
+/* ------------------------------------------------------------- */
+const Loader = () => (
+  <div className="d-flex justify-content-center py-5">
+    <div className="spinner-border" role="status" />
+  </div>
+);
+
+/* ------------------------------------------------------------- */
+/* Composant                                                      */
+/* ------------------------------------------------------------- */
 const TrainingDetail = () => {
   const { id } = useParams();
-  const [training, setTraining] = useState(trainings.find(t => t.id === Number(id)));
-  const [tab, setTab] = useState('overview');
+  const navigate = useNavigate();
 
+  const [training, setTraining] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("overview");
+
+  /* ----------------------------------------------------------- */
+  /* 1. Récupération formation + état utilisateur                */
+  /* ----------------------------------------------------------- */
   useEffect(() => {
-    // Recharger les données de formation depuis la source
-    const updatedTraining = trainings.find(t => t.id === Number(id));
-    setTraining(updatedTraining);
+    (async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.get(`/formations/${id}/`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
+        });
+        // Sécurise les tableaux pour éviter les undefined.length
+        setTraining({...data,
+          tabsCompleted: {
+            overview:   data.tabsCompleted?.overview   ?? false,
+            modules:    data.tabsCompleted?.modules    ?? false,
+            resources:  data.tabsCompleted?.resources  ?? false,
+            quiz:       data.tabsCompleted?.quiz       ?? false,
+          },
+        });
+      } catch (err) {
+        toast.error("Formation introuvable ou inaccessible");
+        navigate("/trainings", { replace: true });
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [id]);
 
-  if (!training) return <p>Formation introuvable</p>;
-
-  // Fonction pour valider un onglet
-  const handleTabCompletion = (tabName) => {
-    const updates = {
-      tabsCompleted: {
-        ...training.tabsCompleted,
-        [tabName]: true
-      }
-    };
-    
-    updateTrainingProgress(training.id, updates);
-    setTraining({ ...training, ...updates });
-    
-    // Auto-navigation vers l'onglet suivant
-    const availableTabs = ['overview'];
-    if (training.chapters.length > 0) availableTabs.push('chapters');
-    if (training.resources.length > 0) availableTabs.push('resources');
-    if (training.quiz) availableTabs.push('quiz');
-    
-    const currentIndex = availableTabs.indexOf(tabName);
-    if (currentIndex !== -1 && currentIndex < availableTabs.length - 1) {
-      const nextTab = availableTabs[currentIndex + 1];
-      setTab(nextTab);
+  /* ----------------------------------------------------------- */
+  /* 2. Helpers persistance                                       */
+  /* ----------------------------------------------------------- */
+  const persist = async (updates) => {
+    if (!training?.userFormationId) return;
+    try {
+      await api.patch(`/user-formations/${training.userFormationId}/`, updates);
+    } catch (e) {
+      // Optionnel : erreur silencieuse
     }
   };
 
-  // Fonction pour valider un chapitre
-  const handleChapterCompletion = (chapterId) => {
-    // forme fonctionnelle : on part toujours de la dernière valeur
-    setTraining(prev => {
-      /* ── 1. marquer le chapitre courant ─────────────────────── */
-      const chapters = prev.chapters.map(ch =>
-        ch.id === chapterId ? { ...ch, completed: true } : ch
-      );
-      const allDone = chapters.every(ch => ch.completed);
-
-      /* ── 2. construire l’update + persister ─────────────────── */
+  /* ----------------------------------------------------------- */
+  /* 3. Handlers                                                  */
+  /* ----------------------------------------------------------- */
+  const handleTabCompletion = (tabName) => {
+    setTraining((prev) => {
       const updates = {
-        chapters,
         tabsCompleted: {
           ...prev.tabsCompleted,
-          chapters: allDone ? true : prev.tabsCompleted.chapters,
+          [tabName]: true,
         },
       };
-      updateTrainingProgress(prev.id, updates);
+      persist(updates);
+      return { ...prev, ...updates };
+    });
 
-      const next = { ...prev, ...updates };
+    // Navigation automatique vers l'onglet suivant
+    const availableTabs = ["overview"];
+    if (training?.modules?.length) availableTabs.push("modules");
+    if (training?.ressources?.length) availableTabs.push("resources");
+    if (training?.quiz) availableTabs.push("quiz");
+    const idx = availableTabs.indexOf(tabName);
+    if (idx !== -1 && idx < availableTabs.length - 1) setTab(availableTabs[idx + 1]);
+  };
 
-      /* ── 3. si tous finis, passer à l’onglet suivant ─────────── */
+  const handleChapterCompletion = (moduleId) => {
+    setTraining((prev) => {
+      const modules = prev.modules.map((c) =>
+        c.id === moduleId ? { ...c, completed: true } : c
+      );
+      const allDone = modules.every((c) => c.completed);
+      const updates = {
+        modules,
+        tabsCompleted: {
+          ...prev.tabsCompleted,
+          modules: allDone ? true : prev.tabsCompleted.modules,
+        },
+      };
+      persist(updates);
       if (allDone) {
-        if (next.resources.length)      setTab('resources');
-        else if (next.quiz)             setTab('quiz');
-        else                            setTab('overview');
+        if (prev.ressources.length)      setTab("resources");
+        else if (prev.quiz)             setTab("quiz");
+        else                            setTab("overview");
       }
-
-      return next;                      // ← nouvelle valeur de training
+      return { ...prev, ...updates };
     });
   };
 
+  /* ----------------------------------------------------------- */
+  /* 4. Préparation des onglets                                   */
+  /* ----------------------------------------------------------- */
+  const tabProps = useMemo(() => (
+    training
+      ? {
+          overview: {
+            component: OverviewTab,
+            props: {
+              training,
+              onComplete: () => handleTabCompletion("overview"),
+              isCompleted: training.tabsCompleted.overview,
+            },
+          },
+          modules: {
+            component: ChaptersTab,
+            props: {
+              training,
+              onChapterComplete: handleChapterCompletion,
+              onTabComplete: () => handleTabCompletion("modules"),
+              isTabCompleted: training.tabsCompleted.modules,
+            },
+          },
+          resources: {
+            component: ResourcesTab,
+            props: {
+              training,
+              onComplete: () => handleTabCompletion("resources"),
+              isCompleted: training.tabsCompleted.resources,
+            },
+          },
+          quiz: {
+            component: QuizTab,
+            props: {
+              quiz: training.quiz,
+              onComplete: () => handleTabCompletion("quiz"),
+              isCompleted: training.tabsCompleted.quiz,
+            },
+          },
+        }
+      : {}
+  ), [training]);
+
+  /* ----------------------------------------------------------- */
+  /* 5. Rendu                                                    */
+  /* ----------------------------------------------------------- */
+  if (loading) return <Loader />;
+  if (!training) return null; // Redirigé vers la liste plus tôt
+
+  const ActiveTab = tabProps[tab]?.component;
+
   return (
     <div className="container pt-4 pb-5">
-
-      {/* ─── Header (titre + badge + méta + progression) */}
+      {/* Header */}
       <TrainingHeader training={training} />
 
-      {/* ─── Barre d'onglets */}
+      {/* Tabs */}
       <Tabs
         active={tab}
         onChange={setTab}
-        hasResources={training.resources.length > 0}
+        hasResources={(training.ressources?.length ?? 0) > 0}
         hasQuiz={Boolean(training.quiz)}
         tabsCompleted={training.tabsCompleted}
       />
 
-      {/* ─── Contenu des onglets */}
-      {tab === 'overview'  && (
-        <OverviewTab  
-          training={training} 
-          onComplete={() => handleTabCompletion('overview')}
-          isCompleted={training.tabsCompleted.overview}
-        />
-      )}
-      {tab === 'chapters'  && (
-        <ChaptersTab  
-          training={training} 
-          onChapterComplete={handleChapterCompletion}
-          onTabComplete={() => handleTabCompletion('chapters')}
-          isTabCompleted={training.tabsCompleted.chapters}
-        />
-      )}
-      {tab === 'resources' && (
-        <ResourcesTab 
-          training={training} 
-          onComplete={() => handleTabCompletion('resources')}
-          isCompleted={training.tabsCompleted.resources}
-        />
-      )}
-      {tab === 'quiz'      && (
-        <QuizTab      
-          quiz={training.quiz} 
-          onComplete={() => handleTabCompletion('quiz')}
-          isCompleted={training.tabsCompleted.quiz}
-        />
-      )}
+      {/* Active tab content */}
+      {ActiveTab && <ActiveTab {...tabProps[tab].props} />}
     </div>
   );
 };

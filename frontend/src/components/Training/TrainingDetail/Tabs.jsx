@@ -10,11 +10,11 @@ const Tabs = ({ active, onChange, hasResources, hasQuiz, tabsCompleted }) => (
       completed={tabsCompleted.overview}
     />
     <Tab 
-      id="chapters" 
-      label="Chapitres" 
+      id="modules" 
+      label="modules" 
       active={active} 
       onChange={onChange} 
-      completed={tabsCompleted.chapters}
+      completed={tabsCompleted.modules}
     />
     {hasResources && (
       <Tab 
