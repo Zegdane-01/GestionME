@@ -376,19 +376,103 @@ class FormationWriteSerializer(serializers.ModelSerializer):
 
 
 class UserFormationSerializer(serializers.ModelSerializer):
+    formation = FormationReadSerializer(read_only=True)
     class Meta:
         model = UserFormation
         fields = '__all__'
 
 class UserModuleSerializer(serializers.ModelSerializer):
+    completed = serializers.SerializerMethodField()
     class Meta:
-        model = UserModule
-        fields = '__all__'
+        model = Module
+        fields = ("id", "titre", "video", "description",
+                  "estimated_time", "completed")
+    
+    def get_completed(self, obj):
+        user = self.context['request'].user
+        return UserModule.objects.filter(
+            user=user,
+            module=obj,
+            completed=True
+        ).exists()
 
 class UserResourceSerializer(serializers.ModelSerializer):
+    read = serializers.SerializerMethodField()
     class Meta:
-        model = UserResource
-        fields = '__all__'
+        model = Resource
+        fields = ("id", "name", "file",
+                  "estimated_time", "read")
+
+    def get_read(self, obj):
+        user = self.context['request'].user
+        return UserResource.objects.filter(
+            user=user,
+            resource=obj,
+            read=True
+        ).exists()
+
+class FormationDetailSerializer(serializers.ModelSerializer):
+    # listes enrichies
+    modules    = UserModuleSerializer(many=True, read_only=True)
+    ressources = UserResourceSerializer(many=True, read_only=True)
+    quiz = QuizSerializer(read_only = True, allow_null=True)
+    quiz_done  = serializers.SerializerMethodField()
+
+    # état d’avancement
+    progress   = serializers.SerializerMethodField()
+    statut     = serializers.SerializerMethodField()
+    userFormationId = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = Formation
+        fields = ("id", "titre", "description", "image_cover",
+                  "statut", "progress", "userFormationId",
+                  "modules", "ressources", "quiz", "quiz_done")
+
+    # helpers ----------------------------------------------------
+    def _get_user_formation(self, obj):
+        user = self.context["request"].user
+        uf, _ = UserFormation.objects.get_or_create(user=user, formation=obj)
+        return uf
+
+    def get_statut(self, obj):
+        return self._get_user_formation(obj).status
+
+    def get_progress(self, obj):
+        return self._get_user_formation(obj).progress
+
+    def get_userFormationId(self, obj):
+        return self._get_user_formation(obj).id
+
+    def get_quiz_done(self, obj):
+        user = self.context["request"].user
+        return UserQuiz.objects.filter(user=user,
+                                       quiz__formation=obj,
+                                       completed=True).exists()
+    
+    def get_tabsCompleted(self, obj):
+        user = self.context["request"].user
+
+        modules_done = obj.modules.exists() and (
+            UserModule.objects.filter(
+                user=user, module__formations=obj, completed=True
+            ).count() == obj.modules.count()
+        )
+
+        ressources_done = obj.ressources.exists() and (
+            UserResource.objects.filter(
+                user=user, resource__formations=obj, read=True
+            ).count() == obj.ressources.count()
+        )
+
+        quiz_done = self.get_quiz_done(obj)
+
+        return {
+            "overview": False,        # l’intro n’est pas validée d’avance
+            "modules": modules_done,
+            "resources": ressources_done,
+            "quiz": quiz_done,
+        }
 
 class UserQuizSerializer(serializers.ModelSerializer):
     class Meta:

@@ -133,6 +133,60 @@ class UserFormation(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.formation.titre}"
+    
+    def update_progress(self):
+        """
+        Calculates and updates the user's progress for this formation.
+        Also updates the status based on the progress.
+        """
+        # Count total items in the formation
+        total_modules = self.formation.modules.count()
+        total_resources = self.formation.ressources.count()
+        has_quiz = 1 if hasattr(self.formation, 'quiz') else 0
+        total_items = total_modules + total_resources + has_quiz
+
+        if total_items == 0:
+            self.progress = 100
+            self.status = 'terminee'
+            self.save()
+            return
+
+        # Count completed items for the user
+        # We need to filter by the modules/resources that belong to THIS formation
+        completed_modules = UserModule.objects.filter(
+            user=self.user, 
+            module__in=self.formation.modules.all(), 
+            completed=True
+        ).count()
+        
+        completed_resources = UserResource.objects.filter(
+            user=self.user, 
+            resource__in=self.formation.ressources.all(), 
+            read=True
+        ).count()
+
+        quiz_completed = 0
+        if has_quiz:
+            quiz_completed = UserQuiz.objects.filter(
+                user=self.user, 
+                quiz=self.formation.quiz, 
+                completed=True
+            ).count()
+
+        completed_items = completed_modules + completed_resources + quiz_completed
+        
+        # Calculate progress percentage
+        self.progress = int((completed_items / total_items) * 100)
+
+        # Update status
+        if self.progress == 100:
+            self.status = 'terminee'
+        elif self.progress > 0:
+            self.status = 'en_cours'
+        else:
+            self.status = 'nouvelle'
+            
+        self.save()
 
 class UserModule(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

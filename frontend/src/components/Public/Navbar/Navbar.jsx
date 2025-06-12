@@ -132,7 +132,7 @@ const Navbar = ({ onHeightChange }) => {
             { path: '/projets', label: 'PROJETS' },
             { path: '/equipes', label: 'EQUIPES' },
             { path: '/manager/trainings', label: 'GERER FORMATIONS' },
-            { path: '/trainings', label: 'MES FORMATIONS' },
+            { path: '/formations', label: 'MES FORMATIONS' },
           ].map(({ path, label }, index) => (
             <Link
               key={path}

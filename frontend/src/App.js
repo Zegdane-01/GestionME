@@ -28,6 +28,8 @@ import EquipeForm from './pages/Equipe/EquipeForm.jsx';
 import TrainingListManager from './pages/Training/Manager/TrainingListManager.jsx';
 import TrainingForm from "./pages/Training/Manager/TrainingForm.jsx";
 
+import FormationBrowser from "./pages/Training/FormationBrowser.jsx";
+
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -84,6 +86,8 @@ function App() {
             <Route path="/manager/trainings" element={<TrainingListManager />} />
             <Route path="/manager/trainings/add" element={<TrainingForm />} />
             <Route path="/manager/trainings/edit/:id" element={<TrainingForm />} />
+
+            <Route path="/formations" element={<FormationBrowser />} />
 
             {/* Routes protégées */}
             
