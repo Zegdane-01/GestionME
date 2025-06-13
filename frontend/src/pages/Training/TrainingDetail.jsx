@@ -23,7 +23,7 @@ const Loader = () => (
 /* Composant                                                      */
 /* ------------------------------------------------------------- */
 const TrainingDetail = () => {
-  const { id } = useParams();
+  const { id: formationId } = useParams(); 
   const navigate = useNavigate();
 
   const [training, setTraining] = useState(null);
@@ -37,36 +37,40 @@ const TrainingDetail = () => {
     (async () => {
       try {
         setLoading(true);
-        const { data } = await api.get(`/formations/${id}/`, {
+        const { data } = await api.get(`/formations/${formationId}/`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
         });
         // Sécurise les tableaux pour éviter les undefined.length
-        setTraining({...data,
-          tabsCompleted: {
-            overview:   data.tabsCompleted?.overview   ?? false,
-            modules:    data.tabsCompleted?.modules    ?? false,
-            resources:  data.tabsCompleted?.resources  ?? false,
-            quiz:       data.tabsCompleted?.quiz       ?? false,
-          },
-        });
+        setTraining(data);
       } catch (err) {
         toast.error("Formation introuvable ou inaccessible");
-        navigate("/trainings", { replace: true });
+        navigate("/formations", { replace: true });
       } finally {
         setLoading(false);
       }
     })();
-  }, [id]);
+  }, [formationId]);
 
   /* ----------------------------------------------------------- */
   /* 2. Helpers persistance                                       */
   /* ----------------------------------------------------------- */
   const persist = async (updates) => {
-    if (!training?.userFormationId) return;
+    if(!formationId) return;
     try {
-      await api.patch(`/user-formations/${training.userFormationId}/`, updates);
+      // On envoie la mise à jour et on attend la nouvelle version complète de l'objet "training"
+      const { data: updatedTraining } = await api.post(
+        `/formations/${formationId}/complete_step/`, // URL corrigée
+        updates,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
+        }
+      );
+      // On remplace l'état local par la réponse du serveur. C'est la source de vérité !
+      setTraining(updatedTraining);
+      toast.success("Progression enregistrée !");
     } catch (e) {
-      // Optionnel : erreur silencieuse
+      toast.error("Erreur lors de la sauvegarde de la progression.");
+      // Optionnel: Gérer le retour en arrière en cas d'erreur
     }
   };
 
@@ -74,47 +78,28 @@ const TrainingDetail = () => {
   /* 3. Handlers                                                  */
   /* ----------------------------------------------------------- */
   const handleTabCompletion = (tabName) => {
-    setTraining((prev) => {
-      const updates = {
-        tabsCompleted: {
-          ...prev.tabsCompleted,
-          [tabName]: true,
-        },
-      };
-      persist(updates);
-      return { ...prev, ...updates };
-    });
+    // On envoie une action claire au backend
+    persist({ completed_tab: tabName });
 
-    // Navigation automatique vers l'onglet suivant
+    // La navigation automatique vers l'onglet suivant reste
     const availableTabs = ["overview"];
     if (training?.modules?.length) availableTabs.push("modules");
     if (training?.ressources?.length) availableTabs.push("resources");
     if (training?.quiz) availableTabs.push("quiz");
     const idx = availableTabs.indexOf(tabName);
-    if (idx !== -1 && idx < availableTabs.length - 1) setTab(availableTabs[idx + 1]);
+    if (idx !== -1 && idx < availableTabs.length - 1) {
+      setTab(availableTabs[idx + 1]);
+    }
   };
 
+
   const handleChapterCompletion = (moduleId) => {
-    setTraining((prev) => {
-      const modules = prev.modules.map((c) =>
-        c.id === moduleId ? { ...c, completed: true } : c
-      );
-      const allDone = modules.every((c) => c.completed);
-      const updates = {
-        modules,
-        tabsCompleted: {
-          ...prev.tabsCompleted,
-          modules: allDone ? true : prev.tabsCompleted.modules,
-        },
-      };
-      persist(updates);
-      if (allDone) {
-        if (prev.ressources.length)      setTab("resources");
-        else if (prev.quiz)             setTab("quiz");
-        else                            setTab("overview");
-      }
-      return { ...prev, ...updates };
-    });
+    // On envoie l'ID du module complété
+    persist({ completed_module_id: moduleId });
+
+    // La navigation vers le chapitre suivant est gérée localement par ChaptersTab.
+    // La navigation vers l'onglet suivant (quand tous les chapitres sont finis)
+    // sera gérée par la mise à jour de l'état `training` qui vient du serveur.
   };
 
   /* ----------------------------------------------------------- */

@@ -130,11 +130,13 @@ class UserFormation(models.Model):
     formation = models.ForeignKey(Formation, on_delete=models.CASCADE)
     progress = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='nouvelle')
+    completed_steps = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"{self.user} - {self.formation.titre}"
     
     def update_progress(self):
+        print("✅ CHECK 5: DANS la méthode 'update_progress'.")
         """
         Calculates and updates the user's progress for this formation.
         Also updates the status based on the progress.
@@ -143,7 +145,9 @@ class UserFormation(models.Model):
         total_modules = self.formation.modules.count()
         total_resources = self.formation.ressources.count()
         has_quiz = 1 if hasattr(self.formation, 'quiz') else 0
-        total_items = total_modules + total_resources + has_quiz
+
+        overview_item = 1 
+        total_items = overview_item + total_modules + total_resources + has_quiz
 
         if total_items == 0:
             self.progress = 100
@@ -153,6 +157,9 @@ class UserFormation(models.Model):
 
         # Count completed items for the user
         # We need to filter by the modules/resources that belong to THIS formation
+
+        completed_overview = 1 if self.completed_steps.get('overview', False) else 0
+
         completed_modules = UserModule.objects.filter(
             user=self.user, 
             module__in=self.formation.modules.all(), 
@@ -173,20 +180,30 @@ class UserFormation(models.Model):
                 completed=True
             ).count()
 
-        completed_items = completed_modules + completed_resources + quiz_completed
+        completed_items = completed_overview + completed_modules + completed_resources + quiz_completed
         
         # Calculate progress percentage
         self.progress = int((completed_items / total_items) * 100)
+        # AJOUTEZ CES PRINTS POUR VOIR LES DÉTAILS DU CALCUL
+        print(f"    -> Détails (complétés/total):")
+        print(f"    -> Overview: {completed_overview}/{overview_item}")
+        print(f"    -> Modules: {completed_modules}/{total_modules}")
+        print(f"    -> Ressources: {completed_resources}/{total_resources}")
+        print(f"    -> Quiz: {quiz_completed}/{has_quiz}")
+        print(f"    -> TOTAL: {completed_items}/{total_items}")
 
         # Update status
         if self.progress == 100:
+            print(f"  -> NOUVEAU POURCENTAGE: {self.progress}%")
             self.status = 'terminee'
         elif self.progress > 0:
+            print(f"    -> NOUVEAU POURCENTAGE CALCULÉ : {self.progress}%")
             self.status = 'en_cours'
         else:
             self.status = 'nouvelle'
             
         self.save()
+        print(f"  -> NOUVELLE SAUVEGARDE EN DB : {self.progress}% | Statut : {self.status} | Étapes : {self.completed_steps}")
 
 class UserModule(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
