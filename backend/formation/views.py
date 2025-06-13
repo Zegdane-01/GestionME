@@ -2,7 +2,12 @@ import os
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from django.db import transaction
+from django.db.models import Sum 
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication  # si tu utilises SimpleJWT
+from rest_framework.authentication import SessionAuthentication
 from .models import *
 from .serializers import *
 
@@ -110,9 +115,6 @@ class FormationViewSet(viewsets.ModelViewSet):
                 user_formation.completed_steps['resources'] = True
                 user_formation.update_progress()
             elif tab_name == 'quiz' and hasattr(formation, 'quiz'):
-                user_quiz, _ = UserQuiz.objects.get_or_create(user=user, quiz=formation.quiz)
-                user_quiz.completed = True
-                user_quiz.save()
                 user_formation.completed_steps['quiz'] = True
                 user_formation.update_progress()
             
@@ -126,6 +128,81 @@ class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
 
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    @transaction.atomic
+    def submit(self, request, pk=None):
+        quiz   = self.get_object()
+        user   = request.user
+        data   = QuizSubmitSerializer(
+                    data=request.data, context={"quiz": quiz}
+                 )
+        data.is_valid(raise_exception=True)
+
+        # crée ou récupère le UserQuiz
+        uq, _ = UserQuiz.objects.get_or_create(user=user, quiz=quiz)
+
+        total_score = 0
+        for item in data.validated_data["answers"]:
+            q  = quiz.questions.get(id=item["question_id"])
+            ua, _ = UserAnswer.objects.get_or_create(user=user, question=q)
+
+            # 1) on enregistre la réponse
+            if q.type in ("single_choice", "multiple_choice"):
+                opts = Option.objects.filter(id__in=item.get("selected_option_ids", []),
+                                             question=q)
+                ua.selected_options.set(opts)
+            else:
+                ua.text_response = item.get("text_response", "")
+            ua.save()
+
+            # 2) on calcule le score
+            if q.type == "single_choice":
+                opt = ua.selected_options.first()
+                if opt and opt.is_correct:
+                    total_score += q.point
+            elif q.type == "multiple_choice":
+                correct = set(q.options.filter(is_correct=True).values_list("id", flat=True))
+                given   = set(ua.selected_options.values_list("id", flat=True))
+                if correct == given:
+                    total_score += q.point
+            else:  # image_text ou text libre
+                if q.check_answer(ua.text_response):
+                    total_score += q.point
+
+        # 3) on marque le quiz terminé
+        uq.score     = total_score
+        uq.completed = True
+        uq.save()
+
+        return Response(
+            {
+                "score": total_score,
+                "total": sum(q.point for q in quiz.questions.all())
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
+    def my_result(self, request, pk=None):
+        quiz = self.get_object()
+        user = request.user
+
+        uq = quiz.userquiz_set.filter(user=user).first()
+        if not uq:
+            return Response({"detail": "Pas de résultat"}, status=status.HTTP_404_NOT_FOUND)
+
+        total_pts = quiz.questions.aggregate(total=Sum("point"))["total"] or 0
+
+        # ⚠️  NE PAS faire de concaténation int + str ici
+        return Response(
+            {
+                "score": uq.score,        # ← entier
+                "total": total_pts,       # ← entier
+                "completed": uq.completed
+            },
+            status=status.HTTP_200_OK
+        )
+
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
@@ -135,16 +212,18 @@ class OptionViewSet(viewsets.ModelViewSet):
     serializer_class = OptionSerializer
 
 class UserFormationViewSet(viewsets.ModelViewSet):
-    serializer_class = UserFormationSerializer
     queryset = UserFormation.objects.all()
+    serializer_class = UserFormationSerializer
+    permission_classes    = [IsAuthenticated]               # 🔑
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     def get_queryset(self):
-        qs = (
+        return(
             UserFormation.objects
             .select_related('formation', 'formation__domain')
             .filter(user=self.request.user,
                     formation__statut='actif')
         )
-        return qs
+        
     
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object() # L'instance de UserFormation

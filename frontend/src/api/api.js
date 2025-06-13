@@ -10,6 +10,15 @@ const api = axios.create({
   },
 });
 
+// ——— Request interceptor ———
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken"); // ou via Context/Redux
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export const mediaApi = axios.create({
   baseURL: API_URL_MEDIA,
 });

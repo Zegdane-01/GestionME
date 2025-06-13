@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../api/api";
 import TrainingCard from "../../components/Training/TrainingCard";
@@ -25,6 +25,10 @@ const statusFromProgress = (progress = 0, explicitStatus) => {
   if (progress > 0) return "en_cours";
   return "nouvelle";
 };
+const getFormationId = (uf) =>
+  uf.formation_id ??
+  (typeof uf.formation === "object" ? uf.formation.id : uf.formation) ??
+  null;
 
 /* ------------------------------------------------------------- */
 /* Composant principal                                           */
@@ -36,7 +40,22 @@ const TrainingList = () => {
   const { state } = useLocation() || {};
   const { domainId, domainName } = state || {};
 
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (domainId == null) {
+      navigate("/formations", { replace: true });
+    }
+  }, [domainId, navigate]);
+
+
   const [allFormations, setAllFormations] = useState([]);
+  const [summaryStats, setSummaryStats] = useState({
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    new: 0,
+  });
+  
   const [loading, setLoading] = useState(true);
 
   //  Filtres locaux (recherche, catégorie, tri)
@@ -55,10 +74,10 @@ const TrainingList = () => {
           api.get("/user-formations/"),
         ]);
 
-        // Indexer les états utilisateur par formation_id
         const userFormationMap = {};
         userStates.forEach((uf) => {
-          userFormationMap[uf.formation_id] = uf;
+          const fid = getFormationId(uf);
+          if (fid !== null) userFormationMap[fid] = uf;
         });
 
         // Fusionner les infos formation + état utilisateur
@@ -70,23 +89,41 @@ const TrainingList = () => {
             ...f,
             progress,
             userFormationId: uf.id ?? null,
-            statut: statusFromProgress(progress, uf.statut),
+            statut: statusFromProgress(progress, uf.status),
           };
         });
 
         setAllFormations(enriched);
+        const stats = enriched.reduce(
+          (acc, f) => {
+            // 1) 9bel ma n-modifi acc, nt2aked mn domaine
+            if (domainId && String(f.domain) !== String(domainId)) return acc;
+
+            // 2) daba acc dayman mewjud
+            acc.total += 1;
+
+            if (f.statut === "terminee")       acc.completed += 1;
+            else if (f.statut === "en_cours")  acc.inProgress += 1;
+            else                               acc.new += 1;
+
+            return acc;   // ✅ khrej acc daiman
+          },
+          { total: 0, completed: 0, inProgress: 0, new: 0 }
+        );
+        setSummaryStats(stats);
+
       } catch (err) {
         toast.error("Impossible de charger les formations");
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [domainId]);
 
   /* ----------------------------------------------------------- */
   /* 2. Filtrage, tri & statistiques (mémorisés)                 */
   /* ----------------------------------------------------------- */
-  const { formations: visibleFormations, stats } = useMemo(() => {
+  const visibleFormations = useMemo(() => {
     // Filtre domaine
     const byDomain = domainId
       ? allFormations.filter((f) => String(f.domain) === String(domainId))
@@ -107,19 +144,7 @@ const TrainingList = () => {
         : a.titre.localeCompare(b.titre)
     );
 
-    // Stats (calculées uniquement sur la liste visible)
-    const stats = sorted.reduce(
-      (acc, f) => {
-        acc.total += 1;
-        if (f.statut === "terminee") acc.completed += 1;
-        else if (f.statut === "en_cours") acc.inProgress += 1;
-        else acc.new += 1;
-        return acc;
-      },
-      { total: 0, completed: 0, inProgress: 0, new: 0 }
-    );
-
-    return { formations: sorted, stats };
+    return sorted;
   }, [allFormations, domainId, search, category, sort]);
 
   if (loading) return <Loader />;
@@ -142,7 +167,7 @@ const TrainingList = () => {
       </div>
 
       {/* Résumé Statistiques */}
-      <StatsSummary stats={stats} />
+      <StatsSummary stats={summaryStats} />
 
       {/* Barre de filtres */}
       <div className="d-flex flex-wrap align-items-center mb-3 gap-2">

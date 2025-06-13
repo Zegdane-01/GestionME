@@ -1,8 +1,8 @@
 /* boîte même style que les autres cartes */
 .box {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
 }
 
 /* badge % (progression) */
