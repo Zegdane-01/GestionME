@@ -497,3 +497,26 @@ class UserAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAnswer
         fields = '__all__'
+
+class QuizAnswerSerializer(serializers.Serializer):
+    question_id         = serializers.IntegerField()
+    selected_option_ids = serializers.ListField(
+        child=serializers.IntegerField(), required=False
+    )
+    text_response       = serializers.CharField(required=False, allow_blank=True)
+
+
+class QuizSubmitSerializer(serializers.Serializer):
+    answers = QuizAnswerSerializer(many=True)
+
+    # ex. de validation supplémentaire
+    def validate_answers(self, answers):
+        quiz = self.context['quiz']
+        valid_ids = {q.id for q in quiz.questions.all()}
+        for ans in answers:
+            if ans['question_id'] not in valid_ids:
+                raise serializers.ValidationError(
+                    f"Question {ans['question_id']} n'appartient pas à ce quiz."
+                )
+        return answers
+        
