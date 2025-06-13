@@ -422,12 +422,13 @@ class FormationDetailSerializer(serializers.ModelSerializer):
     progress   = serializers.SerializerMethodField()
     statut     = serializers.SerializerMethodField()
     userFormationId = serializers.SerializerMethodField()
+    tabsCompleted = serializers.SerializerMethodField()
 
     class Meta:
         model  = Formation
         fields = ("id", "titre", "description", "image_cover",
                   "statut", "progress", "userFormationId",
-                  "modules", "ressources", "quiz", "quiz_done")
+                  "modules", "ressources", "quiz", "quiz_done", "tabsCompleted")
 
     # helpers ----------------------------------------------------
     def _get_user_formation(self, obj):
@@ -452,28 +453,41 @@ class FormationDetailSerializer(serializers.ModelSerializer):
     
     def get_tabsCompleted(self, obj):
         user = self.context["request"].user
+        user_formation = self._get_user_formation(obj)
 
-        modules_done = obj.modules.exists() and (
-            UserModule.objects.filter(
-                user=user, module__formations=obj, completed=True
-            ).count() == obj.modules.count()
-        )
+        # 1. Onglet "Vue d'ensemble"
+        overview_done = user_formation.completed_steps.get('overview', False)
 
-        ressources_done = obj.ressources.exists() and (
-            UserResource.objects.filter(
-                user=user, resource__formations=obj, read=True
-            ).count() == obj.ressources.count()
-        )
+        # 2. Onglet "Modules"
+        modules_done = False
+        if obj.modules.exists():
+            completed_module_count = UserModule.objects.filter(
+                user=user,
+                module__in=obj.modules.all(),
+                completed=True
+            ).count()
+            modules_done = completed_module_count == obj.modules.count()
 
+        # 3. Onglet "Ressources"
+        resources_done = False
+        if obj.ressources.exists():
+            read_resource_count = UserResource.objects.filter(
+                user=user,
+                resource__in=obj.ressources.all(),
+                read=True
+            ).count()
+            resources_done = read_resource_count == obj.ressources.count()
+
+        # 4. Onglet "Quiz"
         quiz_done = self.get_quiz_done(obj)
 
         return {
-            "overview": False,        # l’intro n’est pas validée d’avance
+            "overview": overview_done,
             "modules": modules_done,
-            "resources": ressources_done,
+            "resources": resources_done,
             "quiz": quiz_done,
         }
-
+    
 class UserQuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserQuiz

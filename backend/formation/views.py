@@ -1,5 +1,7 @@
 import os
-from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from .models import *
 from .serializers import *
@@ -62,6 +64,64 @@ class FormationViewSet(viewsets.ModelViewSet):
         # Supprimer la formation elle-même (supprime aussi quiz/questions/options via CASCADE)
         instance.delete()
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def complete_step(self, request, pk=None):
+        """
+        Action pour enregistrer la complétion d'une étape (module ou onglet).
+        """
+        print("✅ CHECK 1: Vue 'complete_step' atteinte.")
+        formation = self.get_object()
+        user = request.user
+        data = request.data
+
+        # ÉTAPE CLÉ : On récupère ou on crée l'objet de suivi.
+        # Ceci résout définitivement l'erreur "DoesNotExist".
+        user_formation, created = UserFormation.objects.get_or_create(
+            user=user,
+            formation=formation
+        )
+
+        # Logique de mise à jour pour un module
+        module_id = data.get('completed_module_id')
+        if module_id:
+            try:
+                module = formation.modules.get(id=module_id)
+                user_module, _ = UserModule.objects.get_or_create(user=user, module=module)
+                user_module.completed = True
+                user_module.save()
+            except Module.DoesNotExist:
+                return Response({"error": "Module non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Logique de mise à jour pour un onglet
+        tab_name = data.get('completed_tab')
+        if tab_name:
+            if user_formation.completed_steps is None:
+                user_formation.completed_steps = {}
+
+            if tab_name == 'overview':
+                user_formation.completed_steps['overview'] = True
+                user_formation.update_progress()
+            elif tab_name == 'resources':
+                print("✅ CHECK 2: Logique pour 'completed_tab: resources' activée.")
+                for resource in formation.ressources.all():
+                    user_resource, _ = UserResource.objects.get_or_create(user=user, resource=resource)
+                    user_resource.read = True
+                    user_resource.save()
+                user_formation.completed_steps['resources'] = True
+                user_formation.update_progress()
+            elif tab_name == 'quiz' and hasattr(formation, 'quiz'):
+                user_quiz, _ = UserQuiz.objects.get_or_create(user=user, quiz=formation.quiz)
+                user_quiz.completed = True
+                user_quiz.save()
+                user_formation.completed_steps['quiz'] = True
+                user_formation.update_progress()
+            
+            user_formation.save()
+
+        # On renvoie toujours l'objet Formation complet et à jour
+        serializer = FormationDetailSerializer(formation, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
@@ -85,6 +145,55 @@ class UserFormationViewSet(viewsets.ModelViewSet):
                     formation__statut='actif')
         )
         return qs
+    
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object() # L'instance de UserFormation
+        user = request.user
+        data = request.data
+
+        # --- ACTION 1: Compléter un module spécifique ---
+        # Le front-end enverra: { "completed_module_id": ID }
+        module_id = data.get('completed_module_id')
+        if module_id:
+            try:
+                module = instance.formation.modules.get(id=module_id)
+                user_module, _ = UserModule.objects.get_or_create(user=user, module=module)
+                user_module.completed = True
+                user_module.save() # Le signal mettra à jour la progression
+            except Module.DoesNotExist:
+                return Response({"error": "Module non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+
+        # --- ACTION 2: Valider un onglet entier ---
+        # Le front-end enverra: { "completed_tab": "overview" | "resources" }
+        tab_name = data.get('completed_tab')
+        if tab_name:
+            if instance.completed_steps is None:
+                instance.completed_steps = {}
+
+            if tab_name == 'overview':
+                instance.completed_steps['overview'] = True
+                instance.save(update_fields=['completed_steps'])
+            
+            elif tab_name == 'resources':
+                # Marquer toutes les ressources de cette formation comme "lues"
+                for resource in instance.formation.ressources.all():
+                    user_resource, _ = UserResource.objects.get_or_create(user=user, resource=resource)
+                    user_resource.read = True
+                    user_resource.save() # Le signal se déclenchera pour chaque, mettant à jour la progression
+                instance.completed_steps['resources'] = True
+                instance.save(update_fields=['completed_steps'])
+            
+            elif tab_name == 'quiz' and hasattr(instance.formation, 'quiz'):
+                user_quiz, _ = UserQuiz.objects.get_or_create(user=user, quiz=instance.formation.quiz)
+                user_quiz.completed = True
+                user_quiz.save()
+                instance.completed_steps['quiz'] = True
+                instance.save(update_fields=['completed_steps'])
+
+        # Après toute action, renvoyer l'état complet et à jour de la formation
+        # L'instance de la formation est `instance.formation`
+        serializer = FormationDetailSerializer(instance.formation, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserModuleViewSet(viewsets.ModelViewSet):
     queryset = UserModule.objects.all()
