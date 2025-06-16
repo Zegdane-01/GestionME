@@ -38,9 +38,6 @@ class FormationViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method in ['POST', 'PUT', 'PATCH']:
             return FormationWriteSerializer   # écriture
-        if self.action == 'retrieve':
-            # Pour la méthode retrieve, on utilise le serializer de lecture détaillée
-            return FormationDetailSerializer
         return FormationReadSerializer        # lecture détaillée
     
     def perform_destroy(self, instance):
@@ -68,61 +65,6 @@ class FormationViewSet(viewsets.ModelViewSet):
 
         # Supprimer la formation elle-même (supprime aussi quiz/questions/options via CASCADE)
         instance.delete()
-
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def complete_step(self, request, pk=None):
-        """
-        Action pour enregistrer la complétion d'une étape (module ou onglet).
-        """
-        print("✅ CHECK 1: Vue 'complete_step' atteinte.")
-        formation = self.get_object()
-        user = request.user
-        data = request.data
-
-        # ÉTAPE CLÉ : On récupère ou on crée l'objet de suivi.
-        # Ceci résout définitivement l'erreur "DoesNotExist".
-        user_formation, created = UserFormation.objects.get_or_create(
-            user=user,
-            formation=formation
-        )
-
-        # Logique de mise à jour pour un module
-        module_id = data.get('completed_module_id')
-        if module_id:
-            try:
-                module = formation.modules.get(id=module_id)
-                user_module, _ = UserModule.objects.get_or_create(user=user, module=module)
-                user_module.completed = True
-                user_module.save()
-            except Module.DoesNotExist:
-                return Response({"error": "Module non trouvé."}, status=status.HTTP_404_NOT_FOUND)
-
-        # Logique de mise à jour pour un onglet
-        tab_name = data.get('completed_tab')
-        if tab_name:
-            if user_formation.completed_steps is None:
-                user_formation.completed_steps = {}
-
-            if tab_name == 'overview':
-                user_formation.completed_steps['overview'] = True
-                user_formation.update_progress()
-            elif tab_name == 'resources':
-                print("✅ CHECK 2: Logique pour 'completed_tab: resources' activée.")
-                for resource in formation.ressources.all():
-                    user_resource, _ = UserResource.objects.get_or_create(user=user, resource=resource)
-                    user_resource.read = True
-                    user_resource.save()
-                user_formation.completed_steps['resources'] = True
-                user_formation.update_progress()
-            elif tab_name == 'quiz' and hasattr(formation, 'quiz'):
-                user_formation.completed_steps['quiz'] = True
-                user_formation.update_progress()
-            
-            user_formation.save()
-
-        # On renvoie toujours l'objet Formation complet et à jour
-        serializer = FormationDetailSerializer(formation, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
@@ -213,7 +155,6 @@ class OptionViewSet(viewsets.ModelViewSet):
 
 class UserFormationViewSet(viewsets.ModelViewSet):
     queryset = UserFormation.objects.all()
-    serializer_class = UserFormationSerializer
     permission_classes    = [IsAuthenticated]               # 🔑
     authentication_classes = [JWTAuthentication, SessionAuthentication]
     def get_queryset(self):
@@ -224,7 +165,12 @@ class UserFormationViewSet(viewsets.ModelViewSet):
                     formation__statut='actif')
         )
         
-    
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return [IsAuthenticated()]
+        return super().get_permissions()
+
+
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object() # L'instance de UserFormation
         user = request.user
@@ -273,6 +219,84 @@ class UserFormationViewSet(viewsets.ModelViewSet):
         # L'instance de la formation est `instance.formation`
         serializer = FormationDetailSerializer(instance.formation, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def get_serializer_class(self):
+        if self.action == 'complete_step':
+            return FormationDetailSerializer
+        return UserFormationDetailSerializer
+
+    @action(detail=False, methods=['get'], url_path='by-formation/(?P<formation_id>[^/.]+)')
+    def by_formation(self, request, formation_id=None):
+        user = request.user
+        try:
+            formation = Formation.objects.get(pk=formation_id)
+        except Formation.DoesNotExist:
+            return Response({"error": "Formation introuvable"}, status=404)
+
+        user_formation, _ = UserFormation.objects.get_or_create(user=user, formation=formation)
+
+        serializer = FormationDetailSerializer(formation, context={"request": request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def complete_step(self, request, pk=None):
+            """
+            Action pour enregistrer la complétion d'une étape (module ou onglet).
+            """
+            
+            user = request.user
+            data = request.data
+
+            formation_id = data.get("formation_id")
+            module_id = data.get('completed_module_id') or data.get('updates', {}).get('completed_module_id')
+            tab_name = data.get('completed_tab') or data.get('updates', {}).get('completed_tab')
+
+            
+            try:
+                formation = Formation.objects.get(id=formation_id)
+            except Formation.DoesNotExist:
+                return Response({"error": "Formation introuvable"}, status=404)
+
+            # ÉTAPE CLÉ : On récupère ou on crée l'objet de suivi.
+            # Ceci résout définitivement l'erreur "DoesNotExist".
+            user_formation, created = UserFormation.objects.get_or_create(
+                user=user,
+                formation=formation
+            )
+
+
+            if module_id:
+                try:
+                    module = formation.modules.get(id=module_id)
+                    user_module, _ = UserModule.objects.get_or_create(user=user, module=module)
+                    user_module.completed = True
+                    user_module.save()
+                except Module.DoesNotExist:
+                    return Response({"error": "Module non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+
+            if tab_name:
+                if user_formation.completed_steps is None:
+                    user_formation.completed_steps = {}
+
+                if tab_name == 'overview':
+                    user_formation.completed_steps['overview'] = True
+                    user_formation.update_progress()
+                elif tab_name == 'resources':
+                    for resource in formation.ressources.all():
+                        user_resource, _ = UserResource.objects.get_or_create(user=user, resource=resource)
+                        user_resource.read = True
+                        user_resource.save()
+                    user_formation.completed_steps['resources'] = True
+                    user_formation.update_progress()
+                elif tab_name == 'quiz' and hasattr(formation, 'quiz'):
+                    user_formation.completed_steps['quiz'] = True
+                    user_formation.update_progress()
+                
+                user_formation.save()
+
+            # On renvoie toujours l'objet Formation complet et à jour
+            serializer = FormationDetailSerializer(formation, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserModuleViewSet(viewsets.ModelViewSet):
     queryset = UserModule.objects.all()
