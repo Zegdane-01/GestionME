@@ -142,10 +142,12 @@ const TrainingForm = () => {
           setFormData({
             ...training,
             ressources: ressources,
-            domain: training.domain ?? '',
+            domain: training.domain ? String(training.domain) : '',
             image_cover: null, // pour ne pas ré-afficher le fichier
+            statut: ['actif', 'inactif'].includes(training.statut) ? training.statut : 'inactif',
 
           });
+          console.log(training);
           setShowModules(training.modules.length > 0);
           setShowResources(training.ressources.length > 0);
           setShowQuiz(training.quiz !== null);
@@ -511,7 +513,7 @@ const TrainingForm = () => {
               className={`${styles.formControl} ${getError('domain') ? styles.inputError : ''}`}
             >
               <option value="">-- Sélectionner --</option>
-              {domains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              {domains.map(d => <option key={d.id} value={String(d.id)}>{d.name}</option>)}
             </select>
             {getError('domain') && <p className={styles.errorText}>{getError('domain')}</p>}
           </div>
@@ -775,7 +777,7 @@ const TrainingForm = () => {
                 id="estimated_time"
                 value={formData.quiz.estimated_time}
                 onChange={e => handleQuizField('estimated_time', e.target.value)}
-                className={`${styles.formControl} ${errors.domain ? styles.inputError : ''}`}
+                className={`${styles.formControl} ${errors.quizTime ? styles.inputError : ''}`}
               />
             </div>
           </div>
