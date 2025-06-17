@@ -2,6 +2,16 @@ import React, { useState } from "react";
 import { CheckCircle, Download, Eye, EyeOff, AlertCircle } from "lucide-react";
 import FileIcon from "../Shared/FileIcon";
 import styles from "../../../assets/styles/Training/TrainingDetail/ResourcesTab.module.css";
+const getExtensionFromUrl = (url) => {
+  try {
+    const decoded = decodeURIComponent(url);                   // pour décoder les %C3%A9 etc.
+    const filename = decoded.split("/").pop();                 // récupérer "nom.pdf"
+    const ext = filename.includes(".") ? filename.split(".").pop() : "";
+    return ext.toLowerCase();
+  } catch (err) {
+    return "";
+  }
+};
 
 /**
  * Onglet Ressources
@@ -94,7 +104,7 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
           // API : {id, name, file, read, ...}
           const rawUrl = r.url || r.file; // compatibilité
           const absUrl = toAbsolute(rawUrl);
-          const ext = (r.ext || r.name.split(".").pop() || "").toLowerCase();
+          const ext = (r.ext || getExtensionFromUrl(absUrl)).toLowerCase();
           const isPreview = previewId === r.id;
 
           return (
