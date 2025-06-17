@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from django.db import transaction
-from django.db.models import Sum 
+from django.db.models import Sum,Q
+from django.http import FileResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication  # si tu utilises SimpleJWT
 from rest_framework.authentication import SessionAuthentication
@@ -24,8 +25,27 @@ class ModuleViewSet(viewsets.ModelViewSet):
     serializer_class = ModuleSerializer
 
 class ResourceViewSet(viewsets.ModelViewSet):
-    queryset = Resource.objects.all()
+    queryset = Resource.objects.all() 
     serializer_class = ResourceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Resource.objects.filter(
+            Q(confidentiel=False) |
+            Q(allowed_equipes__assigned_users=user) |
+            Q(allowed_equipes=None)
+        ).distinct()
+
+    @action(detail=True, methods=["get"])
+    def download(self, request, pk=None):
+        resource = self.get_object()
+        if not resource.user_has_access(request.user):
+            return Response({"detail": "Vous n’avez pas les droits."},
+                            status=status.HTTP_403_FORBIDDEN)
+        return FileResponse(resource.file.open("rb"),
+                            as_attachment=True,
+                            filename=resource.file.name.split("/")[-1])
 
 class FormationViewSet(viewsets.ModelViewSet):
     queryset = Formation.objects.all()

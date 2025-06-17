@@ -147,7 +147,6 @@ const TrainingForm = () => {
             statut: ['actif', 'inactif'].includes(training.statut) ? training.statut : 'inactif',
 
           });
-          console.log(training);
           setShowModules(training.modules.length > 0);
           setShowResources(training.ressources.length > 0);
           setShowQuiz(training.quiz !== null);
@@ -444,7 +443,6 @@ const TrainingForm = () => {
         fd.append('quiz', JSON.stringify(quizCopy));
       }
       if (isEditMode) {
-        console.log(fd.get('ressources'));
         await api.put(`/formations/${id}/`, fd, { headers:{'Content-Type':'multipart/form-data'} });
         toast.success('Formation mise à jour');
       } else {

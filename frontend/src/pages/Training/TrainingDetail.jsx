@@ -40,10 +40,8 @@ const TrainingDetail = () => {
         const { data } = await api.get(`/user-formations/by-formation/${formationId}/`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
         });
-        console.log("✅ Données reçues du backend : ", data);
         // Sécurise les tableaux pour éviter les undefined.length
         setTraining(data);
-        console.log(training);
       } catch (err) {
         toast.error("Formation introuvable ou inaccessible");
         navigate("/formations", { replace: true });
@@ -167,6 +165,7 @@ const TrainingDetail = () => {
       <Tabs
         active={tab}
         onChange={setTab}
+        hasModules={(training.modules?.length ?? 0) >0}
         hasResources={(training.ressources?.length ?? 0) > 0}
         hasQuiz={Boolean(training.quiz)}
         tabsCompleted={training.tabsCompleted}

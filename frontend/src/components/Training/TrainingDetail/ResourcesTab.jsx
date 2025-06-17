@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CheckCircle, Download, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Lock, CheckCircle, Download, Eye, EyeOff, AlertCircle } from "lucide-react";
 import FileIcon from "../Shared/FileIcon";
 import styles from "../../../assets/styles/Training/TrainingDetail/ResourcesTab.module.css";
 const getExtensionFromUrl = (url) => {
@@ -101,12 +101,30 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
     <>
       <div className="row gy-4 mt-4">
         {training.ressources.map((r) => {
-          // API : {id, name, file, read, ...}
-          const rawUrl = r.url || r.file; // compatibilité
-          const absUrl = toAbsolute(rawUrl);
-          const ext = (r.ext || getExtensionFromUrl(absUrl)).toLowerCase();
           const isPreview = previewId === r.id;
+          const ext       = r.ext || getExtensionFromUrl(r.file || r.url);
+          if (!r.accessible) {
+            /* ---------- Ressource verrouillée ---------- */
+            return (
+              <div className="col-lg-6" key={r.id}>
+                <div className={`card p-3 ${styles.box} ${styles.locked}`}>
+                  <div className="d-flex align-items-start">
+                    <FileIcon ext={ext} />
+                    <div className="flex-grow-1 ms-3">
+                      <strong>{r.name}</strong>
+                    </div>
+                    <Lock size={20} />
+                  </div>
 
+                  <div className="alert alert-danger mt-3 d-flex align-items-center">
+                    <AlertCircle size={18} className="me-2" />
+                    Vous n’avez pas les droits d’accéder à cette ressource.
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          const absUrl = toAbsolute(r.file || r.url);
           return (
             <div className="col-lg-6" key={r.id}>
               <div className={`card p-3 ${styles.box} ${isPreview ? styles.selected : ""}`}>                

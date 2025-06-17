@@ -97,14 +97,28 @@ class ResourceSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     allowed_equipes_info = EquipeMiniSerializer(source='allowed_equipes',read_only=True, many=True)
+
+    accessible = serializers.SerializerMethodField()
+    file = serializers.SerializerMethodField() 
+
     class Meta:
         model  = Resource
         fields = [
-            'id', 'name', 'file', 'confidentiel',
+            'id', 'name','accessible', 'file', 'confidentiel',
             'estimated_time',
             'allowed_equipes',          # écrit
             'allowed_equipes_info'      # lu
         ]
+    
+    def get_accessible(self, obj):
+        request = self.context["request"]
+        return obj.user_has_access(request.user)
+
+    def get_file(self, obj):
+        request = self.context["request"]
+        if obj.user_has_access(request.user):
+            return request.build_absolute_uri(obj.file.url)
+        return None      
 
 
 class FormationReadSerializer(serializers.ModelSerializer):
@@ -290,6 +304,9 @@ class FormationWriteSerializer(serializers.ModelSerializer):
         modules_data = json.loads(request.data.get('modules', '[]'))
         ressources_data = json.loads(request.data.get('ressources', '[]'))
 
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+
         # Gestion des modules
         instance.modules.clear()
         for i, mod_data in enumerate(modules_data):
@@ -407,11 +424,19 @@ class UserModuleSerializer(serializers.ModelSerializer):
         ).exists()
 
 class UserResourceSerializer(serializers.ModelSerializer):
+    allowed_equipes = serializers.PrimaryKeyRelatedField(
+        queryset=Equipe.objects.all(),
+        many=True,
+        allow_null=True
+    )
+    allowed_equipes_info = EquipeSerializer(source='allowed_equipes',read_only=True, many=True)
     read = serializers.SerializerMethodField()
+    accessible = serializers.SerializerMethodField()
+    file = serializers.SerializerMethodField()
     class Meta:
         model = Resource
-        fields = ("id", "name", "file",
-                  "estimated_time", "read")
+        fields = ("id", "name","accessible", "file",
+                  "estimated_time","allowed_equipes", "allowed_equipes_info", "read")
 
     def get_read(self, obj):
         user = self.context['request'].user
@@ -420,6 +445,16 @@ class UserResourceSerializer(serializers.ModelSerializer):
             resource=obj,
             read=True
         ).exists()
+
+    def get_accessible(self, obj):
+        request = self.context["request"]
+        return obj.user_has_access(request.user)
+
+    def get_file(self, obj):
+        request = self.context["request"]
+        if obj.user_has_access(request.user):
+            return request.build_absolute_uri(obj.file.url)
+        return None    
 
 class FormationDetailSerializer(serializers.ModelSerializer):
     # listes enrichies

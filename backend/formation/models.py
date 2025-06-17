@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+ALLOWED_MANAGER_ROLES = ("TL1", "TL2") 
+
 class TimedContent(models.Model):
     estimated_time = models.DurationField()
 
@@ -53,6 +55,20 @@ class Resource(TimedContent):
         """
         if not self.confidentiel and self.pk:       # instance déjà sauvegardée
             self.allowed_equipes.clear()
+            
+    def user_has_access(self, user):
+        """Retourne True si l’utilisateur peut lire/télécharger la ressource"""
+        if not self.confidentiel:
+            return True
+        if getattr(user, "role", None) in ALLOWED_MANAGER_ROLES:
+            return True
+        print('----------------')
+        print("Equipes autorisées :", list(self.allowed_equipes.values_list('id', 'name')))
+        print(self.allowed_equipes.values_list('id', 'name','assigned_users'))
+        print(user)
+        print('----------------')
+
+        return self.allowed_equipes.filter(assigned_users=user).exists()
 
 class Formation(models.Model):
     STATUS_CHOICES = [

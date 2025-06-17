@@ -1,6 +1,6 @@
 import styles from '../../../assets/styles/Training/TrainingDetail/Tabs.module.css';
 
-const Tabs = ({ active, onChange, hasResources, hasQuiz, tabsCompleted }) => (
+const Tabs = ({ active, onChange, hasModules, hasResources, hasQuiz, tabsCompleted }) => (
   <ul className={`nav nav-tabs ${styles.tabs}`}>
     <Tab 
       id="overview" 
@@ -9,13 +9,16 @@ const Tabs = ({ active, onChange, hasResources, hasQuiz, tabsCompleted }) => (
       onChange={onChange} 
       completed={tabsCompleted.overview}
     />
-    <Tab 
-      id="modules" 
-      label="modules" 
-      active={active} 
-      onChange={onChange} 
-      completed={tabsCompleted.modules}
-    />
+    {hasModules && (
+      <Tab 
+        id="modules" 
+        label="modules" 
+        active={active} 
+        onChange={onChange} 
+        completed={tabsCompleted.modules}
+      />
+    )}
+    
     {hasResources && (
       <Tab 
         id="resources" 
