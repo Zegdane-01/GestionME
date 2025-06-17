@@ -376,11 +376,21 @@ class FormationWriteSerializer(serializers.ModelSerializer):
 
 
 class UserFormationSerializer(serializers.ModelSerializer):
-    formation = FormationReadSerializer(read_only=True)
+    formation = serializers.SerializerMethodField()
+
     class Meta:
         model = UserFormation
         fields = '__all__'
 
+    def get_formation(self, obj):
+        request = self.context.get("request")
+        return FormationDetailSerializer(obj.formation, context={"request": request}).data
+    
+class UserFormationDetailSerializer(serializers.ModelSerializer):
+    formation = FormationReadSerializer(read_only=True)
+    class Meta:
+        model = UserFormation
+        fields = '__all__'
 class UserModuleSerializer(serializers.ModelSerializer):
     completed = serializers.SerializerMethodField()
     class Meta:

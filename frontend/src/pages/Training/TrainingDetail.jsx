@@ -37,11 +37,13 @@ const TrainingDetail = () => {
     (async () => {
       try {
         setLoading(true);
-        const { data } = await api.get(`/formations/${formationId}/`, {
+        const { data } = await api.get(`/user-formations/by-formation/${formationId}/`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
         });
+        console.log("✅ Données reçues du backend : ", data);
         // Sécurise les tableaux pour éviter les undefined.length
         setTraining(data);
+        console.log(training);
       } catch (err) {
         toast.error("Formation introuvable ou inaccessible");
         navigate("/formations", { replace: true });
@@ -59,8 +61,11 @@ const TrainingDetail = () => {
     try {
       // On envoie la mise à jour et on attend la nouvelle version complète de l'objet "training"
       const { data: updatedTraining } = await api.post(
-        `/formations/${formationId}/complete_step/`, // URL corrigée
-        updates,
+        `/user-formations/${formationId}/complete_step/`, // URL corrigée
+        {
+          updates,
+          formation_id: formationId
+        },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
         }
