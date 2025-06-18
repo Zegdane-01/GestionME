@@ -279,89 +279,109 @@ const TrainingForm = () => {
   /*                 3. Validation très légère                     */
   /* ------------------------------------------------------------ */
   const validate = () => {
-    const e = {};
-    const hasCover = existingCover || formData.image_cover;
+    const newErrors = {};
+    const timeRegex = /^\d{2}:\d{2}:\d{2}$/; // Regex pour valider le format HH:MM:SS
 
-    /* ---------- Formation (toujours obligatoires) ---------- */
-    if (!formData.titre.trim())         e.titre        = 'Titre requis';
-    if (!formData.description.trim())   e.description  = 'Description requise';
-    if (!formData.domain)               e.domain       = 'Domaine requis';
-   
-    if (!hasCover) e.image_cover = 'Image de couverture requise';
+    // --- 1. Validation de la formation principale ---
+    if (!formData.titre.trim()) newErrors.titre = 'Le titre est requis.';
+    if (!formData.description.trim()) newErrors.description = 'La description est requise.';
+    if (!formData.domain) newErrors.domain = 'Le domaine est requis.';
+    if (!existingCover && !formData.image_cover) {
+      newErrors.image_cover = 'Une image de couverture est requise.';
+    }
 
-
-    /* ---------- Modules (seulement si showModules = true) ---------- */
+    // --- 2. Validation des modules ---
     if (showModules) {
       if (formData.modules.length === 0) {
-        e.modules = 'Ajouter au moins un module';
+        newErrors.modules = 'Veuillez ajouter au moins un module.';
       }
-      formData.modules.forEach((m, i) => {
-        if (!m.titre.trim() || !m.description.trim() || !m.video || !m.estimated_time.trim()) {
-          e[`module${i}`] = 'Tous les champs du module sont obligatoires';
+      formData.modules.forEach((module, index) => {
+        const moduleErrors = [];
+        if (!module.titre.trim()) moduleErrors.push('Titre');
+        if (!module.description.trim()) moduleErrors.push('Description');
+        if (!module.video) moduleErrors.push('Vidéo');
+        if (!timeRegex.test(module.estimated_time)) moduleErrors.push('Temps estimé (format HH:MM:SS)');
+        
+        if (moduleErrors.length > 0) {
+          newErrors[`module${index}`] = `Champs requis : ${moduleErrors.join(', ')}.`;
         }
       });
     }
 
-    /* ---------- Ressources (seulement si showResources = true) ---------- */
+    // --- 3. Validation des ressources ---
     if (showResources) {
       if (formData.ressources.length === 0) {
-        e.ressources = 'Ajouter au moins une ressource';
+        newErrors.ressources = 'Veuillez ajouter au moins une ressource.';
       }
-      formData.ressources.forEach((r, i) => {
-        const noFile = !(r.file instanceof File) && typeof r.file !== 'string';
-        if (!r.name.trim() || noFile || !r.estimated_time.trim()) {
-          e[`ress${i}`] = 'Tous les champs de la ressource sont obligatoires';
+      formData.ressources.forEach((resource, index) => {
+        const resourceErrors = [];
+        const hasFile = resource.file instanceof File || typeof resource.file === 'string';
+        if (!resource.name.trim()) resourceErrors.push('Nom');
+        if (!hasFile) resourceErrors.push('Fichier');
+        if (!timeRegex.test(resource.estimated_time)) resourceErrors.push('Temps estimé (format HH:MM:SS)');
+        if (resource.confidentiel && resource.allowed_equipes.length === 0) {
+            resourceErrors.push("Équipes autorisées (si confidentiel)");
+        }
+
+        if (resourceErrors.length > 0) {
+          newErrors[`ress${index}`] = `Champs requis : ${resourceErrors.join(', ')}.`;
         }
       });
     }
 
-    /* ---------- Quiz (seulement si showQuiz = true) ---------- */
+    // --- 4. Validation du quiz ---
     if (showQuiz) {
       if (!formData.quiz) {
-        e.quiz = 'Le quiz est obligatoire';
+        newErrors.quiz = 'Problème avec le quiz. Essayez de le ré-ajouter.';
       } else {
-        if (!formData.quiz.estimated_time.trim()) {
-          e.quizTime = 'Temps estimé requis';
+        if (!timeRegex.test(formData.quiz.estimated_time)) {
+          newErrors.quizTime = 'Le temps estimé pour le quiz est requis (format HH:MM:SS).';
         }
         if (formData.quiz.questions.length === 0) {
-          e.quizQuestions = 'Ajouter au moins une question';
+          newErrors.quizQuestions = 'Le quiz doit contenir au moins une question.';
         }
 
-        formData.quiz.questions.forEach((q, qi) => {
-          if (!q.texte.trim()) e[`q${qi}`] = 'Texte question requis';
+        formData.quiz.questions.forEach((q, qIdx) => {
+          const qErrors = [];
+          if (!q.texte.trim()) qErrors.push('Texte de la question');
+          if (!q.point || q.point < 1) qErrors.push('Points (minimum 1)');
 
-          /* single / multiple */
           if (['single_choice', 'multiple_choice'].includes(q.type)) {
-            if (q.options.length === 0 || q.options.some(o => !o.texte.trim())) {
-              e[`q${qi}opt`] = 'Toutes les options sont obligatoires';
+            if (q.options.length < 1) {
+              qErrors.push('Au moins une option');
+            } else if (q.options.some(o => !o.texte.trim())) {
+              qErrors.push('Texte pour toutes les options');
             }
-            if (
-              q.type === 'single_choice' &&
-              q.options.filter(o => o.is_correct).length !== 1
-            ) {
-              e[`q${qi}opt`] = 'Une seule option doit être correcte';
+            if (q.options.filter(o => o.is_correct).length === 0) {
+              qErrors.push('Au moins une réponse correcte');
             }
           }
 
-          /* image_text */
+          if (q.type === 'text' || q.type === 'image_text') {
+            const hasKeywords = (q.correct_raw || '').trim().length > 0;
+            if (!hasKeywords) qErrors.push('Au moins un mot-clé');
+          }
+          
           if (q.type === 'image_text') {
-            if (!q.image) {
-              e[`q${qi}img`] = 'Image requise';
-            }
-            // Validate based on correct_raw, which holds the user's comma-separated input
-            const keywordsEntered = (q.correct_raw || '')
-              .split(',')
-              .map(k => k.trim())
-              .filter(Boolean);
-            if (!keywordsEntered.length) {
-              e[`q${qi}kw`]  = 'Un mot-clé minimum requis';
-            }
+            const hasImage = q.image instanceof File || typeof q.image === 'string';
+            if (!hasImage) qErrors.push('Image requise');
+          }
+
+          if (qErrors.length > 0) {
+            newErrors[`q${qIdx}`] = `Champs requis : ${qErrors.join(', ')}.`;
           }
         });
       }
     }
+    
+    // --- 5. Vérifier qu'au moins une section est ajoutée ---
+    if (!showModules && !showResources && !showQuiz) {
+        // Pour éviter d'écraser une erreur existante, on ajoute à un champ global
+        newErrors.global = 'Une formation doit contenir au moins des modules, des ressources ou un quiz.';
+        toast.error('Une formation doit contenir au moins des modules, des ressources ou un quiz.');
+    }
 
-    return e;
+    return newErrors;
   };
 
 
@@ -480,8 +500,8 @@ const TrainingForm = () => {
       navigate('/manager/trainings');
     } catch (err) {
       if (err.response) {
-        console.error('Validation errors →', err.response.data);
-        toast.error('Validation errors →', err.response.data);
+
+        toast.error('Validation errors', err.response.data);
       } else {
         console.error(err);
         toast.error('Erreur réseau');
@@ -671,8 +691,8 @@ const TrainingForm = () => {
           {showResources && (
             <>
               {formData.ressources.map((r, idx) => {
-                const modErr   = getError(`ress${idx}`);
-                const hasErr   = Boolean(modErr);
+                const ressErr   = getError(`ress${idx}`);
+                const hasErr   = Boolean(ressErr);
                 return (
                 <div key={idx} className="border p-3 mb-3 rounded">
                   <div className="row g-2">
@@ -784,6 +804,7 @@ const TrainingForm = () => {
                       </div>
                     </div>
                   )}
+                  {ressErr && <p className={styles.errorText}>{ressErr}</p>}
                   <button type="button" className="btn btn-sm btn-danger mt-2" onClick={() => removeResource(idx)}>
                     Supprimer ressource
                   </button>
@@ -819,8 +840,8 @@ const TrainingForm = () => {
           </div>
 
           {formData.quiz.questions.map((q, qIdx) => {
-            const modErr   = getError(`q${qIdx}`);
-            const hasErr   = Boolean(modErr);
+            const qErr   = getError(`q${qIdx}`);
+            const hasErr   = Boolean(qErr);
             return (
             <div key={qIdx} className="border p-3 mb-3 rounded">
               <div className="mb-2">
@@ -941,14 +962,14 @@ const TrainingForm = () => {
                       </div>
                     
                   
-
+                  </>
+                )}            
                 <div>
                   <button type="button" className="btn btn-sm btn-danger mt-2" onClick={() => removeQuestion(qIdx)}>
                     Supprimer question
                   </button>
                 </div>
-                </>
-              )}
+              {qErr && <p className={styles.errorText}>{qErr}</p>}
             </div>
             );
           })}
