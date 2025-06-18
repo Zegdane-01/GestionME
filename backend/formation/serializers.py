@@ -386,6 +386,90 @@ class FormationWriteSerializer(serializers.ModelSerializer):
         # Synchroniser la liste des ressources de la formation
         instance.ressources.set(processed_resource_ids)
 
+
+        # -----------------------------------------------------------------
+        # --- NOUVEAU : GESTION DE LA MISE À JOUR DU QUIZ ---
+        # -----------------------------------------------------------------
+        quiz_data = json.loads(request.data.get('quiz')) if 'quiz' in request.data else None
+        existing_quiz = getattr(instance, 'quiz', None)
+
+        if quiz_data:
+            # Le frontend a envoyé des données de quiz (création ou mise à jour)
+            questions_data = quiz_data.pop('questions', [])
+            
+            if not existing_quiz:
+                # Créer le quiz s'il n'existait pas
+                existing_quiz = Quiz.objects.create(formation=instance)
+
+            # Mettre à jour les champs du quiz (ex: temps estimé)
+            existing_quiz.estimated_time = _parse_duration_or_none(quiz_data.get('estimated_time'))
+            existing_quiz.save()
+            
+            # Synchroniser les questions
+            question_ids_from_frontend = {q.get('id') for q in questions_data if q.get('id')}
+            
+            # Supprimer les questions qui ne sont plus dans la liste
+            existing_quiz.questions.exclude(id__in=question_ids_from_frontend).delete()
+            
+            for q_data in questions_data:
+                question_id = q_data.get('id')
+                options_data = q_data.pop('options', [])
+
+                if question_id:
+                    # --- MISE À JOUR D'UNE QUESTION EXISTANTE ---
+                    question_obj = Question.objects.get(id=question_id, quiz=existing_quiz)
+                    
+                    # Mettre à jour les champs simples
+                    question_obj.texte = q_data.get('texte', question_obj.texte)
+                    question_obj.type = q_data.get('type', question_obj.type)
+                    question_obj.point = q_data.get('point', question_obj.point)
+                    
+                    # Mettre à jour l'image SEULEMENT si une nouvelle est fournie
+                    image_placeholder = q_data.get('image')
+                    if image_placeholder and request.FILES.get(image_placeholder):
+                        if question_obj.image:
+                            question_obj.image.delete(save=False) # Supprimer l'ancienne
+                        question_obj.image = request.FILES.get(image_placeholder)
+
+                    # Mettre à jour les mots-clés
+                    if 'correct_keywords' in q_data:
+                        question_obj.correct_keywords = q_data.get('correct_keywords')
+                    
+                    question_obj.save()
+                    
+                    # Synchroniser les options (supprimer et recréer, c'est plus simple ici)
+                    question_obj.options.all().delete()
+                    if options_data:
+                        Option.objects.bulk_create([
+                            Option(question=question_obj, **opt) for opt in options_data
+                        ])
+
+                else:
+                    # --- CRÉATION D'UNE NOUVELLE QUESTION ---
+                    image_placeholder = q_data.pop('image', None)
+                    image_file = request.FILES.get(image_placeholder) if image_placeholder else None
+                    keywords = q_data.pop('correct_keywords', [])
+                    
+                    new_question = Question.objects.create(
+                        quiz=existing_quiz,
+                        image=image_file,
+                        correct_keywords=keywords,
+                        **q_data
+                    )
+                    if options_data:
+                        Option.objects.bulk_create([
+                            Option(question=new_question, **opt) for opt in options_data
+                        ])
+
+        elif existing_quiz:
+            # Le frontend n'a envoyé aucune donnée de quiz, cela signifie qu'il faut le supprimer
+            existing_quiz.delete()
+
+        # -----------------------------------------------------------------
+        # --- FIN DU BLOC QUIZ ---
+        # -----------------------------------------------------------------
+
+
         # ... le reste de votre fonction update
         instance.save()
         return instance

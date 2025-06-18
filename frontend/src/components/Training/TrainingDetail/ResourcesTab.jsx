@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Lock, CheckCircle, Download, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Lock, CheckCircle, Download, Eye, AlertCircle } from "lucide-react";
 import FileIcon from "../Shared/FileIcon";
 import styles from "../../../assets/styles/Training/TrainingDetail/ResourcesTab.module.css";
+import ResourcePreviewModal from './ResourcePreviewModal';
+
 const getExtensionFromUrl = (url) => {
   try {
     const decoded = decodeURIComponent(url);                   // pour décoder les %C3%A9 etc.
@@ -22,7 +24,7 @@ const getExtensionFromUrl = (url) => {
  *  - isCompleted      : bool (toutes lues)
  */
 const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
-  const [previewId, setPreviewId] = useState(null);
+  const [previewRes, setPreviewRes] = useState(null);
 
   /* --------------------------------------------------------- */
   /* Helpers                                                   */
@@ -31,77 +33,43 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
     if (!url) return "";
     return url.startsWith("http") ? url : `${window.location.origin}${url}`;
   };
-
-  const buildViewerURL = (absUrl, ext) => {
-    const office = ["ppt", "pptx", "xls", "xlsx", "doc", "docx"];
-    const images = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
-    ext = ext.toLowerCase();
-
-    if (office.includes(ext) && absUrl.startsWith("https://")) {
-      return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(absUrl)}`;
-    }
-    if (images.includes(ext)) return absUrl;
-    return null; // autre type → gestion ailleurs
-  };
-
-  const renderPreview = (absUrl, ext) => {
-    if (!absUrl) return null;
-    ext = ext.toLowerCase();
-
-    if (ext === "pdf") return <iframe src={absUrl} title="pdf" className={styles.fullPreview} />;
-
-    const officeViewer = buildViewerURL(absUrl, ext);
-    if (officeViewer)
-      return <iframe src={officeViewer} title="office" className={styles.officePreview} />;
-
-    const images = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
-    if (images.includes(ext))
-      return (
-        <div className={styles.imagePreview}>
-          <img src={absUrl} alt="Aperçu" style={{ maxWidth: "100%", maxHeight: 500 }} />
-        </div>
-      );
-
-    const videos = ["mp4", "webm", "ogg"];
-    if (videos.includes(ext))
-      return (
-        <video controls className={styles.videoPreview}>
-          <source src={absUrl} type={`video/${ext}`} />
-        </video>
-      );
-
-    const audio = ["mp3", "wav", "ogg"];
-    if (audio.includes(ext))
-      return (
-        <audio controls className={styles.audioPreview}>
-          <source src={absUrl} type={`audio/${ext}`} />
-        </audio>
-      );
-
-    const textFiles = ["txt", "csv", "json", "xml"];
-    if (textFiles.includes(ext))
-      return (
-        <iframe src={absUrl} title="text" className={styles.fullPreview} />
-      );
-
-    return (
-      <div className="alert alert-warning d-flex flex-column align-items-center">
-        <AlertCircle size={28} className="text-warning mb-2" />
-        <p className="mb-0 text-center">Aperçu indisponible&nbsp;; téléchargez le fichier.</p>
-      </div>
-    );
-  };
-
   /* --------------------------------------------------------- */
   /* Render                                                    */
   /* --------------------------------------------------------- */
   if (!training.ressources?.length) return <p>Aucune ressource.</p>;
+  const handleDownload = async (resource) => {
+    try {
+      const absUrl = toAbsolute(resource.file);
+      
+      const response = await fetch(absUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = resource.title || resource.name || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert(`Erreur de téléchargement: ${error.message}`);
+    }
+  };
+
 
   return (
     <>
       <div className="row gy-4 mt-4">
         {training.ressources.map((r) => {
-          const isPreview = previewId === r.id;
           const ext       = r.ext || getExtensionFromUrl(r.file || r.url);
           if (!r.accessible) {
             /* ---------- Ressource verrouillée ---------- */
@@ -124,50 +92,37 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
               </div>
             );
           }
-          const absUrl = toAbsolute(r.file || r.url);
           return (
             <div className="col-lg-6" key={r.id}>
-              <div className={`card p-3 ${styles.box} ${isPreview ? styles.selected : ""}`}>                
+              <div className={`card p-3 ${styles.box}`}>                
                 {/* Ligne méta */}
                 <div className="d-flex align-items-start">
                   <FileIcon ext={ext} />
                   <div className="flex-grow-1 ms-3">
-                    <strong>{r.title ?? r.name}</strong>
-                    {r.size && <small className="d-block text-muted">{r.size}</small>}
+                    <strong>{r.name}</strong>
                   </div>
                   <div className="d-flex flex-column gap-2">
                     <button
                       className="btn btn-sm btn-outline-dark"
                       onClick={() => {
-                        // toggle preview
-                        setPreviewId(isPreview ? null : r.id);
+                        setPreviewRes(r);  
                         if (!r.read) onRead?.(r.id);
                       }}
                     >
-                      {isPreview ? (
-                        <>
-                          <EyeOff size={16} className="me-1" /> Fermer
-                        </>
-                      ) : (
-                        <>
-                          <Eye size={16} className="me-1" /> Visualiser
-                        </>
-                      )}
+                      <div className="d-flex align-items-center">
+                        <Eye size={16} className="me-1" /> &nbsp;Visualiser
+                      </div>
                     </button>
-                    <a
-                      href={absUrl}
+                    <button
                       className="btn btn-sm btn-dark"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
+                      onClick={() => handleDownload(r)}
                     >
-                      <Download size={16} className="me-1" /> Télécharger
-                    </a>
+                      <div className="d-flex align-items-center">
+                        <Download size={16} className="me-1" /> &nbsp;Télécharger
+                      </div>
+                    </button>
                   </div>
                 </div>
-
-                {/* Aperçu */}
-                {isPreview && <div className={styles.preview}>{renderPreview(absUrl, ext)}</div>}
               </div>
             </div>
           );
@@ -186,6 +141,7 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
           </div>
         )}
       </div>
+      <ResourcePreviewModal res={previewRes} onHide={() => setPreviewRes(null)} />
     </>
   );
 };

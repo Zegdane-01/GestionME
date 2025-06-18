@@ -18,6 +18,16 @@ const Loader = () => (
   </div>
 );
 
+const BackBtn = ({ onClick, label }) => (
+    <button
+      className="btn btn-outline-secondary mb-4 d-flex align-items-center gap-2"
+      onClick={onClick}
+    >
+      <i className="bi bi-arrow-left" />
+      {label}
+    </button>
+);
+
 // Déterminer le statut en fonction du progrès
 const statusFromProgress = (progress = 0, explicitStatus) => {
   if (explicitStatus) return explicitStatus; // l'API renvoie déjà le statut
@@ -38,7 +48,7 @@ const TrainingList = () => {
   /* State                                                       */
   /* ----------------------------------------------------------- */
   const { state } = useLocation() || {};
-  const { domainId, domainName } = state || {};
+  const { domainId, domainName, teamContext } = state || {};
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -147,6 +157,16 @@ const TrainingList = () => {
     return sorted;
   }, [allFormations, domainId, search, category, sort]);
 
+  const handleBackToDomains = () => {
+    navigate('/formations', {
+      // replace: true, // Optionnel: remplace l'entrée /trainings dans l'historique
+      state: {
+        restoreStep: 'domains',  // Instruction pour le composant
+        restoreTeam: teamContext // L'équipe à restaurer
+      }
+    });
+  };
+
   if (loading) return <Loader />;
 
   /* ----------------------------------------------------------- */
@@ -154,17 +174,20 @@ const TrainingList = () => {
   /* ----------------------------------------------------------- */
   return (
     <div className={styles.dashboard}>
-      <div className={styles.dashboardHeader}>
+
         <h1 className={styles.dashboardTitle}>
           Mes Formations
           {domainName && (
             <>
-              {" - "}
+              {" : "}
               <small className="text-secondary">{domainName}</small>
             </>
           )}
         </h1>
-      </div>
+        <p className="text-muted fs-5 mb-3">Formations disponibles</p>
+      {domainId && (
+        <BackBtn onClick={handleBackToDomains} label="Retour à la sélection des domaines" />
+      )}
 
       {/* Résumé Statistiques */}
       <StatsSummary stats={summaryStats} />

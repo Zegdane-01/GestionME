@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+import re
 
 ALLOWED_MANAGER_ROLES = ("TL1", "TL2") 
 
@@ -112,21 +113,45 @@ class Question(models.Model):
     def __str__(self):
         return self.texte[:50]
     
-    def check_answer(self, user_text: str) -> bool:
+    def get_score_for_answer(self, selected_option_ids: list = None, text_response: str = None) -> int:
         """
-        Retourne True si la réponse 'user_text' contient TOUS les mots-clés
-        définis dans 'correct_keywords'.  Non sensible à la casse.
-        Concerne uniquement les questions de type 'image_text'.
+        Calcule et retourne le score pour une réponse donnée, en fonction du type de question.
         """
-        if self.type != 'image_text':
-            return False   # ne s'applique pas
+        if self.type == 'single_choice' or self.type == 'multiple_choice':
+            if not selected_option_ids:
+                return 0
+            
+            # Récupérer les IDs de toutes les options correctes pour cette question
+            correct_option_ids = set(self.options.filter(is_correct=True).values_list('id', flat=True))
+            
+            # Vérifier si l'ensemble des réponses de l'utilisateur est identique à l'ensemble des réponses correctes
+            if correct_option_ids == set(selected_option_ids):
+                return self.point
+            return 0
 
-        if not user_text:
-            return False
+        elif self.type == 'text' or self.type == 'image_text':
+            # Logique pour la correspondance à 50% des mots-clés
+            if not text_response or not self.correct_keywords:
+                return 0
 
-        answer = user_text.lower()
-        return all(kw.lower() in answer for kw in self.correct_keywords)
-
+            # Normaliser le texte de l'utilisateur et les mots-clés (insensible à la casse)
+            user_words = set(re.split(r'\s+|,|\.', text_response.lower()))
+            keywords_to_find = [kw.lower() for kw in self.correct_keywords]
+            
+            # Compter combien de mots-clés sont trouvés
+            found_count = 0
+            for keyword in keywords_to_find:
+                if keyword in user_words:
+                    found_count += 1
+            
+            total_keywords = len(keywords_to_find)
+            
+            # Vérifier si le ratio atteint le seuil de 50%
+            if (found_count / total_keywords) >= 0.5:
+                return self.point
+            return 0
+            
+        return 0
 class Option(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
     texte = models.CharField(max_length=255)

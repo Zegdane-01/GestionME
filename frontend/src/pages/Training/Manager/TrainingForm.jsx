@@ -25,7 +25,6 @@ const TrainingForm = () => {
   const [existingCover, setExistingCover] = useState(null);
   const [allEquipes, setAllEquipes] = useState([]);
   const [searchEquipe, setSearchEquipe] = useState('');
-  const [existingFiles, setExistingFiles] = useState({});
   const [loading, setLoading] = useState(false);
   const [errors,  setErrors]  = useState({});
 
@@ -80,10 +79,15 @@ const TrainingForm = () => {
       // Suppression d'options si on passe à text/image_text
       if (newType === 'text' || newType === 'image_text') {
         q.options = [];
+        // --- MODIFIÉ : On initialise les mots-clés pour les deux types
+        q.correct_keywords = [];
+        q.correct_raw = '';
+
         if (newType === 'image_text') {
-          q.image = null;
-          q.correct_keywords = [];
-          q.correct_raw = '';
+            q.image = null;
+        } else {
+            // Pour le type 'text', on s'assure que le champ image est nul
+            q.image = null; 
         }
       }
 
@@ -127,13 +131,22 @@ const TrainingForm = () => {
         if (isEditMode) {
           const { data: training } = await api.get(`/formations/${id}/`);
           setExistingCover(training.image_cover);
-          const filesMap = {};
-          training.ressources.forEach((r, idx) => {
-            if (r.file) {
-              filesMap[`resource_${idx}`] = r.file;
-            }
-          });
-          setExistingFiles(filesMap);
+          
+          // Pré-traiter le quiz pour générer correct_raw à partir de correct_keywords
+          if (training.quiz && training.quiz.questions) {
+            training.quiz.questions = training.quiz.questions.map(q => {
+              if ((q.type === 'text' || q.type === 'image_text') && Array.isArray(q.correct_keywords)) {
+                return {
+                  ...q,
+                  // On joint le tableau de mots-clés en une chaîne
+                  correct_raw: q.correct_keywords.join(', ') 
+                };
+              }
+              return q;
+            });
+          }
+
+
           const ressources = training.ressources.map(r => ({
             ...r,
             allowed_equipes: (r.allowed_equipes ?? []).map(String),
@@ -404,6 +417,7 @@ const TrainingForm = () => {
         };
         
       });
+      
       fd.append('ressources', JSON.stringify(resMeta));
 
       // quiz
@@ -415,30 +429,41 @@ const TrainingForm = () => {
 
 
         formData.quiz.questions.forEach((origQ, idx) => {
-          const q = { ...origQ };              // shallow copy : garde le File
-          if (q.type === 'image_text') {
-            /* -------- image -------- */
-            if (q.image instanceof File) {
-              const key = `question_image_${idx}`;
-              fd.append(key, q.image);         // ① on ajoute le fichier
-              q.image = key;                   // ② on remplace par la clé
-            } else {
-              q.image = null;                  // aucune image sélectionnée
-            }
+          const q = { ...origQ };
+          
+          // --- MODIFIÉ : Logique unifiée pour la préparation des données ---
+          if (q.type === 'text' || q.type === 'image_text') {
+              // Traiter les mots-clés pour les deux types
+              q.correct_keywords = (q.correct_raw || '')
+                  .split(',')
+                  .map(s => s.trim())
+                  .filter(Boolean);
+              delete q.correct_raw;
 
-            /* ------ keywords ------- */
-            q.correct_keywords = (q.correct_raw || '')
-              .split(',')
-              .map(s => s.trim())
-              .filter(Boolean);
-            delete q.correct_raw;
+              // Gérer l'image spécifiquement pour 'image_text'
+              if (q.type === 'image_text') {
+                  if (q.image instanceof File) {
+                      const key = `question_image_${idx}`;
+                      fd.append(key, q.image);
+                      q.image = key;
+                  } else if (typeof q.image === 'string' && q.image) {
+                      delete q.image; 
+                  } else {
+                      q.image = null;
+                  }
+              } else {
+                  // S'assurer qu'aucune image n'est envoyée pour le type 'text'
+                  delete q.image;
+              }
+
           } else {
-            delete q.image;
-            delete q.correct_raw;
+              // Pour les autres types, on nettoie les champs non pertinents
+              delete q.image;
+              delete q.correct_raw;
           }
 
           quizCopy.questions.push(q);
-        });
+      });
 
         fd.append('quiz', JSON.stringify(quizCopy));
       }
@@ -665,16 +690,29 @@ const TrainingForm = () => {
                   <div className="row mt-3 g-2">
 
                     <div className="col-md-12">
-                      <label htmlFor={`res-${idx}-file`} className={styles.formLabel}>Fichier<span className="text-danger">*</span></label>
+                      <label htmlFor={`res-${idx}-file`} className={styles.formLabel}>Fichier (PDF)<span className="text-danger">*</span></label>
                       {isEditMode && typeof r.file === 'string' && (
                         <a href={r.file} target="_blank" rel="noopener noreferrer">Fichier existant</a>
                       )}
                       <input
                         id={`res-${idx}-file`}
                         type="file"
-                        onChange={e => handleResourceChange(idx, 'file', e.target.files[0])}
+                        // 1. Ajouter l'attribut `accept`
+                        accept="application/pdf"
+                        // 2. Mettre à jour la logique `onChange`
+                        onChange={e => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                if (file.type === 'application/pdf') {
+                                    handleResourceChange(idx, 'file', file);
+                                } else {
+                                    toast.error('Veuillez sélectionner un fichier au format PDF uniquement.');
+                                    e.target.value = null; // Réinitialise le champ
+                                }
+                            }
+                        }}
                         className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
-                      />
+                    />
                     </div>
                   </div>
                   <div className="row mt-3 g-2">
@@ -808,7 +846,7 @@ const TrainingForm = () => {
                     <option value="single_choice">Un choix</option>
                     <option value="multiple_choice">Plusieurs choix</option>
                     <option value="text">Texte libre</option>
-                    <option value="image_text">Voir image et insérer texte</option>
+                    <option value="image_text">Voir l'image et insérer texte</option>
                   </select>
                 </div>
                 <div className="col-md-2">
@@ -851,42 +889,66 @@ const TrainingForm = () => {
                 </>
               )}
 
-              {/* === IMAGE + MOTS-CLÉS (pour image_text) === */}
-              {q.type === 'image_text' && (
+              {(q.type === 'text' || q.type === 'image_text') && (
                 <>
-                  <div className="mb-2">
-                    <label htmlFor={`q-${qIdx}-img`} className={styles.formLabel}>Image<span className="text-danger">*</span></label>
-                    <input
-                      id={`q-${qIdx}-img`}
-                      type="file"
-                      accept="image/*"
-                      onChange={e => handleQuestionChange(qIdx, 'image', e.target.files[0])}
-                      className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
-                    />
-                  </div>
-                  <div className="mb-2">
-                    <label htmlFor={`q-${qIdx}-kw`} className={styles.formLabel}>Mots-clés (séparés par virgule)</label>
-                    <input
-                      id={`q-${qIdx}-kw`}
-                      type="text"
-                      onChange={e =>
-                        handleQuestionChange(
-                          qIdx,
-                          'correct_raw',
-                          e.target.value
-                        )
-                      }
-                      className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
-                    />
-                  </div>
+                  {q.type === 'image_text' && (
+                    <>
+                      {isEditMode && typeof q.image === 'string' && q.image && (
+                        <div className="mb-2">
+                          <label className={styles.formLabel}>Image actuelle</label>
+                          <img src={q.image} alt={`Question ${qIdx + 1}`} className="img-thumbnail" style={{maxWidth: 250, display: 'block'}} />
+                        </div>
+                      )}
+                      <div className="mb-2">
+                        <label htmlFor={`q-${qIdx}-img`} className={styles.formLabel}>Image<span className="text-danger">*</span></label>
+                        <input
+                          id={`q-${qIdx}-img`}
+                          type="file"
+                          accept="image/*"
+                          onChange={e => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              // On vérifie que le type de fichier commence bien par "image/"
+                              if (file.type.startsWith('image/')) {
+                                handleQuestionChange(qIdx, 'image', file);
+                              } else {
+                                // Sinon, on affiche une erreur et on vide le champ
+                                toast.error('Veuillez sélectionner un fichier de type image uniquement.');
+                                e.target.value = null;
+                              }
+                            }
+                          }}
+                          className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                        />
+                      </div>
+                      </>
+                      )}
+                      <div className="mb-2">
+                        <label htmlFor={`q-${qIdx}-kw`} className={styles.formLabel}>Mots-clés (séparés par virgule)</label>
+                        <input
+                          id={`q-${qIdx}-kw`}
+                          type="text"
+                          value={q.correct_raw || ''}
+                          onChange={e =>
+                            handleQuestionChange(
+                              qIdx,
+                              'correct_raw',
+                              e.target.value
+                            )
+                          }
+                          className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                        />
+                      </div>
+                    
+                  
+
+                <div>
+                  <button type="button" className="btn btn-sm btn-danger mt-2" onClick={() => removeQuestion(qIdx)}>
+                    Supprimer question
+                  </button>
+                </div>
                 </>
               )}
-
-              <div>
-                <button type="button" className="btn btn-sm btn-danger mt-2" onClick={() => removeQuestion(qIdx)}>
-                  Supprimer question
-                </button>
-              </div>
             </div>
             );
           })}

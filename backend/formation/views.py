@@ -117,19 +117,14 @@ class QuizViewSet(viewsets.ModelViewSet):
                 ua.text_response = item.get("text_response", "")
             ua.save()
 
-            # 2) on calcule le score
-            if q.type == "single_choice":
-                opt = ua.selected_options.first()
-                if opt and opt.is_correct:
-                    total_score += q.point
-            elif q.type == "multiple_choice":
-                correct = set(q.options.filter(is_correct=True).values_list("id", flat=True))
-                given   = set(ua.selected_options.values_list("id", flat=True))
-                if correct == given:
-                    total_score += q.point
-            else:  # image_text ou text libre
-                if q.check_answer(ua.text_response):
-                    total_score += q.point
+            # 2) On calcule le score en utilisant la méthode universelle du modèle
+            #    On remplace tout le bloc if/elif/else par un seul appel.
+            
+            score_for_question = q.get_score_for_answer(
+                selected_option_ids=item.get("selected_option_ids"),
+                text_response=item.get("text_response")
+            )
+            total_score += score_for_question
 
         # 3) on marque le quiz terminé
         uq.score     = total_score
