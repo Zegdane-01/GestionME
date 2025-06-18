@@ -19,6 +19,24 @@ const statusMap = {
   terminee: { label: "Terminée", className: "bg-success" },
   default: { label: "Inconnue", className: "bg-light text-dark" },
 };
+const formatDuration = (durationString) => {
+  if (!durationString) return null;
+
+  const [hours, minutes] = durationString.split(':').map(Number);
+  
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${hours} h`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes} min`);
+  }
+
+  // Si la durée est 0, on ne retourne rien pour ne pas afficher l'icône.
+  if (parts.length === 0) return null;
+
+  return parts.join(' ');
+};
 
 /* ------------------------------------------------------------- */
 /*  Carte Formation                                              */
@@ -35,6 +53,8 @@ const TrainingCard = ({ training }) => {
 
   const chaptersCount = training.modules?.length ?? 0;
   const ressourcesCount = training.ressources?.length ?? 0;
+
+  const formattedDuration = formatDuration(training.total_estimated_time);
 
   return (
     <div className="card h-100 shadow-sm">
@@ -69,10 +89,10 @@ const TrainingCard = ({ training }) => {
 
         {/* Méta 1 : durée & auteur */}
         <div className="d-flex gap-3 small mb-1">
-          {training.duree && (
+          {formattedDuration && (
             <span>
               <Clock3 size={14} className="me-1" />
-              {training.duree}
+              {formattedDuration}
             </span>
           )}
           {training.created_by && (

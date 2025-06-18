@@ -126,6 +126,7 @@ class FormationReadSerializer(serializers.ModelSerializer):
     resource_count = serializers.SerializerMethodField()
     has_quiz = serializers.SerializerMethodField()
     passed_count = serializers.SerializerMethodField()
+    total_estimated_time = serializers.SerializerMethodField()
 
     created_by = serializers.PrimaryKeyRelatedField(
         queryset=Personne.objects.all(),
@@ -147,7 +148,7 @@ class FormationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Formation
-        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count']
+        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time']
     
     # petits résumés pour modules / ressources
     def get_modules(self, obj):
@@ -176,6 +177,24 @@ class FormationReadSerializer(serializers.ModelSerializer):
 
     def get_passed_count(self, obj):
         return obj.userformation_set.filter(status='terminee').count()
+    
+    def get_total_estimated_time(self, obj):
+        """
+        Retourne la durée totale formatée comme une chaîne "HH:MM:SS".
+        """
+        duration = obj.total_estimated_time # Appel de notre @property du modèle
+        
+        # Le DurationField est automatiquement sérialisé en chaîne de caractères,
+        # mais si on veut contrôler le format, on peut le faire ici.
+        # Par défaut, str(duration) donnera un format comme "H:MM:SS" ou "HH:MM:SS.ffffff"
+        # On peut le formater pour être sûr d'avoir HH:MM:SS
+        if duration:
+            total_seconds = int(duration.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        return "00:00:00"
     
 
 class FormationWriteSerializer(serializers.ModelSerializer):
@@ -552,12 +571,13 @@ class FormationDetailSerializer(serializers.ModelSerializer):
     statut     = serializers.SerializerMethodField()
     userFormationId = serializers.SerializerMethodField()
     tabsCompleted = serializers.SerializerMethodField()
+    total_estimated_time = serializers.SerializerMethodField()
 
     class Meta:
         model  = Formation
         fields = ("id", "titre", "description", "image_cover",
                   "statut", "progress", "userFormationId",
-                  "modules", "ressources", "quiz", "quiz_done", "tabsCompleted")
+                  "modules", "ressources", "quiz", "quiz_done", "tabsCompleted","total_estimated_time")
 
     # helpers ----------------------------------------------------
     def _get_user_formation(self, obj):
@@ -617,6 +637,25 @@ class FormationDetailSerializer(serializers.ModelSerializer):
             "quiz": quiz_done,
         }
     
+    def get_total_estimated_time(self, obj):
+        """
+        Retourne la durée totale formatée comme une chaîne "HH:MM:SS".
+        """
+        duration = obj.total_estimated_time # Appel de notre @property du modèle
+        
+        # Le DurationField est automatiquement sérialisé en chaîne de caractères,
+        # mais si on veut contrôler le format, on peut le faire ici.
+        # Par défaut, str(duration) donnera un format comme "H:MM:SS" ou "HH:MM:SS.ffffff"
+        # On peut le formater pour être sûr d'avoir HH:MM:SS
+        if duration:
+            total_seconds = int(duration.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        return "00:00:00"
+    
+
 class UserQuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserQuiz

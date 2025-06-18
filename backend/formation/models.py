@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import Sum
+from datetime import timedelta
 import re
 
 ALLOWED_MANAGER_ROLES = ("TL1", "TL2") 
@@ -85,6 +87,32 @@ class Formation(models.Model):
     modules = models.ManyToManyField(Module, related_name='formations',blank=True, null=True)
     ressources = models.ManyToManyField(Resource, related_name='formations', blank=True, null=True)
     statut = models.CharField(max_length=10, choices=STATUS_CHOICES, default='actif')
+
+    @property
+    def total_estimated_time(self):
+        """
+        Calcule et retourne la durée totale estimée de la formation
+        en additionnant les durées des modules, ressources et du quiz.
+        """
+        total_duration = timedelta() # Initialiser une durée de zéro
+
+        # 1. Ajouter la durée totale des modules
+        # aggregate retourne un dictionnaire, ex: {'total_time': timedelta(...)}
+        module_time = self.modules.aggregate(total_time=Sum('estimated_time'))['total_time']
+        if module_time:
+            total_duration += module_time
+
+        # 2. Ajouter la durée totale des ressources
+        resource_time = self.ressources.aggregate(total_time=Sum('estimated_time'))['total_time']
+        if resource_time:
+            total_duration += resource_time
+            
+        # 3. Ajouter la durée du quiz s'il existe
+        if hasattr(self, 'quiz') and self.quiz and self.quiz.estimated_time:
+            total_duration += self.quiz.estimated_time
+            
+        return total_duration
+
 
     def __str__(self):
         return self.titre

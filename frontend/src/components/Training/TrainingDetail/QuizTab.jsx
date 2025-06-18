@@ -8,14 +8,10 @@ import {
   faClock,
   faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
+import { formatDuration } from "../../../utils/formatters";
 import styles from "../../../assets/styles/Training/TrainingDetail/QuizTab.module.css";
 
-// --- Helper (inchangé) ---
-const quizDuration = (hhmmss = "00:00:00") => {
-  const [h, m] = hhmmss.split(":").map(Number);
-  const totalMin = h * 60 + m;
-  return totalMin ? `${totalMin} min` : "—";
-};
+
 
 
 const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
@@ -213,6 +209,7 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
 
   // 3. ÉCRAN D’INTRO (inchangé)
   if (!started) {
+    const duration = formatDuration(quiz.estimated_time);
     return (
         <div className="d-flex flex-column align-items-center mt-4">
           <div className={`card p-4 mb-4 ${styles.box}`} style={{ maxWidth: 500, width: "100%" }}>
@@ -225,10 +222,12 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
                           <FontAwesomeIcon icon={faListOl} className="me-2 text-secondary" />
                           {questions.length}&nbsp;question{questions.length > 1 ? "s" : ""}
                       </div>
-                      <div className="col-12">
-                          <FontAwesomeIcon icon={faClock} className="me-2 text-secondary" />
-                          Durée estimée&nbsp;: {quizDuration(quiz.estimated_time)}
-                      </div>
+                      {duration && (
+                          <div className="col-12">
+                              <FontAwesomeIcon icon={faClock} className="me-2 text-secondary" />
+                              Durée estimée&nbsp;: {duration}
+                          </div>
+                        )}
                   </div>
                   <button type="button" className="btn btn-primary btn-lg px-4" onClick={() => setStarted(true)}>
                       <FontAwesomeIcon icon={faCirclePlay} className="me-2" />

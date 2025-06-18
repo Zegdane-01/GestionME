@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Lock, CheckCircle, Download, Eye, AlertCircle } from "lucide-react";
+import { Clock3, Lock, CheckCircle, Download, Eye, AlertCircle } from "lucide-react";
 import FileIcon from "../Shared/FileIcon";
+import { formatDuration } from "../../../utils/formatters";
 import styles from "../../../assets/styles/Training/TrainingDetail/ResourcesTab.module.css";
 import ResourcePreviewModal from './ResourcePreviewModal';
 
@@ -71,6 +72,7 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
       <div className="row gy-4 mt-4">
         {training.ressources.map((r) => {
           const ext       = r.ext || getExtensionFromUrl(r.file || r.url);
+          const duration = formatDuration(r.estimated_time);
           if (!r.accessible) {
             /* ---------- Ressource verrouillée ---------- */
             return (
@@ -80,6 +82,12 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
                     <FileIcon ext={ext} />
                     <div className="flex-grow-1 ms-3">
                       <strong>{r.name}</strong>
+                      {duration && (
+                        <p className="small text-muted mb-0 mt-1 d-flex align-items-center">
+                            <Clock3 size={14} className="me-1" />
+                            {duration}
+                        </p>
+                      )}
                     </div>
                     <Lock size={20} />
                   </div>
@@ -100,6 +108,12 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
                   <FileIcon ext={ext} />
                   <div className="flex-grow-1 ms-3">
                     <strong>{r.name}</strong>
+                    {duration && (
+                      <p className="small text-muted mb-0 mt-1 d-flex align-items-center">
+                        <Clock3 size={14} className="me-1" />
+                        Temps de lecture estimé : {duration}
+                      </p>
+                    )}
                   </div>
                   <div className="d-flex flex-column gap-2">
                     <button
