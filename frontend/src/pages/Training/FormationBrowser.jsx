@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import TrainingList from './TrainingList';
 import api from '../../api/api';
 import styles from '../../assets/styles/Training/FormationBrowser.module.css';
 
@@ -131,6 +130,7 @@ const DomainSelector = ({ domains, onSelect, onBack, teamName }) => (
 
 // --------- 5. Orchestrateur principal amélioré --------------------------
 const FormationBrowser = () => {
+  const { state: locationState } = useLocation();
   const [step, setStep] = useState('teams');
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
@@ -150,6 +150,19 @@ const FormationBrowser = () => {
         ]);
         setTeams(t.data);
         setAllDomains(d.data);
+
+        if (locationState?.restoreStep === 'domains' && locationState?.restoreTeam) {
+          // Utilise une version de handleTeamSelect qui ne dépend pas de l'état précédent
+          const teamData = locationState.restoreTeam;
+          setSelectedTeam(teamData);
+          setDomains(
+            (teamData.domains_info && teamData.domains_info.length)
+              ? teamData.domains_info
+              : d.data.filter(domain => (teamData.domains || []).includes(domain.id))
+          );
+          setStep('domains');
+        }
+
       } catch (err) {
         console.error('Erreur lors du chargement des équipes:', err);
         setError('Impossible de charger les équipes');
@@ -175,6 +188,7 @@ const FormationBrowser = () => {
       state: {
         domainId: domain.id,
         domainName: domain.name,
+        teamContext: selectedTeam
       }
     }
     )
@@ -238,8 +252,6 @@ const FormationBrowser = () => {
         return 'Choisissez une équipe';
       case 'domains':
         return 'Sélectionnez un domaine';
-      case 'formations':
-        return 'Formations disponibles';
       default:
         return 'Navigation';
     }

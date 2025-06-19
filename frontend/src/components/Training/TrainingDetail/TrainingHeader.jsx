@@ -31,7 +31,7 @@ const parseDurationToMinutes = (durationString) => {
 
 
 const TrainingHeader = ({ training = {} }) => {
-  // --- CHANGEMENT 1 : Adapter la déstructuration aux données de l'API ---
+
   // On utilise 'modules' et 'ressources' et on supprime 'duree' qui n'existe pas.
   const {
     statut = "nouvelle",
@@ -40,22 +40,15 @@ const TrainingHeader = ({ training = {} }) => {
     ressources = [],   // C'était 'resources'
     quiz = null,
     progress = 0,
+    total_estimated_time = "00:00:00",
   } = training;
 
   const s = statusMap[statut] ?? statusMap.nouvelle;
   const navigate = useNavigate();
 
-  // --- CHANGEMENT 2 : Calculer la durée totale à partir des modules ---
-  // On utilise useMemo pour ne recalculer que si les modules changent.
-  const totalDurationInMinutes = useMemo(() => {
-    return modules.reduce((total, module) => {
-      // Le 'estimated_time' vient de l'API (ex: "00:15:00")
-      return total + parseDurationToMinutes(module.estimated_time);
-    }, 0);
-  }, [modules]);
 
   // Conversion de la durée totale calculée en h / min
-  const totalMinutes = Math.round(totalDurationInMinutes);
+  const totalMinutes = Math.round(parseDurationToMinutes(total_estimated_time));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
@@ -83,7 +76,7 @@ const TrainingHeader = ({ training = {} }) => {
         {/* On affiche la durée seulement si elle est supérieure à 0 */}
         {totalMinutes > 0 && (
           <span>
-            <Clock3 size={14} className="me-1" /> {hours > 0 && `${hours}h `}{minutes > 0 && `${minutes}min`}
+            <Clock3 size={14} className="me-1" /> {hours > 0 && `${hours} h `}{minutes > 0 && `${minutes} min`}
           </span>
         )}
         <span>

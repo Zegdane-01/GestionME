@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from django.db import transaction
-from django.db.models import Sum 
+from django.db.models import Sum,Q
+from django.http import FileResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication  # si tu utilises SimpleJWT
 from rest_framework.authentication import SessionAuthentication
@@ -24,8 +25,27 @@ class ModuleViewSet(viewsets.ModelViewSet):
     serializer_class = ModuleSerializer
 
 class ResourceViewSet(viewsets.ModelViewSet):
-    queryset = Resource.objects.all()
+    queryset = Resource.objects.all() 
     serializer_class = ResourceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Resource.objects.filter(
+            Q(confidentiel=False) |
+            Q(allowed_equipes__assigned_users=user) |
+            Q(allowed_equipes=None)
+        ).distinct()
+
+    @action(detail=True, methods=["get"])
+    def download(self, request, pk=None):
+        resource = self.get_object()
+        if not resource.user_has_access(request.user):
+            return Response({"detail": "Vous n’avez pas les droits."},
+                            status=status.HTTP_403_FORBIDDEN)
+        return FileResponse(resource.file.open("rb"),
+                            as_attachment=True,
+                            filename=resource.file.name.split("/")[-1])
 
 class FormationViewSet(viewsets.ModelViewSet):
     queryset = Formation.objects.all()
@@ -97,19 +117,14 @@ class QuizViewSet(viewsets.ModelViewSet):
                 ua.text_response = item.get("text_response", "")
             ua.save()
 
-            # 2) on calcule le score
-            if q.type == "single_choice":
-                opt = ua.selected_options.first()
-                if opt and opt.is_correct:
-                    total_score += q.point
-            elif q.type == "multiple_choice":
-                correct = set(q.options.filter(is_correct=True).values_list("id", flat=True))
-                given   = set(ua.selected_options.values_list("id", flat=True))
-                if correct == given:
-                    total_score += q.point
-            else:  # image_text ou text libre
-                if q.check_answer(ua.text_response):
-                    total_score += q.point
+            # 2) On calcule le score en utilisant la méthode universelle du modèle
+            #    On remplace tout le bloc if/elif/else par un seul appel.
+            
+            score_for_question = q.get_score_for_answer(
+                selected_option_ids=item.get("selected_option_ids"),
+                text_response=item.get("text_response")
+            )
+            total_score += score_for_question
 
         # 3) on marque le quiz terminé
         uq.score     = total_score
@@ -297,6 +312,47 @@ class UserFormationViewSet(viewsets.ModelViewSet):
             # On renvoie toujours l'objet Formation complet et à jour
             serializer = FormationDetailSerializer(formation, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def restart(self, request, pk=None):
+        """
+        Réinitialise la progression d'un utilisateur pour une formation spécifique.
+        """
+        user_formation = self.get_object()
+        user = request.user
+        formation = user_formation.formation
+
+        # Vérifier que l'utilisateur qui fait la demande est bien le propriétaire du suivi
+        if user_formation.user != user:
+            return Response(
+                {"error": "Vous n'êtes pas autorisé à effectuer cette action."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 1. Supprimer les suivis des modules liés
+        UserModule.objects.filter(user=user, module__in=formation.modules.all()).delete()
+
+        # 2. Supprimer les suivis des ressources liées
+        UserResource.objects.filter(user=user, resource__in=formation.ressources.all()).delete()
+
+        # 3. Supprimer les suivis du quiz (UserQuiz et toutes les UserAnswer)
+        if hasattr(formation, 'quiz'):
+            quiz = formation.quiz
+            UserQuiz.objects.filter(user=user, quiz=quiz).delete()
+            # Supprimer les réponses aux questions de ce quiz
+            UserAnswer.objects.filter(user=user, question__quiz=quiz).delete()
+
+        # 4. Réinitialiser l'objet UserFormation principal
+        user_formation.progress = 0
+        user_formation.status = 'nouvelle'
+        user_formation.completed_steps = {}
+        user_formation.save()
+
+        # 5. Renvoyer l'état mis à jour de la formation
+        # Le serializer a besoin du contexte de la requête
+        serializer = FormationDetailSerializer(formation, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserModuleViewSet(viewsets.ModelViewSet):
     queryset = UserModule.objects.all()

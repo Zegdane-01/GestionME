@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Clock3 } from "lucide-react";
+import { formatDuration } from '../../../utils/formatters'; 
 import styles from "../../../assets/styles/Training/TrainingDetail/ChaptersTab.module.css";
 
 /* ------------------------------------------------------------- */
@@ -22,7 +23,7 @@ const ChaptersTab = ({
     if (!current || !modules.find((m) => m.id === current.id)) {
       setCurrent(modules[0] ?? null);
     }
-  }, [modules]);
+  }, [modules, current]);
 
   if (modules.length === 0) return <p>Aucun chapitre disponible.</p>;
 
@@ -64,7 +65,12 @@ const ChaptersTab = ({
                 </div>
                 <div className="flex-grow-1 text-start">
                   <strong className="d-block">{m.titre}</strong>
-                  <small className="text-muted">{m.duration ?? 0} min</small>
+                  {formatDuration(m.estimated_time) && (
+                    <small className="text-muted d-flex align-items-center mt-1">
+                      <Clock3 size={12} className="me-1" />
+                      {formatDuration(m.estimated_time)}
+                    </small>
+                  )}
                 </div>
                 {m.completed && <CheckCircle size={16} className="text-success" />}
               </button>

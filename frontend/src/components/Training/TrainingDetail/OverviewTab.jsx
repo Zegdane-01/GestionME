@@ -80,14 +80,6 @@ const OverviewTab = ({ training, onComplete, isCompleted }) => {
                     <div className="flex-grow-1">
                       <strong className="d-block">{r.title ?? r.name}</strong>
                     </div>
-                    <a
-                      href={dlUrl}
-                      download
-                      className={styles.dlBtn}
-                      title="Télécharger"
-                    >
-                      <Download size={14} />
-                    </a>
                   </div>
                 );
               })}

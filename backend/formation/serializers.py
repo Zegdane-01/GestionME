@@ -97,14 +97,28 @@ class ResourceSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     allowed_equipes_info = EquipeMiniSerializer(source='allowed_equipes',read_only=True, many=True)
+
+    accessible = serializers.SerializerMethodField()
+    file = serializers.SerializerMethodField() 
+
     class Meta:
         model  = Resource
         fields = [
-            'id', 'name', 'file', 'confidentiel',
+            'id', 'name','accessible', 'file', 'confidentiel',
             'estimated_time',
             'allowed_equipes',          # écrit
             'allowed_equipes_info'      # lu
         ]
+    
+    def get_accessible(self, obj):
+        request = self.context["request"]
+        return obj.user_has_access(request.user)
+
+    def get_file(self, obj):
+        request = self.context["request"]
+        if obj.user_has_access(request.user):
+            return request.build_absolute_uri(obj.file.url)
+        return None      
 
 
 class FormationReadSerializer(serializers.ModelSerializer):
@@ -112,6 +126,7 @@ class FormationReadSerializer(serializers.ModelSerializer):
     resource_count = serializers.SerializerMethodField()
     has_quiz = serializers.SerializerMethodField()
     passed_count = serializers.SerializerMethodField()
+    total_estimated_time = serializers.SerializerMethodField()
 
     created_by = serializers.PrimaryKeyRelatedField(
         queryset=Personne.objects.all(),
@@ -133,7 +148,7 @@ class FormationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Formation
-        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count']
+        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time']
     
     # petits résumés pour modules / ressources
     def get_modules(self, obj):
@@ -162,6 +177,24 @@ class FormationReadSerializer(serializers.ModelSerializer):
 
     def get_passed_count(self, obj):
         return obj.userformation_set.filter(status='terminee').count()
+    
+    def get_total_estimated_time(self, obj):
+        """
+        Retourne la durée totale formatée comme une chaîne "HH:MM:SS".
+        """
+        duration = obj.total_estimated_time # Appel de notre @property du modèle
+        
+        # Le DurationField est automatiquement sérialisé en chaîne de caractères,
+        # mais si on veut contrôler le format, on peut le faire ici.
+        # Par défaut, str(duration) donnera un format comme "H:MM:SS" ou "HH:MM:SS.ffffff"
+        # On peut le formater pour être sûr d'avoir HH:MM:SS
+        if duration:
+            total_seconds = int(duration.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        return "00:00:00"
     
 
 class FormationWriteSerializer(serializers.ModelSerializer):
@@ -290,6 +323,9 @@ class FormationWriteSerializer(serializers.ModelSerializer):
         modules_data = json.loads(request.data.get('modules', '[]'))
         ressources_data = json.loads(request.data.get('ressources', '[]'))
 
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+
         # Gestion des modules
         instance.modules.clear()
         for i, mod_data in enumerate(modules_data):
@@ -369,6 +405,90 @@ class FormationWriteSerializer(serializers.ModelSerializer):
         # Synchroniser la liste des ressources de la formation
         instance.ressources.set(processed_resource_ids)
 
+
+        # -----------------------------------------------------------------
+        # --- NOUVEAU : GESTION DE LA MISE À JOUR DU QUIZ ---
+        # -----------------------------------------------------------------
+        quiz_data = json.loads(request.data.get('quiz')) if 'quiz' in request.data else None
+        existing_quiz = getattr(instance, 'quiz', None)
+
+        if quiz_data:
+            # Le frontend a envoyé des données de quiz (création ou mise à jour)
+            questions_data = quiz_data.pop('questions', [])
+            
+            if not existing_quiz:
+                # Créer le quiz s'il n'existait pas
+                existing_quiz = Quiz.objects.create(formation=instance)
+
+            # Mettre à jour les champs du quiz (ex: temps estimé)
+            existing_quiz.estimated_time = _parse_duration_or_none(quiz_data.get('estimated_time'))
+            existing_quiz.save()
+            
+            # Synchroniser les questions
+            question_ids_from_frontend = {q.get('id') for q in questions_data if q.get('id')}
+            
+            # Supprimer les questions qui ne sont plus dans la liste
+            existing_quiz.questions.exclude(id__in=question_ids_from_frontend).delete()
+            
+            for q_data in questions_data:
+                question_id = q_data.get('id')
+                options_data = q_data.pop('options', [])
+
+                if question_id:
+                    # --- MISE À JOUR D'UNE QUESTION EXISTANTE ---
+                    question_obj = Question.objects.get(id=question_id, quiz=existing_quiz)
+                    
+                    # Mettre à jour les champs simples
+                    question_obj.texte = q_data.get('texte', question_obj.texte)
+                    question_obj.type = q_data.get('type', question_obj.type)
+                    question_obj.point = q_data.get('point', question_obj.point)
+                    
+                    # Mettre à jour l'image SEULEMENT si une nouvelle est fournie
+                    image_placeholder = q_data.get('image')
+                    if image_placeholder and request.FILES.get(image_placeholder):
+                        if question_obj.image:
+                            question_obj.image.delete(save=False) # Supprimer l'ancienne
+                        question_obj.image = request.FILES.get(image_placeholder)
+
+                    # Mettre à jour les mots-clés
+                    if 'correct_keywords' in q_data:
+                        question_obj.correct_keywords = q_data.get('correct_keywords')
+                    
+                    question_obj.save()
+                    
+                    # Synchroniser les options (supprimer et recréer, c'est plus simple ici)
+                    question_obj.options.all().delete()
+                    if options_data:
+                        Option.objects.bulk_create([
+                            Option(question=question_obj, **opt) for opt in options_data
+                        ])
+
+                else:
+                    # --- CRÉATION D'UNE NOUVELLE QUESTION ---
+                    image_placeholder = q_data.pop('image', None)
+                    image_file = request.FILES.get(image_placeholder) if image_placeholder else None
+                    keywords = q_data.pop('correct_keywords', [])
+                    
+                    new_question = Question.objects.create(
+                        quiz=existing_quiz,
+                        image=image_file,
+                        correct_keywords=keywords,
+                        **q_data
+                    )
+                    if options_data:
+                        Option.objects.bulk_create([
+                            Option(question=new_question, **opt) for opt in options_data
+                        ])
+
+        elif existing_quiz:
+            # Le frontend n'a envoyé aucune donnée de quiz, cela signifie qu'il faut le supprimer
+            existing_quiz.delete()
+
+        # -----------------------------------------------------------------
+        # --- FIN DU BLOC QUIZ ---
+        # -----------------------------------------------------------------
+
+
         # ... le reste de votre fonction update
         instance.save()
         return instance
@@ -407,11 +527,19 @@ class UserModuleSerializer(serializers.ModelSerializer):
         ).exists()
 
 class UserResourceSerializer(serializers.ModelSerializer):
+    allowed_equipes = serializers.PrimaryKeyRelatedField(
+        queryset=Equipe.objects.all(),
+        many=True,
+        allow_null=True
+    )
+    allowed_equipes_info = EquipeSerializer(source='allowed_equipes',read_only=True, many=True)
     read = serializers.SerializerMethodField()
+    accessible = serializers.SerializerMethodField()
+    file = serializers.SerializerMethodField()
     class Meta:
         model = Resource
-        fields = ("id", "name", "file",
-                  "estimated_time", "read")
+        fields = ("id", "name","accessible", "file",
+                  "estimated_time","allowed_equipes", "allowed_equipes_info", "read")
 
     def get_read(self, obj):
         user = self.context['request'].user
@@ -420,6 +548,16 @@ class UserResourceSerializer(serializers.ModelSerializer):
             resource=obj,
             read=True
         ).exists()
+
+    def get_accessible(self, obj):
+        request = self.context["request"]
+        return obj.user_has_access(request.user)
+
+    def get_file(self, obj):
+        request = self.context["request"]
+        if obj.user_has_access(request.user):
+            return request.build_absolute_uri(obj.file.url)
+        return None    
 
 class FormationDetailSerializer(serializers.ModelSerializer):
     # listes enrichies
@@ -433,12 +571,13 @@ class FormationDetailSerializer(serializers.ModelSerializer):
     statut     = serializers.SerializerMethodField()
     userFormationId = serializers.SerializerMethodField()
     tabsCompleted = serializers.SerializerMethodField()
+    total_estimated_time = serializers.SerializerMethodField()
 
     class Meta:
         model  = Formation
         fields = ("id", "titre", "description", "image_cover",
                   "statut", "progress", "userFormationId",
-                  "modules", "ressources", "quiz", "quiz_done", "tabsCompleted")
+                  "modules", "ressources", "quiz", "quiz_done", "tabsCompleted","total_estimated_time")
 
     # helpers ----------------------------------------------------
     def _get_user_formation(self, obj):
@@ -498,6 +637,25 @@ class FormationDetailSerializer(serializers.ModelSerializer):
             "quiz": quiz_done,
         }
     
+    def get_total_estimated_time(self, obj):
+        """
+        Retourne la durée totale formatée comme une chaîne "HH:MM:SS".
+        """
+        duration = obj.total_estimated_time # Appel de notre @property du modèle
+        
+        # Le DurationField est automatiquement sérialisé en chaîne de caractères,
+        # mais si on veut contrôler le format, on peut le faire ici.
+        # Par défaut, str(duration) donnera un format comme "H:MM:SS" ou "HH:MM:SS.ffffff"
+        # On peut le formater pour être sûr d'avoir HH:MM:SS
+        if duration:
+            total_seconds = int(duration.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        return "00:00:00"
+    
+
 class UserQuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserQuiz
