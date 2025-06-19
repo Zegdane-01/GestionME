@@ -313,6 +313,47 @@ class UserFormationViewSet(viewsets.ModelViewSet):
             serializer = FormationDetailSerializer(formation, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def restart(self, request, pk=None):
+        """
+        Réinitialise la progression d'un utilisateur pour une formation spécifique.
+        """
+        user_formation = self.get_object()
+        user = request.user
+        formation = user_formation.formation
+
+        # Vérifier que l'utilisateur qui fait la demande est bien le propriétaire du suivi
+        if user_formation.user != user:
+            return Response(
+                {"error": "Vous n'êtes pas autorisé à effectuer cette action."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 1. Supprimer les suivis des modules liés
+        UserModule.objects.filter(user=user, module__in=formation.modules.all()).delete()
+
+        # 2. Supprimer les suivis des ressources liées
+        UserResource.objects.filter(user=user, resource__in=formation.ressources.all()).delete()
+
+        # 3. Supprimer les suivis du quiz (UserQuiz et toutes les UserAnswer)
+        if hasattr(formation, 'quiz'):
+            quiz = formation.quiz
+            UserQuiz.objects.filter(user=user, quiz=quiz).delete()
+            # Supprimer les réponses aux questions de ce quiz
+            UserAnswer.objects.filter(user=user, question__quiz=quiz).delete()
+
+        # 4. Réinitialiser l'objet UserFormation principal
+        user_formation.progress = 0
+        user_formation.status = 'nouvelle'
+        user_formation.completed_steps = {}
+        user_formation.save()
+
+        # 5. Renvoyer l'état mis à jour de la formation
+        # Le serializer a besoin du contexte de la requête
+        serializer = FormationDetailSerializer(formation, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class UserModuleViewSet(viewsets.ModelViewSet):
     queryset = UserModule.objects.all()
     serializer_class = UserModuleSerializer

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Clock3,
@@ -7,7 +7,10 @@ import {
   FileText,
   Trophy,
   Book,
+  RefreshCw,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import api from "../../api/api";
 import styles from "../../assets/styles/Training/TrainingCard.module.css";
 
 /* ------------------------------------------------------------- */
@@ -41,15 +44,44 @@ const formatDuration = (durationString) => {
 /* ------------------------------------------------------------- */
 /*  Carte Formation                                              */
 /* ------------------------------------------------------------- */
-const TrainingCard = ({ training }) => {
+const TrainingCard = ({ training, onUpdate }) => {
   const navigate = useNavigate();
+  const [isRestarting, setIsRestarting] = useState(false);
 
-  const { statut, progress = 0 } = training; // progress = 0 par défaut
+  const { statut, progress = 0, userFormationId } = training; // progress = 0 par défaut
   const s = statusMap[statut] ?? statusMap.default;
 
   // Libellé CTA
   const cta =
     statut === "terminee" ? "Revoir" : statut === "nouvelle" ? "Commencer" : "Continuer";
+
+  const handleRestart = async (e) => {
+    e.stopPropagation(); // Empêche la navigation en cliquant sur la carte
+
+    if (!window.confirm("Êtes-vous sûr de vouloir recommencer cette formation ? Toute votre progression sera perdue.")) {
+      return;
+    }
+
+    if (!userFormationId) {
+      toast.error("Impossible de réinitialiser : ID de suivi manquant.");
+      return;
+    }
+
+    setIsRestarting(true);
+    try {
+      const response = await api.post(`/user-formations/${userFormationId}/restart/`);
+      toast.success("La formation a été réinitialisée !");
+      // On notifie le composant parent de la mise à jour
+      onUpdate(response.data); 
+    } catch (err) {
+      console.error("Erreur lors de la réinitialisation", err);
+      toast.error("Une erreur est survenue.");
+    } finally {
+      setIsRestarting(false);
+    }
+  };
+
+
 
   const chaptersCount = training.modules?.length ?? 0;
   const ressourcesCount = training.ressources?.length ?? 0;
@@ -134,13 +166,37 @@ const TrainingCard = ({ training }) => {
           </>
         )}
 
-        {/* CTA */}
-        <button
-          className="btn btn-dark w-100 mt-auto"
-          onClick={() => navigate(`/trainings/${training.id}`)}
-        >
-          {cta}
-        </button>
+        <div className="mt-auto">
+          {statut === 'terminee' ? (
+            <div className="d-grid gap-2 d-sm-flex justify-content-sm-center">
+              <button
+                className="btn btn-dark flex-grow-1"
+                onClick={() => navigate(`/trainings/${training.id}`)}
+              >
+                {cta}
+              </button>
+              <button
+                className="btn btn-outline-warning d-flex align-items-center justify-content-center"
+                onClick={handleRestart}
+                disabled={isRestarting}
+                title="Recommencer la formation"
+              >
+                {isRestarting ? (
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+              </button>
+            </div>
+          ) : (
+            <button
+              className="btn btn-dark w-100"
+              onClick={() => navigate(`/trainings/${training.id}`)}
+            >
+              {cta}
+            </button>
+          )}
+          </div>
       </div>
     </div>
   );

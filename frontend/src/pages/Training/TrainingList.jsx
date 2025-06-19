@@ -72,7 +72,15 @@ const TrainingList = () => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all"); // all | nouvelle | en_cours | terminee
   const [sort, setSort] = useState("recent"); // recent | alpha
-
+  const handleFormationUpdate = (updatedFormation) => {
+    setAllFormations(currentFormations =>
+      currentFormations.map(f =>
+        f.id === updatedFormation.id
+          ? { ...f, ...updatedFormation, statut: 'nouvelle', progress: 0, userFormationId: updatedFormation.userFormationId } // Assurer une mise à jour complète
+          : f
+      )
+    );
+  };
   /* ----------------------------------------------------------- */
   /* 1. Récupération des données (formations + état utilisateur) */
   /* ----------------------------------------------------------- */
@@ -226,7 +234,7 @@ const TrainingList = () => {
       <div className="row g-4 d-flex justify-content-center">
         {visibleFormations.map((f) => (
           <div className="col-md-3" key={f.id}>
-            <TrainingCard training={f} />
+            <TrainingCard training={f} onUpdate={handleFormationUpdate} />
           </div>
         ))}
       </div>
