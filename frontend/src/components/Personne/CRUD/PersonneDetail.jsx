@@ -1,5 +1,6 @@
 import React from 'react';
 import defaultAvatar from '../../../assets/images/default-avatar.png';
+import { Download} from "lucide-react";
 
 const PersonDetail = ({ person }) => {
   if (!person) {
@@ -84,12 +85,13 @@ const PersonDetail = ({ person }) => {
       <FieldRow label="Manager" value={`${person.manager_info?.first_name || "—"} ${person.manager_inf?.last_name || ''}`} />
       <FieldRow label="Backup" value={`${person.backup_info?.first_name || "—"} ${person.backup_info?.last_name || ''}`} />
       <FieldRow label="Projet" value={person.projet_info?.nom || "—"} />
+      <FieldRow label="Equipe" value={person.equipe_info?.name || "—"} />
       <>
         <div className="row">
           <div className="col-sm-6 text-secondary fw-bold">DDC :</div>
           <div className="col-sm-6">
             {person.ddc && 
-              <a href={person.ddc} rel="noopener noreferrer" download>Télécharger le document</a>
+              <a href={person.ddc} rel="noopener noreferrer" download><Download size={16} className="me-1" /></a>
             }
             {!person.ddc &&
               <label>—</label>
@@ -108,7 +110,6 @@ const PersonDetail = ({ person }) => {
                 height: '12px',
                 borderRadius: '50%',
                 backgroundColor: person.is_active ? 'green' : 'red',
-                marginLeft: '8px',
               }}
               title={person.is_active ? 'Actif' : 'Inactif'}
             />

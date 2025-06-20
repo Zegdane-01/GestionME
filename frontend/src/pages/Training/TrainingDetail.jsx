@@ -70,7 +70,6 @@ const TrainingDetail = () => {
       );
       // On remplace l'état local par la réponse du serveur. C'est la source de vérité !
       setTraining(updatedTraining);
-      toast.success("Progression enregistrée !");
     } catch (e) {
       toast.error("Erreur lors de la sauvegarde de la progression.");
       // Optionnel: Gérer le retour en arrière en cas d'erreur

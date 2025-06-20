@@ -35,10 +35,10 @@ const OverviewTab = ({ training, onComplete, isCompleted }) => {
   return (
     <>
       {/* Intro */}
-      {training.intro && (
+      {training.description && (
         <div className={`card p-3 mb-4 ${styles.box}`}>
           <h4>Introduction</h4>
-          <p>{training.introLong ?? training.intro}</p>
+          <p>{training.description}</p>
         </div>
       )}
 

@@ -16,6 +16,7 @@ const TrainingTable = ({ trainings, onView, onEdit, onDelete }) => {
             <th># Ressources</th>
             <th>Quiz</th>
             <th>Terminées</th>
+            <th>Nombre d'Équipes</th>
             <th>Statut</th>
             <th>Actions</th>
           </tr>
@@ -36,7 +37,8 @@ const TrainingTable = ({ trainings, onView, onEdit, onDelete }) => {
                     title={training.has_quiz ? "Quiz disponible" : "Pas de quiz"}
                   />
                 </td>
-                <td>{training.passed_count}</td>
+                <td>{training.passed_count}/{training.assigned_person_count} <small>({(training.passed_count/training.assigned_person_count)*100}%)</small></td>
+                <td>{training.assigned_team_count}</td>
                 <td>
                   <span
                     className={styles.badge}
@@ -53,9 +55,6 @@ const TrainingTable = ({ trainings, onView, onEdit, onDelete }) => {
                 </td>
                 <td className={styles.actionsCell}>
                   <div className={styles.actionGroup}>
-                    <button onClick={() => onView(training)} title="Voir" className={`${styles['actionBtn']} ${styles.view}`}>
-                      <FontAwesomeIcon icon={faEye} />
-                    </button>
                     <button onClick={() => onEdit(training.id)} title="Modifier" className={`${styles['actionBtn']} ${styles.edit}`}>
                       <FontAwesomeIcon icon={faPencilAlt} />
                     </button>
@@ -68,7 +67,7 @@ const TrainingTable = ({ trainings, onView, onEdit, onDelete }) => {
             ))
           ) : (
             <tr>
-              <td colSpan={6} className={styles.noData}>
+              <td colSpan={10} className={styles.noData}>
                 <div className={styles.noDataContent}>
                   <FontAwesomeIcon icon={faRocket} className={styles.noDataIcon} />
                   Aucune formation trouvée
