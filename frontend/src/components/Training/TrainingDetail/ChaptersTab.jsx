@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { CheckCircle, Clock3 } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { CheckCircle, Lock, Clock3 } from "lucide-react";
 import { formatDuration } from '../../../utils/formatters'; 
 import styles from "../../../assets/styles/Training/TrainingDetail/ChaptersTab.module.css";
 
@@ -18,10 +18,21 @@ const ChaptersTab = ({
   // Chapitre courant (premier ou null)
   const [current, setCurrent] = useState(modules[0] ?? null);
 
+  const videoRef = useRef(null); // Référence à l'élément <video>
+  // On utilise un Set pour stocker les IDs des modules dont la vidéo a été assez vue
+  const [watchedModules, setWatchedModules] = useState(new Set());
+  
+  const currentDone = current?.completed ?? false;
+  // Le bouton "Valider" est actif si la vidéo a été vue ET que le chapitre n'est pas déjà validé
+  const canValidate = watchedModules.has(current?.id) && !currentDone;
+
   // Si la liste change (ex: après maj parent), on réinitialise le courant
   useEffect(() => {
     if (!current || !modules.find((m) => m.id === current.id)) {
       setCurrent(modules[0] ?? null);
+    }
+    if (videoRef.current) {
+        videoRef.current.currentTime = 0;
     }
   }, [modules, current]);
 
@@ -30,9 +41,9 @@ const ChaptersTab = ({
   /* ----------------------------------------------------------- */
   /*  Handlers                                                   */
   /* ----------------------------------------------------------- */
-  const currentDone = current?.completed ?? false;
 
   const handleValidateAndNext = () => {
+    if (!canValidate) return;
     if (!current) return;
     onChapterComplete(current.id); // signale au parent
 
@@ -41,6 +52,20 @@ const ChaptersTab = ({
       setCurrent(modules[idx + 1]);
     } else {
       onTabComplete(); // tous finis
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video || !current || watchedModules.has(current.id)) {
+      return; // Si pas de vidéo, pas de module courant, ou si déjà marqué comme vu, on ne fait rien
+    }
+
+    const percentageWatched = (video.currentTime / video.duration) * 100;
+
+    // Si plus de 90% de la vidéo a été vue, on l'ajoute à notre liste
+    if (percentageWatched > 0.5) {
+      setWatchedModules(prev => new Set(prev).add(current.id));
     }
   };
 
@@ -54,27 +79,44 @@ const ChaptersTab = ({
         <div className={`${styles.sidebarCard} flex-grow-1`}>
           <h5 className="mb-3">Chapitres</h5>
           <div className="list-group">
-            {modules.map((m, idx) => (
-              <button
-                key={m.id}
-                className={`list-group-item list-group-item-action d-flex align-items-center ${current?.id === m.id ? styles.active : ""}`}
-                onClick={() => setCurrent(m)}
-              >
-                <div className="me-3">
-                  <span className={styles.badge}>{idx + 1}</span>
-                </div>
-                <div className="flex-grow-1 text-start">
-                  <strong className="d-block">{m.titre}</strong>
-                  {formatDuration(m.estimated_time) && (
-                    <small className="text-muted d-flex align-items-center mt-1">
-                      <Clock3 size={12} className="me-1" />
-                      {formatDuration(m.estimated_time)}
-                    </small>
-                  )}
-                </div>
-                {m.completed && <CheckCircle size={16} className="text-success" />}
-              </button>
-            ))}
+            {modules.map((m, idx) => {
+              const isAccessible = (idx === 0) || (modules[idx - 1]?.completed === true);
+              return (
+                <>
+                  <button
+                    key={m.id}
+                    className={`list-group-item list-group-item-action d-flex align-items-center ${current?.id === m.id ? styles.active : ""}`}
+                    onClick={() => {
+                      if (isAccessible) {
+                        setCurrent(m);
+                      }
+                    }}
+                    disabled={!isAccessible}
+                    title={isAccessible ? m.titre : "Veuillez terminer le chapitre précédent"}
+                  >
+                    <div className="me-3">
+                      <span className={styles.badge}>{idx + 1}</span>
+                    </div>
+                    <div className="flex-grow-1 text-start">
+                      <strong className="d-block">{m.titre}</strong>
+                      {formatDuration(m.estimated_time) && (
+                        <small className="text-muted d-flex align-items-center mt-1">
+                          <Clock3 size={12} className="me-1" />
+                          {formatDuration(m.estimated_time)}
+                        </small>
+                      )}
+                    </div>
+                    <div className="ms-2">
+                    {!isAccessible ? (
+                      <Lock size={16} className="text-muted" />
+                      ) : m.completed ? (
+                        <CheckCircle size={16} className="text-success" />
+                      ) : null}
+                    </div>
+                  </button>
+                </>
+              );
+            })}
           </div>
 
           {/* Progression */}
@@ -111,16 +153,23 @@ const ChaptersTab = ({
               </div>
 
               <video
+                ref={videoRef}
                 key={current.id}
                 src={encodeURI(current.video)}
                 controls
+                onTimeUpdate={handleTimeUpdate} // On écoute la progression de la lecture
                 className="mb-4 w-100"
                 style={{ borderRadius: 6, background: "#0f172a" }}
               />
 
               <div className="d-flex justify-content-center gap-3">
                 {!currentDone ? (
-                  <button className="btn btn-success" onClick={handleValidateAndNext}>
+                  <button 
+                    className="btn btn-success" 
+                    onClick={handleValidateAndNext}
+                    disabled={!canValidate} // Le bouton est désactivé si la condition n'est pas remplie
+                    title={!canValidate ? "Veuillez visionner au moins 90% de la vidéo pour valider" : "Valider ce chapitre"}
+                  >
                     <CheckCircle size={20} className="me-2" /> Valider ce chapitre
                   </button>
                 ) : (

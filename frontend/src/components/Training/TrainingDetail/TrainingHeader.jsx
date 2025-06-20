@@ -87,7 +87,7 @@ const TrainingHeader = ({ training = {} }) => {
         {ressources.length > 0 && (
           <span>
             {/* On utilise 'ressources.length' */}
-            <FileText size={14} className="me-1" /> {ressources.length} ressource
+            <FileText size={14} className="me-1" /> {ressources.length} Support
             {ressources.length > 1 && "s"}
           </span>
         )}

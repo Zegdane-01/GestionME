@@ -30,11 +30,11 @@ const TeamCard = React.memo(({ team, onSelect }) => (
 
       {/* Titre sur deux lignes */}
       <h5 className="fw-bold text-center mt-3 mb-1">
-        Équipe<br />{team.name}
+        Activité<br />{team.name}
       </h5>
 
       {/* **Description générique – la même pour tout le monde** */}
-      <p className="text-muted small text-center mb-3">Découvre et suis les formations adaptées à ton équipe</p>
+      <p className="text-muted small text-center mb-3">Découvre et suis les formations adaptées à ton Activité</p>
 
       {/* Bouton d’action */}
       <button
@@ -53,7 +53,7 @@ const TeamSelector = ({ teams, onSelect }) => (
     {teams.length === 0 ? (
       <div className="text-center py-5">
         <i className="bi bi-inbox text-muted mb-3" style={{ fontSize: '3rem' }} />
-        <p className="text-muted fs-5">Aucune équipe disponible</p>
+        <p className="text-muted fs-5">Aucune activité disponible</p>
       </div>
     ) : (
       <div className="row g-4">
@@ -106,7 +106,7 @@ const DomainCard = React.memo(({ domain, onSelect }) => (
 const DomainSelector = ({ domains, onSelect, onBack, teamName }) => (
   <div className="container-fluid">
     <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-      <BackBtn onClick={onBack} label="Retour aux équipes" />
+      <BackBtn onClick={onBack} label="Retour aux activités" />
       <div className="text-muted">
         <i className="bi bi-folder me-1" />
         {domains.length} domaine{domains.length !== 1 && 's'} disponible{domains.length !== 1 && 's'}
@@ -116,7 +116,7 @@ const DomainSelector = ({ domains, onSelect, onBack, teamName }) => (
     {domains.length === 0 ? (
       <div className="text-center py-5">
         <i className="bi bi-folder-x text-muted mb-3" style={{ fontSize: '3rem' }} />
-        <p className="text-muted fs-5">Aucun domaine disponible pour cette équipe</p>
+        <p className="text-muted fs-5">Aucun domaine disponible pour cette activité</p>
       </div>
     ) : (
       <div className="row g-4">
@@ -164,9 +164,8 @@ const FormationBrowser = () => {
         }
 
       } catch (err) {
-        console.error('Erreur lors du chargement des équipes:', err);
-        setError('Impossible de charger les équipes');
-        toast.error('Impossible de charger les équipes');
+        setError('Impossible de charger les activités');
+        toast.error('Impossible de charger les activité');
       }
     };
     fetchTeams();
@@ -249,7 +248,7 @@ const FormationBrowser = () => {
   const getSubtitle = () => {
     switch (step) {
       case 'teams':
-        return 'Choisissez une équipe';
+        return 'Choisissez une activité';
       case 'domains':
         return 'Sélectionnez un domaine';
       default:
@@ -260,7 +259,7 @@ const FormationBrowser = () => {
   return (
     <div className={styles.dashboard}>
       <div className="mb-4">
-        <h1 className={styles.dashboardTitle}>Mes Formations</h1>
+        <h1 className={styles.dashboardTitle}>Formations</h1>
         <p className="text-muted fs-5 mb-3">{getSubtitle()}</p>
       </div>
       

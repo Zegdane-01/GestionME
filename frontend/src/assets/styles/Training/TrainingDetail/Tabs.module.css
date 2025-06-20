@@ -46,3 +46,8 @@
   background: #0f172a;                    /* même couleur que le texte actif */
   transform: scaleX(1);
 }
+
+.disabled {
+  color: #adb5bd !important; /* Couleur de texte grisée */
+  cursor: not-allowed !important;
+}

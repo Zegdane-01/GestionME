@@ -130,9 +130,9 @@ const Navbar = ({ onHeightChange }) => {
           [
             { path: '/collaborateurs', label: 'COLLABORATEURS' },
             { path: '/projets', label: 'PROJETS' },
-            { path: '/equipes', label: 'EQUIPES' },
+            { path: '/activites', label: 'ACTIVITES' },
             { path: '/manager/trainings', label: 'GERER FORMATIONS' },
-            { path: '/formations', label: 'MES FORMATIONS' },
+            { path: '/formations', label: 'FORMATIONS' },
           ].map(({ path, label }, index) => (
             <Link
               key={path}
@@ -151,7 +151,7 @@ const Navbar = ({ onHeightChange }) => {
           [
             { path: '/', label: '' },
             { path: '/profile', label: 'PROFILE' },
-            { path: '/trainings', label: 'MES FORMATIONS' }
+            { path: '/trainings', label: 'FORMATIONS' }
           ].map(({ path, label }, index) => (
             <Link
               key={path}

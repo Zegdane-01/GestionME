@@ -30,7 +30,7 @@ const EquipeList = () => {
       setEquipes(res.data);
       setFiltered(res.data);
     } catch (err) {
-      toast.error("Erreur de récupération des équipes");
+      toast.error("Erreur de récupération des activités");
     } finally {
       setLoading(false);
     }
@@ -52,15 +52,15 @@ const EquipeList = () => {
   const handleSearch = e => setSearchTerm(e.target.value);
   const handleView = equipe => { setSelected(equipe); setShowView(true); };
   const handleDeleteConfirm = equipe => { setToDelete(equipe); setShowDelete(true); };
-  const handleEdit = id => navigate(`/Equipes/edit/${id}`);
-  const handleAdd = () => navigate('/Equipes/add');
+  const handleEdit = id => navigate(`/activites/edit/${id}`);
+  const handleAdd = () => navigate('/activites/add');
 
   const deleteEquipe = async () => {
     if (!toDelete) return;
     try {
       await api.delete(`/equipes/${toDelete.id}/`);
       setEquipes(equipes.filter(e => e.id !== toDelete.id));
-      toast.success("Équipe supprimée");
+      toast.success("Activité supprimée");
     } catch (err) {
       toast.error("Erreur lors de la suppression");
     } finally {
@@ -71,7 +71,7 @@ const EquipeList = () => {
   return (
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
-        <h1 className={styles.dashboardTitle}>Équipes</h1>
+        <h1 className={styles.dashboardTitle}>Activités</h1>
          <div className="d-flex justify-content-end gap-2">
             <button
               className={`${styles.addButton}`}
@@ -80,7 +80,7 @@ const EquipeList = () => {
               Gérer Domaines
             </button>
             <button className={styles.addButton} onClick={handleAdd}>
-              <FontAwesomeIcon icon={faPlus} className={styles.addIcon} /> <span>Nouvelle Équipe</span>
+              <FontAwesomeIcon icon={faPlus} className={styles.addIcon} /> <span>Nouvelle Activité</span>
             </button>
         </div>
       </div>
@@ -89,10 +89,10 @@ const EquipeList = () => {
         <SearchBar
           value={searchTerm}
           onChange={handleSearch}
-          placeholder="Rechercher par nom d'équipe..."
+          placeholder="Rechercher par nom d'actvité..."
         />
         <div className={styles.searchStats}>
-          {filtered.length} équipe{filtered.length !== 1 ? 's' : ''} trouvée
+          {filtered.length} activité{filtered.length !== 1 ? 's' : ''} trouvée
           {filtered.length !== 1 ? 's' : ''}
         </div>
       </div>

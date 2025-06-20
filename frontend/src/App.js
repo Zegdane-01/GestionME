@@ -78,9 +78,9 @@ function App() {
             <Route path="/trainings" element={<TrainingList />} />
             <Route path="/trainings/:id" element={<TrainingDetail />} />
 
-            <Route path="/equipes" element={<EquipeList />} />
-            <Route path="/equipes/add" element={<EquipeForm />} />
-            <Route path="/equipes/edit/:id" element={<EquipeForm />} />
+            <Route path="/activites" element={<EquipeList />} />
+            <Route path="/activites/add" element={<EquipeForm />} />
+            <Route path="/activites/edit/:id" element={<EquipeForm />} />
 
 
             <Route path="/manager/trainings" element={<TrainingListManager />} />

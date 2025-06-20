@@ -9,6 +9,7 @@ import styles from "../../../assets/styles/Training/TrainingDetail/OverviewTab.m
  *  - liste des ressources
  *  - conclusion
  */
+
 const OverviewTab = ({ training, onComplete, isCompleted }) => {
   /* Présence */
   const modules = training.modules ?? [];
@@ -18,10 +19,14 @@ const OverviewTab = ({ training, onComplete, isCompleted }) => {
 
   /* Helper ext */
   const getExt = (r) => {
-    const raw = r.ext || r.name?.split(".").pop() || r.file?.split(".").pop() || "";
+    const raw = r.file?.split(".").pop() || "";
     return raw.toLowerCase();
   };
 
+  const toAbsolute = (url) => {
+    if (!url) return "";
+    return url.startsWith("http") ? url : `${window.location.origin}${url}`;
+  };
   /* Helper duration minutes → "xh ymin" */
   const fmtDuration = (d) => {
     if (!d) return "";
@@ -32,6 +37,33 @@ const OverviewTab = ({ training, onComplete, isCompleted }) => {
     return h ? `${h}h ${m}min` : `${m}min`;
   };
 
+  const handleDownload = async (resource) => {
+    try {
+      const absUrl = toAbsolute(resource.file);
+      
+      const response = await fetch(absUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = resource.title || resource.name || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert(`Erreur de téléchargement: ${error.message}`);
+    }
+  };
   return (
     <>
       {/* Intro */}
@@ -68,19 +100,28 @@ const OverviewTab = ({ training, onComplete, isCompleted }) => {
           <div className={hasContent ? "col-lg-6" : "col-lg-12"}>
             <div className={`card h-100 p-4 ${styles.box}`}>
               <h5 className="mb-3 d-flex align-items-center gap-2">
-                <FileText size={16} /> Ressources
+                <FileText size={16} /> Supports
               </h5>
               {ressources.map((r) => {
                 const ext = getExt(r);
                 const colorCls = styles[`extBadge_${ext}`] || "";
-                const dlUrl = r.url || r.file || "#";
+                const dlUrl = r.file || "#";
                 return (
                   <div key={r.id} className={styles.line}>
                     <span className={`${styles.resBadge} ${colorCls}`}>{ext.slice(0, 2).toUpperCase()}</span>
                     <div className="flex-grow-1">
-                      <strong className="d-block">{r.title ?? r.name}</strong>
+                      <strong className="d-block">{r.name}.{ext}</strong>
                     </div>
+                    <button
+                                          className="btn btn-sm btn-dark"
+                                          onClick={() => handleDownload(r)}
+                                        >
+                                          <div className="d-flex align-items-center">
+                                            <Download size={16} className="me-1" /> &nbsp;Télécharger
+                                          </div>
+                                        </button>
                   </div>
+                  
                 );
               })}
             </div>

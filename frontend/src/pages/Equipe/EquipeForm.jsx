@@ -37,7 +37,7 @@ const EquipeForm = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Le nom de l'équipe est requis.";
+    if (!formData.name.trim()) newErrors.name = "Le nom de l'activité est requis.";
     return newErrors;
   };
 
@@ -126,12 +126,12 @@ const EquipeForm = () => {
       try {
         if (isEditMode) {
           await api.put(`/equipes/${id}/`, payload);
-          toast.success("Équipe mise à jour avec succès");
+          toast.success("Activité mise à jour avec succès");
         } else {
           await api.post(`/equipes/`, payload);
-          toast.success("Équipe créée avec succès");
+          toast.success("Activité créée avec succès");
         }
-        navigate('/equipes');
+        navigate('/activites');
       } catch (err) {
         console.error(err);
         toast.error("Erreur lors de l'enregistrement.");
@@ -144,7 +144,7 @@ const EquipeForm = () => {
   return (
     <div className="container py-5">
       <h1 className={`${styles.formTitle} mb-5 text-center`}>
-        {isEditMode ? 'Modifier une équipe' : 'Créer une nouvelle équipe'}
+        {isEditMode ? 'Modifier une activité' : 'Créer une nouvelle activité'}
       </h1>
 
       <form onSubmit={handleSubmit} className={styles.projetFormCard}>
@@ -245,7 +245,7 @@ const EquipeForm = () => {
         <div className={`${styles.buttonGroup} d-flex justify-content-end`}>
           <button
             type="button"
-            onClick={() => navigate('/equipes')}
+            onClick={() => navigate('/activites')}
             className={`${styles.actionButton} ${styles.cancelButton} me-3`}
           >
             Annuler

@@ -184,7 +184,7 @@ const TrainingList = () => {
     <div className={styles.dashboard}>
 
         <h1 className={styles.dashboardTitle}>
-          Mes Formations
+          Formations
           {domainName && (
             <>
               {" : "}
