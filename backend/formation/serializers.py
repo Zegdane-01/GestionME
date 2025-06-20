@@ -3,6 +3,7 @@ from .models import *
 import os
 from personne.models import Personne
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 import json
 from django.utils.dateparse import parse_duration
 from datetime import timedelta
@@ -45,6 +46,21 @@ class EquipeSerializer(serializers.ModelSerializer):
     assigned_users_count = serializers.SerializerMethodField()
     domains_info = DomainSerializer(source='domains', many=True, read_only=True)
     domain_count = serializers.SerializerMethodField()
+
+    # On attend une liste de matricules pour les utilisateurs
+    assigned_users = serializers.SlugRelatedField(
+        queryset=Personne.objects.all(),
+        many=True,
+        slug_field='matricule',  # On indique que 'matricule' est le champ à utiliser
+        required=False
+    )
+    # On attend une liste d'IDs pour les domaines
+    domains = serializers.PrimaryKeyRelatedField(
+        queryset=Domain.objects.all(),
+        many=True,
+        required=False
+    )
+
     class Meta:
         model = Equipe
         fields = ['id', 'name', 'assigned_users', 'domains', 'domain_count', 'assigned_users_count' , 'assigned_users_info', 'domains_info']
@@ -60,6 +76,29 @@ class EquipeSerializer(serializers.ModelSerializer):
         Retourne le nombre de domaines associés à cette équipe.
         """
         return obj.domains.count()
+    
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        """
+        Met à jour une équipe en gérant le transfert des membres.
+        """
+        # 1. Gérer les champs simples et les relations qui ne nécessitent pas de logique spéciale (comme 'domains')
+        # On retire 'assigned_users' car on va le gérer manuellement
+        assigned_users_data = validated_data.pop('assigned_users', None)
+        instance = super().update(instance, validated_data)
+
+        if assigned_users_data is not None:
+            # 2. Pour chaque utilisateur qu'on veut ajouter/conserver dans l'équipe...
+            for user in assigned_users_data:
+                # ... on le retire de TOUTES les équipes auxquelles il pourrait appartenir.
+                # C'est la manière la plus simple et la plus sûre d'assurer qu'il n'est que dans une seule équipe.
+                user.equipes.clear()
+            
+            # 3. Maintenant que les utilisateurs sont "libres", on les assigne à l'équipe en cours de modification.
+            instance.assigned_users.set(assigned_users_data)
+
+        return instance
+
 
 
 class OptionSerializer(serializers.ModelSerializer):
