@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from .models import *
+import os
 from personne.models import Personne
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 import json
 from django.utils.dateparse import parse_duration
 from datetime import timedelta
@@ -44,6 +46,21 @@ class EquipeSerializer(serializers.ModelSerializer):
     assigned_users_count = serializers.SerializerMethodField()
     domains_info = DomainSerializer(source='domains', many=True, read_only=True)
     domain_count = serializers.SerializerMethodField()
+
+    # On attend une liste de matricules pour les utilisateurs
+    assigned_users = serializers.SlugRelatedField(
+        queryset=Personne.objects.all(),
+        many=True,
+        slug_field='matricule',  # On indique que 'matricule' est le champ à utiliser
+        required=False
+    )
+    # On attend une liste d'IDs pour les domaines
+    domains = serializers.PrimaryKeyRelatedField(
+        queryset=Domain.objects.all(),
+        many=True,
+        required=False
+    )
+
     class Meta:
         model = Equipe
         fields = ['id', 'name', 'assigned_users', 'domains', 'domain_count', 'assigned_users_count' , 'assigned_users_info', 'domains_info']
@@ -59,6 +76,29 @@ class EquipeSerializer(serializers.ModelSerializer):
         Retourne le nombre de domaines associés à cette équipe.
         """
         return obj.domains.count()
+    
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        """
+        Met à jour une équipe en gérant le transfert des membres.
+        """
+        # 1. Gérer les champs simples et les relations qui ne nécessitent pas de logique spéciale (comme 'domains')
+        # On retire 'assigned_users' car on va le gérer manuellement
+        assigned_users_data = validated_data.pop('assigned_users', None)
+        instance = super().update(instance, validated_data)
+
+        if assigned_users_data is not None:
+            # 2. Pour chaque utilisateur qu'on veut ajouter/conserver dans l'équipe...
+            for user in assigned_users_data:
+                # ... on le retire de TOUTES les équipes auxquelles il pourrait appartenir.
+                # C'est la manière la plus simple et la plus sûre d'assurer qu'il n'est que dans une seule équipe.
+                user.equipes.clear()
+            
+            # 3. Maintenant que les utilisateurs sont "libres", on les assigne à l'équipe en cours de modification.
+            instance.assigned_users.set(assigned_users_data)
+
+        return instance
+
 
 
 class OptionSerializer(serializers.ModelSerializer):
@@ -127,6 +167,8 @@ class FormationReadSerializer(serializers.ModelSerializer):
     has_quiz = serializers.SerializerMethodField()
     passed_count = serializers.SerializerMethodField()
     total_estimated_time = serializers.SerializerMethodField()
+    assigned_team_count = serializers.SerializerMethodField()
+    assigned_person_count = serializers.SerializerMethodField()
 
     created_by = serializers.PrimaryKeyRelatedField(
         queryset=Personne.objects.all(),
@@ -148,7 +190,7 @@ class FormationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Formation
-        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time']
+        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time','assigned_team_count', 'assigned_person_count']
     
     # petits résumés pour modules / ressources
     def get_modules(self, obj):
@@ -196,6 +238,13 @@ class FormationReadSerializer(serializers.ModelSerializer):
             return f"{hours:02}:{minutes:02}:{seconds:02}"
         return "00:00:00"
     
+    def get_assigned_team_count(self, obj):
+        """Retourne le nombre d'équipes assignées à la formation via son domaine."""
+        return obj.assigned_teams.count()
+
+    def get_assigned_person_count(self, obj):
+        """Retourne le nombre de personnes uniques dans les équipes assignées."""
+        return obj.assigned_persons.count()
 
 class FormationWriteSerializer(serializers.ModelSerializer):
     module_count = serializers.SerializerMethodField()
@@ -327,8 +376,13 @@ class FormationWriteSerializer(serializers.ModelSerializer):
             setattr(instance, field, value)
 
         # Gestion des modules
+        old_module_ids = set(instance.modules.values_list('id', flat=True))
+
+       
         instance.modules.clear()
+        new_module_ids = set()
         for i, mod_data in enumerate(modules_data):
+            mod_id = mod_data.get('id')
             video_key = mod_data.get('video')
             video_file = request.FILES.get(video_key) if video_key else None
 
@@ -349,8 +403,25 @@ class FormationWriteSerializer(serializers.ModelSerializer):
                 mod = Module.objects.filter(titre=mod_data['titre']).first()
             if mod:
                 instance.modules.add(mod)
+                new_module_ids.add(mod.id)
+        # 3. AJOUT : Identifier et supprimer les modules orphelins
+        removed_ids = old_module_ids - new_module_ids
+        for mod_id in removed_ids:
+            try:
+                module_to_check = Module.objects.get(id=mod_id)
+                # On vérifie s'il est maintenant lié à 0 formation
+                if module_to_check.formations.count() == 0:
+                    # Si oui, on supprime le fichier vidéo...
+                    if module_to_check.video and os.path.isfile(module_to_check.video.path):
+                        os.remove(module_to_check.video.path)
+                    # ... et l'objet de la base de données.
+                    module_to_check.delete()
+            except Module.DoesNotExist:
+                pass # Déjà supprimé, rien à faire
+
 
         # Gestion des ressources
+        old_resource_ids = set(instance.ressources.values_list('id', flat=True))
         processed_resource_ids = []
         for res_data in ressources_data:
             resource_id = res_data.get('id')
@@ -405,6 +476,17 @@ class FormationWriteSerializer(serializers.ModelSerializer):
         # Synchroniser la liste des ressources de la formation
         instance.ressources.set(processed_resource_ids)
 
+        removed_ids = old_resource_ids - set(processed_resource_ids)
+        for res_id in removed_ids:
+            try:
+                resource_to_check = Resource.objects.get(id=res_id)
+                # On vérifie si elle est maintenant liée à 0 formation
+                if resource_to_check.formations.count() == 0:
+                    if resource_to_check.file and os.path.isfile(resource_to_check.file.path):
+                        os.remove(resource_to_check.file.path)
+                    resource_to_check.delete()
+            except Resource.DoesNotExist:
+                pass
 
         # -----------------------------------------------------------------
         # --- NOUVEAU : GESTION DE LA MISE À JOUR DU QUIZ ---

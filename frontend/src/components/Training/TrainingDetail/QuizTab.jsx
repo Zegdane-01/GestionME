@@ -156,7 +156,9 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
         return (
           <div className="mb-4">
             {question.type === 'image_text' && question.image && (
-              <img src={question.image} alt="Question" className={`img-fluid rounded mb-3 ${styles.quizImage}`} />
+              <div className="d-flex h-100 justify-content-center">
+                <img src={question.image} alt="Question" className={`img-fluid rounded mb-3 ${styles.quizImage}`} />
+              </div>
             )}
             <textarea
               className="form-control"

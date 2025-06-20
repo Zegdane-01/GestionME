@@ -125,12 +125,6 @@ const TrainingListManager = () => {
           />
         )}
       </div>
-{/*
-      <ViewTrainingModal
-        show={showViewModal}
-        onHide={() => setShowViewModal(false)}
-        training={selectedTraining}
-      />*/}
 
       <DeleteTrainingModal
         show={showDeleteModal}

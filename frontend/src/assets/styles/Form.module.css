@@ -181,6 +181,82 @@
   cursor: pointer;
 }
 
+.assignedListContainer {
+  max-height: 200px; /* Hauteur maximale avant d'afficher la barre de défilement */
+  overflow-y: auto;  /* Affiche la "slide bar" (scrollbar) si nécessaire */
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa; /* Un fond légèrement différent */
+}
+
+.assignedUserRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+.assignedUserRow:last-child {
+  margin-bottom: 0;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.removeButton:hover {
+  background-color: #e9ecef;
+  color: #dc3545; /* Rouge pour la suppression */
+}
+
+.searchResults {
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 0.375rem 0.375rem;
+  max-height: 250px;
+  overflow-y: auto;
+  background-color: #fff;
+}
+
+.searchResultItem {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f1f1;
+}
+.searchResultItem:last-child {
+  border-bottom: none;
+}
+.searchResultItem:hover {
+  background-color: #f8f9fa;
+}
+
+.assignedItemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+.assignedItemRow:last-child {
+  margin-bottom: 0;
+}
+
 
 
 /* Responsive adjustments */

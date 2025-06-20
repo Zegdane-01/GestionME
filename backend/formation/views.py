@@ -60,6 +60,14 @@ class FormationViewSet(viewsets.ModelViewSet):
             return FormationWriteSerializer   # écriture
         return FormationReadSerializer        # lecture détaillée
     
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        """
+        Enveloppe toute l'opération de mise à jour dans une transaction de base de données.
+        Si une erreur se produit dans le serializer, tout sera annulé.
+        """
+        return super().update(request, *args, **kwargs)
+    
     def perform_destroy(self, instance):
         # Supprimer image de couverture
         if instance.image_cover and instance.image_cover.path and os.path.isfile(instance.image_cover.path):

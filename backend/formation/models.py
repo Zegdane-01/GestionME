@@ -4,6 +4,8 @@ from django.db.models import Sum
 from datetime import timedelta
 import re
 
+from personne.models import Personne
+
 ALLOWED_MANAGER_ROLES = ("TL1", "TL2") 
 
 class TimedContent(models.Model):
@@ -113,7 +115,20 @@ class Formation(models.Model):
             
         return total_duration
 
+       # --- AJOUT : Propriété pour récupérer les équipes liées via le domaine ---
+    
+    @property
+    def assigned_teams(self):
+        if not self.domain:
+            return Equipe.objects.none() # Retourne un queryset vide
+        return self.domain.equipes.all()
 
+    # --- AJOUT : Propriété pour récupérer les personnes liées via les équipes du domaine ---
+    @property
+    def assigned_persons(self):
+        # Récupère toutes les personnes des équipes assignées, sans doublons.
+        return Personne.objects.filter(equipes__in=self.assigned_teams).distinct()
+    
     def __str__(self):
         return self.titre
 

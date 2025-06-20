@@ -37,7 +37,7 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
   /* --------------------------------------------------------- */
   /* Render                                                    */
   /* --------------------------------------------------------- */
-  if (!training.ressources?.length) return <p>Aucune ressource.</p>;
+  if (!training.ressources?.length) return <p>Aucune Support.</p>;
   const handleDownload = async (resource) => {
     try {
       const absUrl = toAbsolute(resource.file);
@@ -94,7 +94,7 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
 
                   <div className="alert alert-danger mt-3 d-flex align-items-center">
                     <AlertCircle size={18} className="me-2" />
-                    Vous n’avez pas les droits d’accéder à cette ressource.
+                    Vous n’avez pas les droits d’accéder à cette Support.
                   </div>
                 </div>
               </div>
@@ -147,11 +147,11 @@ const ResourcesTab = ({ training, onRead, onComplete, isCompleted }) => {
       <div className="d-flex justify-content-center mt-5">
         {!isCompleted ? (
           <button className="btn btn-success" onClick={onComplete}>
-            <CheckCircle size={18} className="me-2" /> Valider la consultation des ressources
+            <CheckCircle size={18} className="me-2" /> Valider la consultation des Supports
           </button>
         ) : (
           <div className="alert alert-success d-flex align-items-center">
-            <CheckCircle size={18} className="me-2" /> Toutes les ressources ont été lues.
+            <CheckCircle size={18} className="me-2" /> Toutes les Supports ont été lues.
           </div>
         )}
       </div>
