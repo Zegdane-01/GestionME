@@ -168,6 +168,46 @@ class QuizViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
+    @action(detail=False, methods=['get'], url_path='radar_scores', permission_classes=[IsAuthenticated])
+    def radar_scores(self, request):
+        user_id = request.query_params.get("user_id")
+        equipe_id = request.query_params.get("equipe_id")
+        projet_id = request.query_params.get("projet_id")
+
+        personnes = Personne.objects.all()
+
+        if user_id:
+            personnes = personnes.filter(matricule=user_id)
+        elif equipe_id:
+            personnes = personnes.filter(equipes__id=equipe_id)
+        elif projet_id:
+            personnes = personnes.filter(projet__id=projet_id)
+
+        domaines = Domain.objects.all()
+        data = []
+
+        for domaine in domaines:
+            formations = Formation.objects.filter(domain=domaine)
+            quizzes = Quiz.objects.filter(formation__in=formations)
+            
+            total_user_score = UserQuiz.objects.filter(
+                quiz__in=quizzes,
+                user__in=personnes,
+                completed=True
+            ).aggregate(total=Sum('score'))['total'] or 0
+
+            total_possible_score = Question.objects.filter(
+                quiz__in=quizzes
+            ).aggregate(total=Sum('point'))['total'] or 0
+
+            score_normalise = (total_user_score / total_possible_score * 4) if total_possible_score else 0
+
+            data.append({
+                "domaine": domaine.name,
+                "score": round(score_normalise, 2)
+            })
+
+        return Response(data)
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
