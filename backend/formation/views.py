@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from django.db import transaction
-from django.db.models import Sum,Q
+from django.db.models import Sum,Q,Avg,F, Case, When, FloatField
+from django.db.models.functions import Cast
 from django.http import FileResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication  # si tu utilises SimpleJWT
@@ -181,33 +182,99 @@ class QuizViewSet(viewsets.ModelViewSet):
         elif equipe_id:
             personnes = personnes.filter(equipes__id=equipe_id)
         elif projet_id:
-            personnes = personnes.filter(projet__id=projet_id)
+            personnes = personnes.filter(projet_id=projet_id)
 
-        domaines = Domain.objects.all()
+        domaines = Domain.objects.filter(
+            equipes__assigned_users__in=personnes
+        ).distinct().order_by('name')
         data = []
 
         for domaine in domaines:
             formations = Formation.objects.filter(domain=domaine)
             quizzes = Quiz.objects.filter(formation__in=formations)
             
-            total_user_score = UserQuiz.objects.filter(
+            user_quizzes_in_domain = UserQuiz.objects.filter(
                 quiz__in=quizzes,
                 user__in=personnes,
                 completed=True
-            ).aggregate(total=Sum('score'))['total'] or 0
+            )
 
-            total_possible_score = Question.objects.filter(
-                quiz__in=quizzes
-            ).aggregate(total=Sum('point'))['total'] or 0
 
-            score_normalise = (total_user_score / total_possible_score * 4) if total_possible_score else 0
+            if not user_quizzes_in_domain.exists():
+                avg_score_percent = 0
+            else:
+                # Cette requête complexe fait le calcul pour nous :
+                # Pour chaque UserQuiz, elle calcule le score en pourcentage, puis fait la moyenne de tous ces pourcentages.
+                # C'est la méthode la plus juste pour une équipe/projet.
+                aggregation = user_quizzes_in_domain.annotate(
+                    # Calculer le score maximum possible pour le quiz de chaque ligne UserQuiz
+                    max_points=Sum('quiz__questions__point'),
+                    # Calculer le score en % pour chaque ligne
+                    percentage_score=Case(
+                        When(max_points__gt=0, then=Cast(F('score'), FloatField()) * 100.0 / F('max_points')),
+                        default=0.0,
+                        output_field=FloatField()
+                    )
+                ).aggregate(
+                    # Calculer la moyenne de tous les pourcentages obtenus
+                    average_score=Avg('percentage_score')
+                )
+                avg_score_percent = aggregation.get('average_score') or 0
 
             data.append({
                 "domaine": domaine.name,
-                "score": round(score_normalise, 2)
+                "score": round(avg_score_percent, 2)
             })
 
         return Response(data)
+
+    @action(detail=False, methods=["get"], url_path="competence_table",
+        permission_classes=[IsAuthenticated])
+    def competence_table(self, request):
+        """Retourne un tableau [ {user, equipe, scores:{dom:%}, average:%} ]"""
+        user_id   = request.query_params.get("user_id")
+        equipe_id = request.query_params.get("equipe_id")
+        projet_id = request.query_params.get("projet_id")
+
+        personnes = Personne.objects.all()
+        if user_id:
+            personnes = personnes.filter(matricule=user_id)
+        elif equipe_id:
+            personnes = personnes.filter(equipes__id=equipe_id)
+        elif projet_id:
+            personnes = personnes.filter(projet_id=projet_id)
+
+        domaines = Domain.objects.all()
+        rows = []
+
+        for pers in personnes:
+            scores = {}
+            total  = 0
+            count  = 0
+            for dom in domaines:
+                quizzes = Quiz.objects.filter(formation__domain=dom)
+                result  = (
+                    UserQuiz.objects
+                    .filter(user=pers, quiz__in=quizzes, completed=True)
+                    .aggregate(avg=Avg("score"))
+                )["avg"]
+                if result is not None:
+                    score = round(result)        # 0-100
+                    scores[dom.name] = score
+                    total += score
+                    count += 1
+
+            if count:
+                rows.append({
+                    "user_id": pers.matricule,
+                    "user"   : f"{pers.first_name} {pers.last_name}",
+                    "equipe" : pers.equipes.first().name if pers.equipes.exists() else "__",  # à ajuster
+                    "scores" : scores,
+                    "average": round(total / count),
+                })
+
+        return Response(rows)
+
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer

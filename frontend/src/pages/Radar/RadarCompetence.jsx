@@ -99,7 +99,7 @@ const RadarCompetence = () => {
     labels  : radarData.map(d=>d.domaine),
     datasets: [{
       label : selectedUser || "Score",
-      data  : radarData.map(d=>d.score),
+      data  : radarData.map(d=>d.score*4/100),
       backgroundColor: "rgba(13,110,253,.2)",
       borderColor    : "#0d6efd",
       borderWidth    : 2,
@@ -107,7 +107,7 @@ const RadarCompetence = () => {
   };
   const radarOpts = {
     plugins: { legend:{ display:false } },
-    scales : { r:{ suggestedMin:0, suggestedMax:100, ticks:{ stepSize:20 } } },
+    scales : { r:{ suggestedMin:0, suggestedMax:4, ticks:{ stepSize:1 } } },
     maintainAspectRatio:false,
   };
   const barChart = {
@@ -191,7 +191,7 @@ const RadarCompetence = () => {
               <label className="form-label">Projet</label>
               <select className="form-select" value={selectedProjet} onChange={e=>setSelectedProjet(e.target.value)}>
                 <option value="">Tous</option>
-                {projets.map(p=>(<option key={p.id} value={p.id}>{p.nom}</option>))}
+                {projets.map(p=>(<option key={p.projet_id} value={p.projet_id}>{p.nom}</option>))}
               </select>
             </div>
           </div>
@@ -224,12 +224,10 @@ const RadarCompetence = () => {
                                 <small>Distribution des scores moyens par domaine</small>
                                 {loading? <p>Chargement…</p> : (
                                     <div className="d-grid gap-2 mt-4 ">
-                                    {radarData.map(item=> (
-                                        <div className="row">
+                                    {radarData.map((item, idx)=> (
+                                        <div key={idx} className="row">
                                             <div className="col-lg-4 ">
-                                                <div key={item.domaine} className="d-flex align-items-center justify-content-between">
-                                                    <span className="fw-medium">{item.domaine}</span>
-                                                </div>
+                                                <span className="fw-medium">{item.domaine}</span>
                                             </div>
                                             <div className="col-lg-8 ">
                                                 <div className="row d-flex align-items-center justify-content-between">
@@ -264,7 +262,7 @@ const RadarCompetence = () => {
                                     <strong>{p.user}</strong><br/>
                                     <span className="text-muted small">{p.equipe}</span>
                                 </div>
-                                <span className="fw-bold text-primary">{p.average}%</span>
+                                <span className="fw-bold text-primary">{p.average*100}%</span>
                                 </div>
                             ))}
                             </div>
