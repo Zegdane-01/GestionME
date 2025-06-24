@@ -201,7 +201,7 @@ class QuizViewSet(viewsets.ModelViewSet):
 
 
             if not user_quizzes_in_domain.exists():
-                avg_score_percent = 0
+                avg_score_percent = None
             else:
                 # Cette requête complexe fait le calcul pour nous :
                 # Pour chaque UserQuiz, elle calcule le score en pourcentage, puis fait la moyenne de tous ces pourcentages.
@@ -220,23 +220,29 @@ class QuizViewSet(viewsets.ModelViewSet):
                     average_score=Avg('percentage_score')
                 )
                 avg_score_percent = aggregation.get('average_score') or 0
-
-            data.append({
-                "domaine": domaine.name,
-                "score": round(avg_score_percent, 2)
-            })
+            
+            if( avg_score_percent is None):
+                data.append({
+                    "domaine": domaine.name,
+                    "score": None
+                })
+            else:
+                data.append({
+                    "domaine": domaine.name,
+                    "score": round(avg_score_percent, 2)
+                })
 
         return Response(data)
 
     @action(detail=False, methods=["get"], url_path="competence_table",
         permission_classes=[IsAuthenticated])
     def competence_table(self, request):
-        """Retourne un tableau [ {user, equipe, scores:{dom:%}, average:%} ]"""
+        """Retourne un tableau [ {user, equipe, scores:{dom:%}, average:%} ] - Version optimisée et correcte"""
         user_id   = request.query_params.get("user_id")
         equipe_id = request.query_params.get("equipe_id")
         projet_id = request.query_params.get("projet_id")
 
-        personnes = Personne.objects.all()
+        personnes = Personne.objects.all().prefetch_related('equipes')
         if user_id:
             personnes = personnes.filter(matricule=user_id)
         elif equipe_id:
@@ -244,37 +250,80 @@ class QuizViewSet(viewsets.ModelViewSet):
         elif projet_id:
             personnes = personnes.filter(projet_id=projet_id)
 
-        domaines = Domain.objects.all()
+        # 1. Requête unique et optimisée pour récupérer tous les résultats des utilisateurs filtrés
+        # On annote chaque résultat avec le score maximum possible pour son quiz.
+        user_quizzes = UserQuiz.objects.filter(
+            user__in=personnes,
+            completed=True
+        ).select_related(
+            'user', 'quiz__formation__domain'
+        ).annotate(
+            max_points=Sum('quiz__questions__point')
+        )
+
+        # 2. On traite les résultats en Python pour regrouper par utilisateur et par domaine
+        # La structure sera : { user_id: { domain_id: {'score': X, 'max': Y, 'name': '...' } } }
+        processed_data = {}
+        for uq in user_quizzes:
+            # S'assurer que le quiz est bien lié à un domaine
+            if not hasattr(uq.quiz, 'formation') or not uq.quiz.formation.domain:
+                continue
+
+            user_id = uq.user_id
+            domain = uq.quiz.formation.domain
+
+            # Initialiser les dictionnaires si c'est la première fois qu'on les rencontre
+            processed_data.setdefault(user_id, {})
+            processed_data[user_id].setdefault(domain.id, {'total_score': 0, 'total_max': 0, 'domain_name': domain.name})
+
+            # Agréger les scores
+            processed_data[user_id][domain.id]['total_score'] += uq.score
+            # S'assurer que max_points n'est pas None
+            processed_data[user_id][domain.id]['total_max'] += uq.max_points or 0
+
+        # 3. On construit la réponse finale
         rows = []
+        all_domains = Domain.objects.all()
+
+        total_domain_count = 0
+
 
         for pers in personnes:
-            scores = {}
-            total  = 0
-            count  = 0
-            for dom in domaines:
-                quizzes = Quiz.objects.filter(formation__domain=dom)
-                result  = (
-                    UserQuiz.objects
-                    .filter(user=pers, quiz__in=quizzes, completed=True)
-                    .aggregate(avg=Avg("score"))
-                )["avg"]
-                if result is not None:
-                    score = round(result)        # 0-100
-                    scores[dom.name] = score
-                    total += score
-                    count += 1
+            # On ne traite que les personnes ayant au moins un résultat
+            if pers.matricule not in processed_data:
+                continue
 
-            if count:
-                rows.append({
-                    "user_id": pers.matricule,
-                    "user"   : f"{pers.first_name} {pers.last_name}",
-                    "equipe" : pers.equipes.first().name if pers.equipes.exists() else "__",  # à ajuster
-                    "scores" : scores,
-                    "average": round(total / count),
-                })
+            user_domain_scores = processed_data[pers.matricule]
+            final_scores = {}
+            total_percentage_sum = 0
+
+            # On calcule le pourcentage pour chaque domaine où l'utilisateur a des résultats
+            for domain_id, data in user_domain_scores.items():
+                if data['total_max'] > 0:
+                    total_domain_count += 1
+                    percentage = round((float(data['total_score']) / data['total_max']) * 100)
+                else:
+                    percentage = 0
+                final_scores[data['domain_name']] = percentage
+                total_percentage_sum += percentage
+
+            # On s'assure que tous les domaines sont présents dans le dictionnaire des scores, avec 0 par défaut
+            for domain in all_domains:
+                if domain.name not in final_scores:
+                    final_scores[domain.name] = None
+            
+            # Calcul final de la moyenne sur le nombre total de domaines
+            average = round(float(total_percentage_sum) / total_domain_count)
+
+            rows.append({
+                "user_id": pers.matricule,
+                "user"   : f"{pers.first_name} {pers.last_name}",
+                "equipe" : pers.equipes.first().name if pers.equipes.exists() else "__",
+                "scores" : final_scores,
+                "average": average,
+            })
 
         return Response(rows)
-
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer

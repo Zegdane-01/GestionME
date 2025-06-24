@@ -65,6 +65,11 @@
   pointer-events: none;
 }
 
+.competenceTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
 /* Top performers list */
 .top-performer {
   background: #f8f9fa;
