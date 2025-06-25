@@ -1,7 +1,9 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
+from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import timedelta
+from decimal import Decimal
 import re
 
 from personne.models import Personne
@@ -23,9 +25,25 @@ class Equipe(models.Model):
 
 class Domain(models.Model):
     name = models.CharField(max_length=100)
-    image_cover = models.ImageField(upload_to='domains/',blank=True, null=True)
-    equipes = models.ManyToManyField(Equipe, related_name='domains',blank=True, null=True)
 
+    prerequisites_level = models.DecimalField(
+        max_digits=3, decimal_places=2,  # ← 0 – 4.0
+        default=Decimal("0.0"),
+        validators=[MinValueValidator(0), MaxValueValidator(4)]
+    )
+    consultant_target = models.DecimalField(
+        max_digits=3, decimal_places=2,
+        default=Decimal("0.0"),
+        validators=[MinValueValidator(0), MaxValueValidator(4)]
+    )
+    leader_target = models.DecimalField(
+        max_digits=3, decimal_places=2,
+        default=Decimal("0.0"),
+        validators=[MinValueValidator(0), MaxValueValidator(4)]
+    )
+
+    equipes = models.ManyToManyField(Equipe, related_name='domains',blank=True, null=True)
+    
     def __str__(self):
         return self.name
 

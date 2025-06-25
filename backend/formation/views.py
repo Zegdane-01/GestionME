@@ -224,12 +224,18 @@ class QuizViewSet(viewsets.ModelViewSet):
             if( avg_score_percent is None):
                 data.append({
                     "domaine": domaine.name,
-                    "score": None
+                    "score": None,
+                    "prerequisites": float(domaine.prerequisites_level),
+                    "consultant_target": float(domaine.consultant_target),
+                    "leader_target": float(domaine.leader_target),
                 })
             else:
                 data.append({
                     "domaine": domaine.name,
-                    "score": round(avg_score_percent, 2)
+                    "score": round(avg_score_percent, 2),
+                    "prerequisites": float(domaine.prerequisites_level),
+                    "consultant_target": float(domaine.consultant_target),
+                    "leader_target": float(domaine.leader_target),
                 })
 
         return Response(data)

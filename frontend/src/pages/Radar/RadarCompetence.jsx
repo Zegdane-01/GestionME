@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import api from "../../api/api";
+import { Table } from "react-bootstrap";
 import { User, BarChart3, Table2, BrainCircuit, Minus } from "lucide-react";
 import styles from "../../assets/styles/Radar/Radar.module.css"; // ← ton fichier CSS local
 
@@ -212,12 +213,101 @@ const RadarCompetence = () => {
     maintainAspectRatio:false,
   };
 
+  /* ---------------------- TABLE Maîtrise des compétences -------------------- */
+  // On prépare les données pour le tableau
+  const rows_competences = [
+    {
+      level: 1,
+      labelEN: "Beginner",
+      labelFR: "Débutant",
+      descEN: "Graduate – No practice",
+      descFR: "Diplômé – Sans pratique",
+    },
+    {
+      level: 2,
+      labelEN: "Junior",
+      labelFR: "Junior",
+      descEN: "Currently learning",
+      descFR: "En cours d'apprentissage",
+    },
+    {
+      level: 3,
+      labelEN: "Confirmed",
+      labelFR: "Confirmé",
+      descEN: "Autonomous in his activities",
+      descFR: "Autonome dans ses activités",
+    },
+    {
+      level: 4,
+      labelEN: "Expert",
+      labelFR: "Expert",
+      descEN: "Recognized by the profession",
+      descFR: "Reconnu par le métier",
+    },
+    {
+      level: "NA",
+      labelEN: "Not applicable",
+      labelFR: "Non applicable",
+      descEN: "",
+      descFR: "",
+    },
+  ];
+
+  const renderTablecompetences = () => {
+    return(
+      <Table bordered responsive className="mb-0">
+        <thead className="table-secondary text-center">
+          <tr>
+            <th colSpan={3} className="h6">
+              Mastery of skills&nbsp;/&nbsp;
+              <span className="text-primary fw-semibold">
+                Maîtrise des compétences
+              </span>
+            </th>
+          </tr>
+          <tr className="table-light">
+            <th style={{ width: "8rem" }}>Niv.</th>
+            <th style={{ width: "24rem" }}>Libellés</th>
+            <th>Descriptions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {rows_competences.map((r, idx) => (
+            <tr
+              key={r.level}
+              className={idx % 2 ? "bg-light" : undefined} // alternance bleutée
+            >
+              <td className="text-center fw-bold">{r.level}</td>
+
+              <td>
+                {r.labelEN}{" "}
+                <span className="text-primary fw-medium">/ {r.labelFR}</span>
+              </td>
+
+              <td>
+                {r.descEN && (
+                  <>
+                    {r.descEN}{" "}
+                    <span className="text-primary fw-medium">
+                      / {r.descFR}
+                    </span>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    );
+  }
+
   /* ---------------------- RENDER TABLE ROWS --------------- */
 
   const getProgressBarColor = (score) => {
     if (score >= 75) return 'bg-success'; // Vert pour les excellents scores
-    if (score >= 50) return 'bg-info';    // Bleu pour les scores corrects
-    if (score >= 25) return 'bg-warning'; // Orange pour les scores faibles
+    if (score >= 50) return 'bg-warning';    // Bleu pour les scores corrects
+    if (score >= 25) return 'bg-danger'; // Orange pour les scores faibles
     return 'bg-danger';                  // Rouge pour les scores très faibles
   };
   const domains = radarData.map(d=>d.domaine);
@@ -341,7 +431,20 @@ const RadarCompetence = () => {
                         <h3 className="card-title mb-3">Radar de compétences</h3>
                         {totalCollab > 0 ? (
                           <>
-                            {loading ? <p>Chargement…</p> : <div className={styles.chart}><Radar data={radarChart} options={radarOpts}/></div>}
+                            {loading ? (
+                              <p>Chargement…</p>
+                            ) : (
+                              <div className="row g-4 mb-4">
+                                <div className="col-lg-4">
+                                  {renderTablecompetences()}
+                                </div>
+                                <div className="col-lg-8 d-flex align-items-center justify-content-center">
+                                  <div className={styles.chart}>
+                                    <Radar data={radarChart} options={radarOpts}/>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </>
                         ) : (
                           <div className="text-center p-5 my-4 border-dashed rounded-3">
