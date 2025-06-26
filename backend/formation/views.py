@@ -289,47 +289,44 @@ class QuizViewSet(viewsets.ModelViewSet):
 
         # 3. On construit la réponse finale
         rows = []
-        all_domains = Domain.objects.all()
-
-        total_domain_count = 0
-
+        all_domains = list(Domain.objects.all())          # on les lit une fois
+        domain_map = {d.id: d for d in all_domains}       # id → objet
 
         for pers in personnes:
-            # On ne traite que les personnes ayant au moins un résultat
-            if pers.matricule not in processed_data:
-                continue
+            user_scores = processed_data.get(pers.matricule, {})
+            if not user_scores:
+                continue                                  # pas de quiz terminé
 
-            user_domain_scores = processed_data[pers.matricule]
             final_scores = {}
-            total_percentage_sum = 0
+            total_pct_sum = 0
+            domain_with_scores = 0                        # compteur local 💡
 
-            # On calcule le pourcentage pour chaque domaine où l'utilisateur a des résultats
-            for domain_id, data in user_domain_scores.items():
-                if data['total_max'] > 0:
-                    total_domain_count += 1
-                    percentage = round((float(data['total_score']) / data['total_max']) * 100)
-                else:
-                    percentage = 0
+            # domaines où l’utilisateur a un résultat
+            for dom_id, data in user_scores.items():
+                pct = round(float(data['total_score']) / data['total_max'] * 100) \
+                    if data['total_max'] else 0
+                d_obj = domain_map[dom_id]
                 final_scores[data['domain_name']] = {
-                    'score': percentage,
-                    'prerequisites': float(domain.prerequisites_level),
-                    'consultant_target': float(domain.consultant_target),
-                    'leader_target': float(domain.leader_target),
+                    'score': pct,
+                    'prerequisites': float(d_obj.prerequisites_level),
+                    'consultant_target': float(d_obj.consultant_target),
+                    'leader_target': float(d_obj.leader_target),
                 }
-                total_percentage_sum += percentage
+                total_pct_sum += pct
+                domain_with_scores += 1                   # ← on incrémente ici
 
-            # On s'assure que tous les domaines sont présents dans le dictionnaire des scores, avec 0 par défaut
-            for domain in all_domains:
-                if domain.name not in final_scores:
-                    final_scores[data['domain_name']] = {
+            # domaines sans résultat
+            for d in all_domains:
+                if d.name not in final_scores:
+                    final_scores[d.name] = {
                         'score': None,
-                        'prerequisites': float(domain.prerequisites_level),
-                        'consultant_target': float(domain.consultant_target),
-                        'leader_target': float(domain.leader_target),
+                        'prerequisites': float(d.prerequisites_level),
+                        'consultant_target': float(d.consultant_target),
+                        'leader_target': float(d.leader_target),
                     }
-            
-            # Calcul final de la moyenne sur le nombre total de domaines
-            average = round(float(total_percentage_sum) / total_domain_count)
+
+            # moyenne sur les seuls domaines scorés
+            average = round(total_pct_sum / domain_with_scores) if domain_with_scores else 0
 
             rows.append({
                 "user_id": pers.matricule,

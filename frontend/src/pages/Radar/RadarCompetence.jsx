@@ -342,7 +342,7 @@ const RadarCompetence = () => {
         const info = row.scores[dom]
         return (
           <td key={dom} className="text-center">
-            {info.score !== null ? (
+            {info && info.score !== null ? (
               <>
                 <div className="progress" style={{height:"6px"}}>
                   <div 
