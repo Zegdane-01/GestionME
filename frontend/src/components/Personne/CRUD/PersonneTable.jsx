@@ -1,8 +1,33 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faTrash, faPencilAlt, faRocket } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faTrash, faPencilAlt, faRocket,faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import styles from '../../../assets/styles/Table.module.css';
 const PersonTable = ({ people, onView, onEdit, onDelete }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPeoples = people.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(people.length / itemsPerPage);
+
+  // Fonction pour gérer le changement de page
+  const handlePageChange = (pageNumber) => {
+      // S'assurer que le numéro de page est dans les limites valides
+      if (pageNumber >= 1 && pageNumber <= totalPages) {
+          setCurrentPage(pageNumber);
+      }
+  };
+
+  // Amélioration pour éviter la division par zéro
+  const calculatePercentage = (passed, total) => {
+      if (!total || total === 0) {
+          return '0.00';
+      }
+      return ((passed / total) * 100).toFixed(2);
+  };
+   
   return (
     <div className={styles.tableContainer}>
       <table className={styles.simpleTable}>
@@ -21,55 +46,88 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
           </tr>
         </thead>
         <tbody>
-          {people.length > 0 ? (
-            people.map((person) => (
-              <tr key={person.matricule} className={styles.dataRow}>
-                <td className={styles.codeCell}>{person.matricule}</td>
-                <td>{person.last_name}</td>
-                <td>{person.first_name}</td>
-                <td>{person.role}</td>
-                <td>{person.status}</td>
-                <td>{person.position}</td>
-                <td>{person.manager_info?.first_name || ''} {person.manager_info?.last_name || ''}</td>
-                <td>{person.backup_info?.first_name || ''} {person.backup_info?.last_name || ''}</td>
-
-                <td><span
-                  style={{
-                    display: 'inline-block',
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    backgroundColor: person.is_active ? 'green' : 'red',
-                  }}
-                  title={person.is_active ? 'Actif' : 'Inactif'}
-                /></td>
-                <td className={styles.actionsCell}>
-                  <div className={styles.actionGroup}>
-                    <button onClick={() => onView(person)} title="Voir" className={`${styles['actionBtn']} ${styles.view}`}>
-                      <FontAwesomeIcon icon={faEye} />
-                    </button>
-                    <button onClick={() => onEdit(person.matricule)} title="Modifier" className={`${styles['actionBtn']} ${styles.edit}`}>
-                      <FontAwesomeIcon icon={faPencilAlt} />
-                    </button>
-                    <button onClick={() => onDelete(person.matricule)} title="Supprimer" className={`${styles['actionBtn']} ${styles.delete}`}>
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={9} className={styles.noData}>
-                <div className={styles.noDataContent}>
-                  <FontAwesomeIcon icon={faRocket} className={styles.noDataIcon} />
-                  Aucun projet trouvé
-                </div>
-              </td>
-            </tr>
-          )}
+            {currentPeoples.length > 0 ? (
+                currentPeoples.map((person) => (
+                    <tr key={person.matricule} className={styles.dataRow}>
+                        <td className={styles.codeCell}>{person.matricule}</td>
+                        <td>{person.last_name}</td>
+                        <td>{person.first_name}</td>
+                        <td>{person.role}</td>
+                        <td>{person.status}</td>
+                        <td>{person.position}</td>
+                        <td>{`${person.manager_info?.first_name || ''} ${person.manager_info?.last_name || ''}`}</td>
+                        <td>{`${person.backup_info?.first_name || ''} ${person.backup_info?.last_name || ''}`}</td>
+                        <td>
+                            <span
+                                style={{
+                                    display: 'inline-block',
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    backgroundColor: person.is_active ? 'green' : 'red',
+                                }}
+                                title={person.is_active ? 'Actif' : 'Inactif'}
+                            />
+                        </td>
+                        <td className={styles.actionsCell}>
+                            <div className={styles.actionGroup}>
+                                <button onClick={() => onView(person)} title="Voir" className={`${styles['actionBtn']} ${styles.view}`}>
+                                    <FontAwesomeIcon icon={faEye} />
+                                </button>
+                                <button onClick={() => onEdit(person.matricule)} title="Modifier" className={`${styles['actionBtn']} ${styles.edit}`}>
+                                    <FontAwesomeIcon icon={faPencilAlt} />
+                                </button>
+                                <button onClick={() => onDelete(person.matricule)} title="Supprimer" className={`${styles['actionBtn']} ${styles.delete}`}>
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                ))
+            ) : (
+                <tr>
+                    {/* MODIFIÉ : colSpan corrigé à 10 et message amélioré */}
+                    <td colSpan={10} className={styles.noData}>
+                        <div className={styles.noDataContent}>
+                            <FontAwesomeIcon icon={faRocket} className={styles.noDataIcon} />
+                            Aucune personne trouvée
+                        </div>
+                    </td>
+                </tr>
+            )}
         </tbody>
       </table>
+          {totalPages > 1 && (
+            <div className={styles.paginationContainer}>
+                <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={styles.paginationButton}
+                    title="Page précédente"
+                >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                    <button
+                        key={number}
+                        onClick={() => handlePageChange(number)}
+                        className={`${styles.paginationButton} ${currentPage === number ? styles.active : ''}`}
+                    >
+                        {number}
+                    </button>
+                ))}
+
+                <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={styles.paginationButton}
+                    title="Page suivante"
+                >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                </button>
+            </div>
+          )}
     </div>
   );
 };

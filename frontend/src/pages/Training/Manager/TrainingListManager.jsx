@@ -21,8 +21,6 @@ const TrainingListManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [trainings, setTrainings] = useState([]);
   const [filteredTrainings, setFilteredTrainings] = useState([]);
-  const [selectedTraining, setSelectedTraining] = useState(null);
-  const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,8 +47,9 @@ const TrainingListManager = () => {
   useEffect(() => {
     const results = trainings.filter(training =>
       training.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      training.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      training.statut.toLowerCase().includes(searchTerm.toLowerCase())
+      training.domain_info.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      training.created_by_info.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      training.created_by_info.last_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredTrainings(results);
   }, [searchTerm, trainings]);
@@ -59,10 +58,6 @@ const TrainingListManager = () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleView = (training) => {
-    setSelectedTraining(training);
-    setShowViewModal(true);
-  };
 
   const handleDeleteConfirm = (id) => {
     setTrainingToDelete(id);
@@ -104,7 +99,7 @@ const TrainingListManager = () => {
       </div>
 
       <div className={styles.searchContainer}>
-        <SearchBar value={searchTerm} onChange={handleSearch} placeholder="Rechercher par titre, description, statut..." />
+        <SearchBar value={searchTerm} onChange={handleSearch} placeholder="Rechercher par titre, domaine, Créateur..." />
         <div className={styles.searchStats}>
           {filteredTrainings.length} formation{filteredTrainings.length !== 1 ? 's' : ''} trouvée{filteredTrainings.length !== 1 ? 's' : ''}
         </div>
@@ -119,7 +114,6 @@ const TrainingListManager = () => {
         ) : (
           <TrainingTable
             trainings={filteredTrainings}
-            onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDeleteConfirm}
           />

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import api from "../../api/api";
-import { Table, Badge } from "react-bootstrap";
-import { User, BarChart3, Table2, BrainCircuit, Minus } from "lucide-react";
+import { Table } from "react-bootstrap";
+import { User, BarChart3, Table2, BrainCircuit } from "lucide-react";
 import styles from "../../assets/styles/Radar/Radar.module.css"; // ← ton fichier CSS local
 
 /* ------------------------------ Chart.js ------------------------------ */
@@ -320,11 +320,18 @@ const RadarCompetence = () => {
 
   /* ---------------------- RENDER TABLE ROWS --------------- */
 
-  const getProgressBarColor = (score) => {
-    if (score >= 75) return 'bg-success'; // Vert pour les excellents scores
-    if (score >= 50) return 'bg-warning';    // Bleu pour les scores corrects
-    if (score >= 25) return 'bg-danger'; // Orange pour les scores faibles
-    return 'bg-danger';                  // Rouge pour les scores très faibles
+  const getProgressBarColor = (score, prerequisites, consultant, leader) => {
+    if (score === null) return 'bg-secondary'; // Si pas de score
+
+    // Convertir les cibles (0-4) en pourcentages
+    const leaderPct = leader * 25;
+    const consultPct = consultant * 25;
+    const prereqPct  = prerequisites * 25;
+
+    if (score >= leaderPct) return 'bg-success';     // vert
+    if (score >= consultPct) return 'bg-warning';       // bleu
+    if (score >= prereqPct)  return 'bg-danger';    // orange
+    return 'bg-info';                              // rouge
   };
   const domains = radarData.map(d=>d.domaine);
   const rows = tableData.length ? tableData.map(row=>(
@@ -332,25 +339,26 @@ const RadarCompetence = () => {
       <td>{row.user}</td>
       <td>{row.equipe}</td>
       {domains.map(dom=>{
-        const score = row.scores[dom];
+        const info = row.scores[dom]
         return (
           <td key={dom} className="text-center">
-            {score !== null ? (
+            {info.score !== null ? (
               <>
                 <div className="progress" style={{height:"6px"}}>
                   <div 
-                    className={`progress-bar ${getProgressBarColor(score)}`} 
-                    style={{width: `${score}%`}}
+                     className={`progress-bar ${getProgressBarColor(info.score, info.prerequisites, info.consultant_target, info.leader_target
+)}`}
+                    style={{width: `${info.score}%`}}
                     role="progressbar"
-                    aria-valuenow={score}
+                    aria-valuenow={info.score}
                     aria-valuemin="0"
                     aria-valuemax="100"
                   />
                 </div>
-                <small>{score}%</small>
+                <small>{info.score}%</small>
               </>
             ) : (
-              <Minus className="text-muted" size={20} strokeWidth={2.5} />
+              <>N/A</>
             )}
           </td>
         );
@@ -474,59 +482,71 @@ const RadarCompetence = () => {
                 </div>
             </div>
             <div className="row g-4 mb-4">
-                <div className="col-lg-6">
-                    <div className="card shadow-sm h-100 p-4">
-                        <div className="card-body">
-                            <h4 className="card-title mb-0">Répartition par compétence</h4>
-                            <small>Distribution des scores moyens par domaine</small>
-                            {loading? <p>Chargement…</p> : (
-                              <div className="d-grid gap-2 mt-4 ">
-                                {radarData.map((item, idx)=> {
-                                  const score = item.score;
-                                  return (
-                                    <div key={idx} className="row align-items-center mb-2"> 
-                                        <div className="col-lg-4">
-                                            <span className="fw-medium">{item.domaine}</span>
+                <div className="col-lg-8">
+                  <div className="card shadow-sm h-100 p-4">
+                    <div className="card-body">
+                      <h4 className="card-title mb-0">Répartition par compétence</h4>
+                      <small>Distribution des scores moyens par domaine</small>
+
+                      {loading ? (
+                        <p>Chargement…</p>
+                      ) : (
+                        <div className="table-responsive mt-4">
+                          <table className="table table-sm align-middle">
+                            <thead className="table-light">
+                              <tr>
+                                <th>Domaine</th>
+                                <th style={{ width: "25%" }}>Score</th>
+                                <th className="text-center">Prérequis</th>
+                                <th className="text-center">Consultant</th>
+                                <th className="text-center">Leader</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {radarData.map((item, idx) => {
+                                const score = item.score;
+                                return (
+                                  <tr key={idx}>
+                                    <td><strong>{item.domaine}</strong></td>
+                                    <td className="pe-4">
+                                      {score !== null ? (
+                                        <div className="d-flex align-items-center">
+                                          <div className="flex-grow-1">
+                                            <div className="progress" style={{ height: '6px' }}>
+                                              <div
+                                                className={`progress-bar ${getProgressBarColor(score, item.prerequisites, item.consultant_target, item.leader_target)}`}
+                                                style={{ width: `${score}%` }}
+                                                role="progressbar"
+                                                aria-valuenow={score}
+                                                aria-valuemin="0"
+                                                aria-valuemax="100"
+                                              />
+                                            </div>
+                                          </div>
+                                          <span className="ms-2 text-muted">{score.toFixed(2)}%</span>
                                         </div>
-                                        {/* La structure de la colonne de droite a été simplifiée */}
-                                        <div className="col-lg-8">
-                                            {score !== null ? (
-                                                // NOUVELLE STRUCTURE : Un simple conteneur flex pour aligner la barre et le score
-                                                <div className="d-flex align-items-center">
-                                                    <div className="flex-grow-1">
-                                                        <div className="progress" style={{height:'6px'}}>
-                                                            <div 
-                                                                className={`progress-bar ${getProgressBarColor(score)}`} 
-                                                                style={{width: `${score}%`}}
-                                                                role="progressbar"
-                                                                aria-valuenow={score}
-                                                                aria-valuemin="0"
-                                                                aria-valuemax="100"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className="ms-3" style={{ minWidth: '40px' }}> {/* Espace et largeur minimale pour le texte */}
-                                                        <span className="text-muted fw-semibold">{score}%</span>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                // L'icône sera maintenant bien centrée grâce à "align-items-center" sur la ligne parente
-                                                <Minus className="text-muted" size={20} strokeWidth={2.5} />
-                                            )}
-                                        </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
+                                      ) : (
+                                        <span className="text-muted">N/A</span>
+                                      )}
+                                    </td>
+                                    <td className="bg-danger text-center text-white"><strong>{(item.prerequisites*100/4).toFixed(2)}%</strong></td>
+                                    <td className="bg-warning text-center text-white"><strong>{(item.consultant_target*100/4).toFixed(2)}%</strong></td>
+                                    <td className="bg-success text-center text-white"><strong>{(item.leader_target*100/4).toFixed(2)}%</strong></td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
+                      )}
                     </div>
+                  </div>
                 </div>
-                <div className="col-lg-6">
+                <div className="col-lg-4">
                     <div className="card shadow-sm h-100 p-4">
                         <div className="card-body">
                         <h4 className="card-title mb-3">Top performers</h4>
-                        {top3.length===0 && <Minus className="text-muted" size={20} strokeWidth={2.5} />}
+                        {top3.length===0 && <>N/A</>}
                         {top3.map((p,i)=>(
                             <div key={i} className="d-flex justify-content-between align-items-center bg-light rounded-3 p-3 mb-2">
                             <div>

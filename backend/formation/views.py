@@ -310,13 +310,23 @@ class QuizViewSet(viewsets.ModelViewSet):
                     percentage = round((float(data['total_score']) / data['total_max']) * 100)
                 else:
                     percentage = 0
-                final_scores[data['domain_name']] = percentage
+                final_scores[data['domain_name']] = {
+                    'score': percentage,
+                    'prerequisites': float(domain.prerequisites_level),
+                    'consultant_target': float(domain.consultant_target),
+                    'leader_target': float(domain.leader_target),
+                }
                 total_percentage_sum += percentage
 
             # On s'assure que tous les domaines sont présents dans le dictionnaire des scores, avec 0 par défaut
             for domain in all_domains:
                 if domain.name not in final_scores:
-                    final_scores[domain.name] = None
+                    final_scores[data['domain_name']] = {
+                        'score': None,
+                        'prerequisites': float(domain.prerequisites_level),
+                        'consultant_target': float(domain.consultant_target),
+                        'leader_target': float(domain.leader_target),
+                    }
             
             # Calcul final de la moyenne sur le nombre total de domaines
             average = round(float(total_percentage_sum) / total_domain_count)
