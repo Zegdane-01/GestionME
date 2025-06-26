@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from django.db import transaction
-from django.db.models import Sum,Q
+from django.db.models import Sum,Q,Avg,F, Case, When, FloatField
+from django.db.models.functions import Cast
 from django.http import FileResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication  # si tu utilises SimpleJWT
@@ -181,33 +182,155 @@ class QuizViewSet(viewsets.ModelViewSet):
         elif equipe_id:
             personnes = personnes.filter(equipes__id=equipe_id)
         elif projet_id:
-            personnes = personnes.filter(projet__id=projet_id)
+            personnes = personnes.filter(projet_id=projet_id)
 
-        domaines = Domain.objects.all()
+        domaines = Domain.objects.filter(
+            equipes__assigned_users__in=personnes
+        ).distinct().order_by('name')
         data = []
 
         for domaine in domaines:
             formations = Formation.objects.filter(domain=domaine)
             quizzes = Quiz.objects.filter(formation__in=formations)
             
-            total_user_score = UserQuiz.objects.filter(
+            user_quizzes_in_domain = UserQuiz.objects.filter(
                 quiz__in=quizzes,
                 user__in=personnes,
                 completed=True
-            ).aggregate(total=Sum('score'))['total'] or 0
+            )
 
-            total_possible_score = Question.objects.filter(
-                quiz__in=quizzes
-            ).aggregate(total=Sum('point'))['total'] or 0
 
-            score_normalise = (total_user_score / total_possible_score * 4) if total_possible_score else 0
-
-            data.append({
-                "domaine": domaine.name,
-                "score": round(score_normalise, 2)
-            })
+            if not user_quizzes_in_domain.exists():
+                avg_score_percent = None
+            else:
+                # Cette requête complexe fait le calcul pour nous :
+                # Pour chaque UserQuiz, elle calcule le score en pourcentage, puis fait la moyenne de tous ces pourcentages.
+                # C'est la méthode la plus juste pour une équipe/projet.
+                aggregation = user_quizzes_in_domain.annotate(
+                    # Calculer le score maximum possible pour le quiz de chaque ligne UserQuiz
+                    max_points=Sum('quiz__questions__point'),
+                    # Calculer le score en % pour chaque ligne
+                    percentage_score=Case(
+                        When(max_points__gt=0, then=Cast(F('score'), FloatField()) * 100.0 / F('max_points')),
+                        default=0.0,
+                        output_field=FloatField()
+                    )
+                ).aggregate(
+                    # Calculer la moyenne de tous les pourcentages obtenus
+                    average_score=Avg('percentage_score')
+                )
+                avg_score_percent = aggregation.get('average_score') or 0
+            
+            if( avg_score_percent is None):
+                data.append({
+                    "domaine": domaine.name,
+                    "score": None,
+                    "prerequisites": float(domaine.prerequisites_level),
+                    "consultant_target": float(domaine.consultant_target),
+                    "leader_target": float(domaine.leader_target),
+                })
+            else:
+                data.append({
+                    "domaine": domaine.name,
+                    "score": round(avg_score_percent, 2),
+                    "prerequisites": float(domaine.prerequisites_level),
+                    "consultant_target": float(domaine.consultant_target),
+                    "leader_target": float(domaine.leader_target),
+                })
 
         return Response(data)
+
+    @action(detail=False, methods=["get"], url_path="competence_table",
+        permission_classes=[IsAuthenticated])
+    def competence_table(self, request):
+        """Retourne un tableau [ {user, equipe, scores:{dom:%}, average:%} ] - Version optimisée et correcte"""
+        user_id   = request.query_params.get("user_id")
+        equipe_id = request.query_params.get("equipe_id")
+        projet_id = request.query_params.get("projet_id")
+
+        personnes = Personne.objects.all().prefetch_related('equipes')
+        if user_id:
+            personnes = personnes.filter(matricule=user_id)
+        elif equipe_id:
+            personnes = personnes.filter(equipes__id=equipe_id)
+        elif projet_id:
+            personnes = personnes.filter(projet_id=projet_id)
+
+        # 1. Requête unique et optimisée pour récupérer tous les résultats des utilisateurs filtrés
+        # On annote chaque résultat avec le score maximum possible pour son quiz.
+        user_quizzes = UserQuiz.objects.filter(
+            user__in=personnes,
+            completed=True
+        ).select_related(
+            'user', 'quiz__formation__domain'
+        ).annotate(
+            max_points=Sum('quiz__questions__point')
+        )
+
+        # 2. On traite les résultats en Python pour regrouper par utilisateur et par domaine
+        # La structure sera : { user_id: { domain_id: {'score': X, 'max': Y, 'name': '...' } } }
+        processed_data = {}
+        for uq in user_quizzes:
+            # S'assurer que le quiz est bien lié à un domaine
+            if not hasattr(uq.quiz, 'formation') or not uq.quiz.formation.domain:
+                continue
+
+            user_id = uq.user_id
+            domain = uq.quiz.formation.domain
+
+            # Initialiser les dictionnaires si c'est la première fois qu'on les rencontre
+            processed_data.setdefault(user_id, {})
+            processed_data[user_id].setdefault(domain.id, {'total_score': 0, 'total_max': 0, 'domain_name': domain.name})
+
+            # Agréger les scores
+            processed_data[user_id][domain.id]['total_score'] += uq.score
+            # S'assurer que max_points n'est pas None
+            processed_data[user_id][domain.id]['total_max'] += uq.max_points or 0
+
+        # 3. On construit la réponse finale
+        rows = []
+        all_domains = Domain.objects.all()
+
+        total_domain_count = 0
+
+
+        for pers in personnes:
+            # On ne traite que les personnes ayant au moins un résultat
+            if pers.matricule not in processed_data:
+                continue
+
+            user_domain_scores = processed_data[pers.matricule]
+            final_scores = {}
+            total_percentage_sum = 0
+
+            # On calcule le pourcentage pour chaque domaine où l'utilisateur a des résultats
+            for domain_id, data in user_domain_scores.items():
+                if data['total_max'] > 0:
+                    total_domain_count += 1
+                    percentage = round((float(data['total_score']) / data['total_max']) * 100)
+                else:
+                    percentage = 0
+                final_scores[data['domain_name']] = percentage
+                total_percentage_sum += percentage
+
+            # On s'assure que tous les domaines sont présents dans le dictionnaire des scores, avec 0 par défaut
+            for domain in all_domains:
+                if domain.name not in final_scores:
+                    final_scores[domain.name] = None
+            
+            # Calcul final de la moyenne sur le nombre total de domaines
+            average = round(float(total_percentage_sum) / total_domain_count)
+
+            rows.append({
+                "user_id": pers.matricule,
+                "user"   : f"{pers.first_name} {pers.last_name}",
+                "equipe" : pers.equipes.first().name if pers.equipes.exists() else "__",
+                "scores" : final_scores,
+                "average": average,
+            })
+
+        return Response(rows)
+
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer

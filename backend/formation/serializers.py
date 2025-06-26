@@ -36,7 +36,14 @@ class DomainSerializer(serializers.ModelSerializer):
     formation_count = serializers.SerializerMethodField()
     class Meta:
         model = Domain
-        fields = ['id', 'name', 'formation_count']
+        fields = [
+            'id',
+            'name',
+            'prerequisites_level',
+            'consultant_target',
+            'leader_target',
+            'formation_count'
+        ]
 
     def get_formation_count(self, obj):
         return obj.formations.count()
