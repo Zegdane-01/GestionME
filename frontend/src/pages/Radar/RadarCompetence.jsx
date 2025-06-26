@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import api from "../../api/api";
-import { Table } from "react-bootstrap";
+import { Table, Badge } from "react-bootstrap";
 import { User, BarChart3, Table2, BrainCircuit, Minus } from "lucide-react";
 import styles from "../../assets/styles/Radar/Radar.module.css"; // ← ton fichier CSS local
 
@@ -17,7 +17,7 @@ import {
   LinearScale,
   BarElement,
 } from "chart.js";
-import { Radar, Bar } from "react-chartjs-2";
+import { Radar } from "react-chartjs-2";
 
 ChartJS.register(
   RadialLinearScale,
@@ -198,109 +198,125 @@ const RadarCompetence = () => {
 
   /* ---------------------- CHART CONFIG -------------------- */
   const radarChart = {
-    labels  : radarData.map(d=>d.domaine),
-    datasets: [{
-      label : selectedUser || "Score",
-      data  : radarData.map(d=>d.score*4/100),
-      backgroundColor: "rgba(13,110,253,.2)",
-      borderColor    : "#0d6efd",
-      borderWidth    : 2,
-    }],
+    labels: radarData.map(d => d.domaine),
+    datasets: [
+      // Couche 1: Le score réalisé (surface pleine)
+      {
+        label: 'Score Réalisé',
+        order: 4,
+        data: radarData.map(d => d.score !== null ? d.score * 4 / 100 : 0),
+        backgroundColor: 'rgba(4, 105, 12, 0.2)', // Bleu (couleur "primary")
+        borderColor: 'rgba(128, 171, 0, 1)', 
+        borderWidth: 2,
+        fill: true, // On remplit la surface pour cette couche
+      },
+      // Couche 4: Le niveau prérequis (ligne fine rouge)
+      {
+        label: 'Prérequis',
+        order: 3,
+        data: radarData.map(d => d.prerequisites),
+        backgroundColor: 'rgba(220, 53, 69, 0.2)', // Rouge (couleur "danger")
+        borderColor: 'rgb(220, 53, 69)',
+        borderWidth: 1,
+        pointRadius: 2,
+        fill: false,
+      },
+      // Couche 2: L'objectif pour un collaborateur (ligne pointillée verte)
+      {
+        label: 'Cible Consultant',
+        order: 2,
+        data: radarData.map(d => d.consultant_target),
+        backgroundColor: 'rgba(25, 135, 84, 0.2)', // Vert (couleur "success")
+        borderColor: 'rgb(3, 3, 254)',
+        borderWidth: 2,
+        borderDash: [5, 5], // Style en pointillé pour les cibles
+        fill: false,
+      },
+      // Couche 3: L'objectif pour un leader (ligne pointillée grise)
+      {
+        label: 'Cible Leader',
+        order: 1,
+        data: radarData.map(d => d.leader_target),
+        backgroundColor: 'rgba(108, 117, 125, 0.2)', // Gris (couleur "secondary")
+        borderColor: 'rgb(1, 176, 240)',
+        borderWidth: 2,
+        pointRadius: 2,
+        fill: false,
+      },
+      
+    ]
   };
+
   const radarOpts = {
-    plugins: { legend:{ display:false } },
-    scales : { r:{ suggestedMin:0, suggestedMax:4, ticks:{ stepSize:1 } } },
-    maintainAspectRatio:false,
+    plugins: {
+      // MODIFIÉ : On active la légende, qui est maintenant indispensable
+      legend: {
+        display: true,
+        position: 'top', // Positionne la légende en haut du graphique
+      }
+    },
+    // L'échelle de 0 à 4 est conservée
+    scales: {
+      r: {
+        suggestedMin: 0,
+        suggestedMax: 4,
+        ticks: { stepSize: 1 }
+      }
+    },
+    maintainAspectRatio: false,
   };
 
   /* ---------------------- TABLE Maîtrise des compétences -------------------- */
   // On prépare les données pour le tableau
-  const rows_competences = [
-    {
-      level: 1,
-      labelEN: "Beginner",
-      labelFR: "Débutant",
-      descEN: "Graduate – No practice",
-      descFR: "Diplômé – Sans pratique",
-    },
-    {
-      level: 2,
-      labelEN: "Junior",
-      labelFR: "Junior",
-      descEN: "Currently learning",
-      descFR: "En cours d'apprentissage",
-    },
-    {
-      level: 3,
-      labelEN: "Confirmed",
-      labelFR: "Confirmé",
-      descEN: "Autonomous in his activities",
-      descFR: "Autonome dans ses activités",
-    },
-    {
-      level: 4,
-      labelEN: "Expert",
-      labelFR: "Expert",
-      descEN: "Recognized by the profession",
-      descFR: "Reconnu par le métier",
-    },
-    {
-      level: "NA",
-      labelEN: "Not applicable",
-      labelFR: "Non applicable",
-      descEN: "",
-      descFR: "",
-    },
-  ];
-
   const renderTablecompetences = () => {
-    return(
-      <Table bordered responsive className="mb-0">
-        <thead className="table-secondary text-center">
-          <tr>
-            <th colSpan={3} className="h6">
-              Mastery of skills&nbsp;/&nbsp;
-              <span className="text-primary fw-semibold">
-                Maîtrise des compétences
-              </span>
-            </th>
-          </tr>
-          <tr className="table-light">
-            <th style={{ width: "8rem" }}>Niv.</th>
-            <th style={{ width: "24rem" }}>Libellés</th>
-            <th>Descriptions</th>
-          </tr>
-        </thead>
+    // Données d'exemple, remplacez par vos vraies données (ex: rows_competences)
+    const competenceData = [
+      { level: 4, labelEN: 'Expert', labelFR: 'Expert', descEN: 'Can teach and innovate.', descFR: 'Peut former et innover.' },
+      { level: 3, labelEN: 'Confirmed', labelFR: 'Confirmé', descEN: 'Works independently.', descFR: 'Travaille sans supervision.' },
+      { level: 2, labelEN: 'Junior', labelFR: 'Junior', descEN: 'Requires some guidance.', descFR: 'Nécessite un suivi partiel.' },
+      { level: 1, labelEN: 'Beginner', labelFR: 'Débutant', descEN: 'Requires full guidance.', descFR: 'Nécessite un suivi complet.' },
+      { level: 'N/A', labelEN: 'Not applicable', labelFR: 'Non applicable', descEN: 'No signature of competence', descFR: 'Aucune signature de compétence' },
+    ];
 
-        <tbody>
-          {rows_competences.map((r, idx) => (
-            <tr
-              key={r.level}
-              className={idx % 2 ? "bg-light" : undefined} // alternance bleutée
-            >
-              <td className="text-center fw-bold">{r.level}</td>
+    return (
 
-              <td>
-                {r.labelEN}{" "}
-                <span className="text-primary fw-medium">/ {r.labelFR}</span>
-              </td>
+        <Table bordered responsive hover size="sm" striped className="mb-0 small">
+            <thead className="table-light align-middle">
+                {/* J'ai simplifié le titre pour qu'il soit plus direct */}
+                <tr>
+                    <th colSpan={3} className="text-center py-2">
+                        <span className="fw-bold">Maîtrise des compétences</span>
+                    </th>
+                </tr>
+                <tr>
+                    {/* MODIFIÉ : Suppression des largeurs fixes pour un design responsive */}
+                    <th className="text-center" style={{ width: '15%' }}>Niveau</th>
+                    <th style={{ width: '35%' }}>Libellé</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody className="align-middle">
+                {competenceData.map((r) => (
+                    // MODIFIÉ : La classe pour les lignes zébrées est maintenant gérée par la prop `striped`
+                    <tr key={r.level}>
+                        <td className="text-center">
+                                {r.level}
 
-              <td>
-                {r.descEN && (
-                  <>
-                    {r.descEN}{" "}
-                    <span className="text-primary fw-medium">
-                      / {r.descFR}
-                    </span>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+                        </td>
+                        <td>
+                            <span className="fw-bold">{r.labelFR}</span>
+                            <span className="text-muted small d-block">{r.labelEN}</span>
+                        </td>
+                        <td>
+                            {r.descFR}
+                            <span className="text-muted small d-block">{r.descEN}</span>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </Table>
     );
-  }
+}
 
   /* ---------------------- RENDER TABLE ROWS --------------- */
 
@@ -362,7 +378,7 @@ const RadarCompetence = () => {
       {/* KPI CARDS */}
       <div className="row g-3 mb-4">
         <div className="col-md-4">
-          <div className="card shadow-sm h-100 p-3 d-flex flex-column justify-content-between">
+          <div className="card shadow-sm h-100 p-4 d-flex flex-column justify-content-between">
             <p className="text-muted small mb-1">Collaborateurs évalués</p>
             {!selectedUser ?
               <h3 className="text-primary">{totalCollab} / {filteredUsers.length}</h3>
@@ -373,13 +389,13 @@ const RadarCompetence = () => {
           </div>
         </div>
         <div className="col-md-4">
-          <div className="card shadow-sm h-100 p-3">
+          <div className="card shadow-sm h-100 p-4">
             <p className="text-muted small mb-1">Compétences analysées</p>
             <h3 className="text-success">{competencesCount}</h3>
           </div>
         </div>
         <div className="col-md-4">
-          <div className="card shadow-sm h-100 p-3">
+          <div className="card shadow-sm h-100 p-4">
             <p className="text-muted small mb-1">Score moyen global</p>
             <h3 className="text-info">{scoreMoyenGlobal}%</h3>
           </div>
@@ -387,7 +403,7 @@ const RadarCompetence = () => {
       </div>
 
       {/* FILTERS */}
-      <div className="card shadow-sm mb-4">
+      <div className="card shadow-sm mb-4 p-4">
         <div className="card-body">
           <h5 className="card-title mb-3">Filtres</h5>
           <div className="row g-3">
@@ -426,7 +442,7 @@ const RadarCompetence = () => {
             <div className="row g-4 mb-4">
                 {/* MAIN PANEL */}
                 <div className="col">
-                    <div className="card shadow-sm">
+                    <div className="card shadow-sm p-4">
                     <div className="card-body">
                         <h3 className="card-title mb-3">Radar de compétences</h3>
                         {totalCollab > 0 ? (
@@ -438,7 +454,7 @@ const RadarCompetence = () => {
                                 <div className="col-lg-4">
                                   {renderTablecompetences()}
                                 </div>
-                                <div className="col-lg-8 d-flex align-items-center justify-content-center">
+                                <div className="col-lg-8">
                                   <div className={styles.chart}>
                                     <Radar data={radarChart} options={radarOpts}/>
                                   </div>
@@ -459,7 +475,7 @@ const RadarCompetence = () => {
             </div>
             <div className="row g-4 mb-4">
                 <div className="col-lg-6">
-                    <div className="card shadow-sm h-100">
+                    <div className="card shadow-sm h-100 p-4">
                         <div className="card-body">
                             <h4 className="card-title mb-0">Répartition par compétence</h4>
                             <small>Distribution des scores moyens par domaine</small>
@@ -507,7 +523,7 @@ const RadarCompetence = () => {
                     </div>
                 </div>
                 <div className="col-lg-6">
-                    <div className="card shadow-sm h-100">
+                    <div className="card shadow-sm h-100 p-4">
                         <div className="card-body">
                         <h4 className="card-title mb-3">Top performers</h4>
                         {top3.length===0 && <Minus className="text-muted" size={20} strokeWidth={2.5} />}
@@ -529,7 +545,7 @@ const RadarCompetence = () => {
             <div className="row g-4">
                 {/* MAIN PANEL */}
                 <div className="col">
-                    <div className="card shadow-sm">
+                    <div className="card shadow-sm p-4">
                       <div className="card-body table-responsive">
                           <h5 className="card-title mb-3">Détail des compétences</h5>
                           <table className={`table align-middle small ${styles.competenceTable}`}>

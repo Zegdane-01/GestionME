@@ -330,6 +330,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             })
 
         return Response(rows)
+
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer

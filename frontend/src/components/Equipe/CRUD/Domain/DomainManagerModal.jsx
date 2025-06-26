@@ -49,8 +49,31 @@ const DomainManagerModal = ({ show, onHide }) => {
   /* --------------------- CRUD ---------------------- */
   const parseVal = (v) => Math.min(4, Math.max(0, parseFloat(v || 0))); // clamp 0‑4
 
+  const validateLevels = (prereq, consult, leader) => {
+    const p = parseFloat(prereq);
+    const c = parseFloat(consult);
+    const l = parseFloat(leader);
+
+    if (p >= c) {
+        toast.error("Le niveau 'Cible Consultant' doit être strictement supérieur au niveau 'Prérequis'.");
+        return false;
+    }
+    if (c >= l) {
+        toast.error("Le niveau 'Cible Leader' doit être strictement supérieur au niveau 'Cible Consultant'.");
+        return false;
+    }
+    return true; // La validation est réussie
+  };
+
+
   const handleAdd = async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+        toast.error("Le nom du domaine est requis.");
+        return;
+    }
+    if (!validateLevels(newPrereq, newConsult, newLeader)) {
+        return; // Arrête la fonction si la validation échoue
+    }
     try {
       await api.post("/domains/", {
         name: newName,
@@ -65,6 +88,13 @@ const DomainManagerModal = ({ show, onHide }) => {
   };
 
   const handleSave = async () => {
+    if (!editName.trim()) {
+        toast.error("Le nom du domaine est requis.");
+        return;
+    }
+    if (!validateLevels(editPrereq, editConsult, editLeader)) {
+        return; // Arrête la fonction si la validation échoue
+    }
     try {
       await api.put(`/domains/${editId}/`, {
         name: editName,
