@@ -45,7 +45,7 @@ const Navbar = ({ onHeightChange }) => {
     ],
     public: [
       { path: '/', label: 'Accueil' },
-      { path: '/a-propos', label: 'À Propos' },
+      { path: '/A_Propos', label: 'À Propos' },
       { path: '/services', label: 'Services' }
     ]
   };

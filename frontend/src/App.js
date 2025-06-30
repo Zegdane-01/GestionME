@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useCallback } from "react";
+import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import { isTokenExpired, logout } from './services/auth';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -37,19 +36,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   const [navHeight, setNavHeight] = useState(0);
-
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    // Ignorer les pages publiques (login, home, etc.)
-    const publicRoutes = ['/', '/login', '/A_Propos'];
-    if (!publicRoutes.includes(location.pathname) && isTokenExpired()) {
-      logout();
-      navigate('/login');
-    }
-  }, [location.pathname, navigate]);
-
 
   // Pour éviter un rerender infini
   const handleHeightChange = useCallback((height) => {
