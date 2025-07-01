@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import api from "../../api/api";
+import { getUserRole, getUserId } from "../../services/auth.js";
 import { Table } from "react-bootstrap";
 import { User, BarChart3, Table2, BrainCircuit } from "lucide-react";
 import styles from "../../assets/styles/Radar/Radar.module.css"; // ← ton fichier CSS local
@@ -40,6 +41,10 @@ const RadarCompetence = () => {
   const [users, setUsers] = useState([]);
   const [equipes, setEquipes] = useState([]);
   const [projets, setProjets] = useState([]);
+  
+  const role      = getUserRole();   
+  const myUserId  = getUserId();  
+  const me = users.find(u => u.matricule === myUserId);
 
   const [selectedUser, setSelectedUser]     = useState("");
   const [selectedEquipe, setSelectedEquipe] = useState("");
@@ -48,13 +53,26 @@ const RadarCompetence = () => {
   const [radarData, setRadarData]   = useState([]); // [{domaine, score}]
   const [tableData, setTableData]   = useState([]); // backend shape
 
-  /* ---------------------- HELPERS ------------------------- */
-  const params = () => ({
-    ...(selectedUser   && { user_id   : selectedUser   }),
-    ...(selectedEquipe && { equipe_id : selectedEquipe }),
-    ...(selectedProjet && { projet_id : selectedProjet }),
-  });
+  const [radarViewScope, setRadarViewScope] = useState("me");
 
+  /* ---------------------- HELPERS ------------------------- */
+  const params = () => {
+    if (role === "COLLABORATEUR") {
+      if (radarViewScope === "me") {
+        return { user_id: myUserId };
+      } else if (radarViewScope === "team" && me.equipe_info) {
+        return { equipe_id: me.equipe_info.id }; // si un seul
+      }
+      return {};
+    }
+
+    // Cas TeamLead (ou admin)
+    return {
+      ...(selectedUser && { user_id: selectedUser }),
+      ...(selectedEquipe && { equipe_id: selectedEquipe }),
+      ...(selectedProjet && { projet_id: selectedProjet }),
+    };
+  };
   /* ---------------------- LOAD FILTER LISTS ---------------- */
   useEffect(() => {
     (async () => {
@@ -97,7 +115,16 @@ const RadarCompetence = () => {
 
     loadKpiData();
     // La dépendance à `viewMode` est retirée. Le chargement ne se fait qu'au changement des filtres.
-  }, [selectedUser, selectedEquipe, selectedProjet]);
+  }, [selectedUser, selectedEquipe, selectedProjet,radarViewScope]);
+
+  useEffect(() => {
+  if (role === "COLLABORATEUR" && users.length) {
+    if (me && me.equipe_info) {
+      /* on garde la 1re équipe comme contexte */
+      setSelectedEquipe(me.equipe_info.id);          // id numérique
+    }
+  }
+}, [role, users, myUserId]);
 
   // --------------------------------------------------------------------------
 
@@ -388,11 +415,15 @@ const RadarCompetence = () => {
         <div className="col-md-4">
           <div className="card shadow-sm h-100 p-4 d-flex flex-column justify-content-between">
             <p className="text-muted small mb-1">Collaborateurs évalués</p>
-            {!selectedUser ?
-              <h3 className="text-primary">{totalCollab} / {filteredUsers.length}</h3>
-             : 
-              <h3 className="text-primary">{totalCollab} / 1</h3>
-            }
+            
+              <h3 className="text-primary">
+                {totalCollab} / {
+                  role === 'TeamLead'
+                    ? (selectedUser ? 1 : filteredUsers.length)
+                    : (radarViewScope === 'me' ? 1 : filteredUsers.length)
+                }
+              </h3>
+            
             <User className="position-absolute end-0 bottom-0 me-3 mb-3 text-primary opacity-25" />
           </div>
         </div>
@@ -409,42 +440,76 @@ const RadarCompetence = () => {
           </div>
         </div>
       </div>
-
       {/* FILTERS */}
-      <div className="card shadow-sm mb-4 p-4">
-        <div className="card-body">
-          <h5 className="card-title mb-3">Filtres</h5>
-          <div className="row g-3">
-            <div className="col-md-4">
-              <label className="form-label">Projet</label>
-              <select className="form-select" value={selectedProjet} onChange={e => setSelectedProjet(e.target.value)}>
-                <option value="">Tous</option>
-                {filteredProjets.map(p=>(<option key={p.projet_id} value={p.projet_id}>{p.nom}</option>))}
-              </select>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Équipe</label>
-              <select className="form-select" value={selectedEquipe} onChange={e => setSelectedEquipe(e.target.value)}>
-                <option value="">Toutes</option>
-                {filteredEquipes.map(eq=>(<option key={eq.id} value={eq.id}>{eq.name}</option>))}
-              </select>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Collaborateur</label>
-              <select className="form-select" value={selectedUser} onChange={e => setSelectedUser(e.target.value)}>
-                <option value="">Tous</option>
-                {filteredUsers.map(u=>(<option key={u.matricule} value={u.matricule}>{u.first_name} {u.last_name}</option>))}
-              </select>
+      { role === "TeamLead" && (
+        <div className="card shadow-sm mb-4 p-4">
+          <div className="card-body">
+            <h5 className="card-title mb-3">Filtres</h5>
+            <div className="row g-3">
+              <div className="col-md-4">
+                <label className="form-label">Projet</label>
+                <select className="form-select" value={selectedProjet} onChange={e => setSelectedProjet(e.target.value)}>
+                  <option value="">Tous</option>
+                  {filteredProjets.map(p=>(<option key={p.projet_id} value={p.projet_id}>{p.nom}</option>))}
+                </select>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label">Équipe</label>
+                <select className="form-select" value={selectedEquipe} onChange={e => setSelectedEquipe(e.target.value)}>
+                  <option value="">Toutes</option>
+                  {filteredEquipes.map(eq=>(<option key={eq.id} value={eq.id}>{eq.name}</option>))}
+                </select>
+              </div>
+              <div className="col-md-4">
+                <label className="form-label">Collaborateur</label>
+                <select className="form-select" value={selectedUser} onChange={e => setSelectedUser(e.target.value)}>
+                  <option value="">Tous</option>
+                  {filteredUsers.map(u=>(<option key={u.matricule} value={u.matricule}>{u.first_name} {u.last_name}</option>))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+{role === "COLLABORATEUR" && (
+  <div className="mb-4 d-flex flex-wrap gap-3">
+    <div className="btn-group">
+      <button
+        className={`btn ${radarViewScope === 'me' ? 'btn-primary' : 'btn-outline-secondary'}`}
+        onClick={() => setRadarViewScope("me")}
+      >
+        Mon radar
+      </button>
+      <button
+        className={`btn ${radarViewScope === 'team' ? 'btn-primary' : 'btn-outline-secondary'}`}
+        onClick={() => setRadarViewScope("team")}
+      >
+        {(() => {
+          const me = users.find(u => u.matricule === myUserId);
+          return `Mon équipe${me?.equipe_info?.name ? ` : ${me.equipe_info.name}` : ''}`;
+        })()}
+      </button>
+    </div>
+  </div>
+)}
 
-      {/* TOGGLE */}
-      <div className="btn-group mb-4">
-        <button className={`btn ${viewMode==='radar'?'btn-primary':'btn-outline-secondary'}`} onClick={()=>setViewMode('radar')}><BarChart3 size={16}/> Vue Radar</button>
-        <button className={`btn ${viewMode==='table'?'btn-primary':'btn-outline-secondary'}`} onClick={()=>setViewMode('table')}><Table2 size={16}/> Vue Tableau</button>
-      </div>
+{/* TOGGLE VUE RADAR / TABLEAU */}
+<div className="mb-4 d-flex flex-wrap gap-3">
+  <div className="btn-group">
+    <button
+      className={`btn ${viewMode === 'radar' ? 'btn-primary' : 'btn-outline-secondary'}`}
+      onClick={() => setViewMode('radar')}
+    >
+      <BarChart3 size={16} className="me-1" /> Vue Radar
+    </button>
+    <button
+      className={`btn ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
+      onClick={() => setViewMode('table')}
+    >
+      <Table2 size={16} className="me-1" /> Vue Tableau
+    </button>
+  </div>
+</div>
         {viewMode === 'radar' ? (
           <>
             <div className="row g-4 mb-4">

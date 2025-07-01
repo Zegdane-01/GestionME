@@ -46,6 +46,16 @@ export const getUserRole = () => {
   }
 };
 
+export const getUserId = () => {
+  try {
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+    // Suppose que le champ s’appelle `matricule`
+    return userData.matricule || null;
+  } catch {
+    return null;
+  }
+};
+
 /// Pour enregistrer les infos utilisateur après login
 export const login = (token, refreshToken, userData) => {
   localStorage.setItem('accessToken', token);

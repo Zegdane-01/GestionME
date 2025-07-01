@@ -36,17 +36,29 @@ const CollaborateurNode = ({ personne }) => {
       </div>
 
       {/* enfants */}
-      {hasChildren && (
-        <div
-          className={`${styles.children} ${
-            childrenCount === 1 ? styles.single : ""
-          }`}
-        >
-          {children.map((sub) => (
-            <CollaborateurNode key={sub.matricule} personne={sub} />
-          ))}
-        </div>
-      )}
+      {hasChildren && (() => {
+        const allChildrenFlat = children.every(c => !c.subordinates || c.subordinates.length === 0);
+
+        if (allChildrenFlat) {
+          // Tous les subordonnés sont "feuilles" ➜ on les affiche horizontalement
+          return (
+            <div className={styles.horizontalGroup}>
+              {children.map((sub) => (
+                <CollaborateurNode key={sub.matricule} personne={sub} />
+              ))}
+            </div>
+          );
+        } else {
+          // Certains enfants ont eux-mêmes des subordonnés ➜ vertical classique
+          return (
+            <div className={`${styles.children} ${children.length === 1 ? styles.single : ""}`}>
+              {children.map((sub) => (
+                <CollaborateurNode key={sub.matricule} personne={sub} />
+              ))}
+            </div>
+          );
+        }
+      })()}
     </div>
   );
 };
@@ -66,8 +78,11 @@ const HierarchieTree = () => {
   }, []);
 
   return (
+    <div className={styles.dashboard}>
+        <div className={styles.dashboardHeader}>
+          <h1 className={styles.dashboardTitle}>Organisation Chart</h1>
+        </div>
     <section className={styles.wrapper}>
-      <h2 className={styles.title}>Organizational Chart</h2>
 
       {/* Racines */}
       <div className={styles.scrollWrapper}>
@@ -78,6 +93,7 @@ const HierarchieTree = () => {
         </div>
       </div>
     </section>
+    </div>
   );
 };
 

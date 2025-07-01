@@ -8,7 +8,6 @@ import { faEnvelope, faPhone, faEye } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-hot-toast';
 import ViewProjetModal from '../components/Projet/CRUD/ViewProjetModal';
 import ViewEquipeModal from '../components/Equipe/CRUD/ViewEquipeModal';
-import { Equal } from 'lucide-react';
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);

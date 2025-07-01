@@ -5,6 +5,7 @@ import logo from '../../../assets/images/logo.png';
 import styles from './Navbar.module.css';
 import { API_URL_MEDIA } from '../../../api/api';
 import { Menu, X, ChevronDown } from 'lucide-react';
+import { path } from 'framer-motion/client';
 
 const Navbar = ({ onHeightChange }) => {
   const navRef = useRef(null);
@@ -29,6 +30,7 @@ const Navbar = ({ onHeightChange }) => {
     TeamLead: [
       { path: '/formations', label: 'Formations' },
       { path: '/radar', label: 'Rapports' },
+      { path: '/hierarchie', label: 'Organisation chart' },
       { 
         label: 'Gestion',
         sublinks: [
@@ -41,7 +43,10 @@ const Navbar = ({ onHeightChange }) => {
     ],
     COLLABORATEUR: [
       { path: '/profile', label: 'Profil' },
-      { path: '/trainings', label: 'Formations' }
+      { path: '/trainings', label: 'Formations' },
+      { path: '/radar', label: 'Rapports' },
+      { path: '/hierarchie', label: 'Organisation chart' }
+
     ],
     public: [
       { path: '/', label: 'Accueil' },
@@ -92,7 +97,6 @@ const Navbar = ({ onHeightChange }) => {
         setOpenDropdown(null);
       }
 
-      // NOUVEAU : Logique pour le menu mobile
       // Se ferme si le clic n'est NI sur le bouton hamburger, NI dans le menu lui-même
       if (
         isMobileMenuOpen &&
@@ -191,9 +195,9 @@ const Navbar = ({ onHeightChange }) => {
               <div className={styles.userDropdownMenu}>
                 <div className={styles.userInfo}>
                     <div className={styles.userName}>{`${userData?.first_name || ''} ${userData?.last_name || ''}`}</div>
-                    <div className={styles.userRole}>{role}</div>
+                    <div className={styles.userRole}>{userData?.role || ''}</div>
                 </div>
-                {/* MODIFIÉ : On ajoute le onClick pour fermer le menu */}
+
                 <Link to="/profile" className={styles.dropdownItem}>Mon Profil</Link>
                 <div className={styles.menuDivider}></div>
                 <a href="#" onClick={handleLogout} className={`${styles.dropdownItem} ${styles.logout}`}>Déconnexion</a>
