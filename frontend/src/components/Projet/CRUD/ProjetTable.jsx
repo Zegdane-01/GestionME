@@ -1,13 +1,29 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styles from '../../../assets/styles/Table.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye,
   faTrash,
-  faPen,         // use faPen instead of faPencilAlt
+  faPen,
   faRocket,
+  faChevronLeft, 
+  faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Affichez 10 projets par page
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  // On ne montre que les projets de la page actuelle
+  const currentProjets = projets.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(projets.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
   return (
     <div className={styles.tableContainer}>
       <table className={styles.simpleTable}>
@@ -27,8 +43,8 @@ const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
           </tr>
         </thead>
         <tbody>
-          {projets.length > 0 ? (
-            projets.map(projet => (
+          {currentProjets.length > 0 ? (
+            currentProjets.map(projet => (
               <tr key={projet.projet_id} className={styles.dataRow}>
                 <td className={styles.nomCell}>{projet.nom}</td>
                 <td>{projet.code}</td>
@@ -40,12 +56,10 @@ const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
                     {projet.sop}
                   </span>
                 </td>
-                <td className={styles.dateCell}>{new Date(projet.date_demarrage).toLocaleDateString()}</td>
-                <td>
-                  {projet.collaborators_count !== undefined && projet.collaborators_count !== null
-                    ? projet.collaborators_count
-                    : '—'}
-                </td> {/* Displaying the count */}
+                <td className={styles.dateCell}>{new Date(projet.date_demarrage).toLocaleDateString('fr-FR')}</td>
+                <td className='text-center'>
+                  {projet.collaborators_count ?? '—'}
+                </td>
                 <td>
                   <span className={`${styles.statusBadge} ${styles[`status${projet.statut.replace(/\s+/g, '')}`]}`}>
                     {projet.statut}
@@ -80,7 +94,8 @@ const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
             ))
           ) : (
             <tr>
-              <td colSpan={9} className={styles.noData}>
+              {/* MODIFIÉ : colSpan corrigé à 10 */}
+              <td colSpan={10} className={styles.noData}>
                 <div className={styles.noDataContent}>
                   <FontAwesomeIcon icon={faRocket} className={styles.noDataIcon} />
                   Aucun projet trouvé
@@ -90,6 +105,37 @@ const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
           )}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div className={styles.paginationContainer}>
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={styles.paginationButton}
+            title="Page précédente"
+          >
+            <FontAwesomeIcon icon={faChevronLeft} />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            <button
+              key={number}
+              onClick={() => handlePageChange(number)}
+              className={`${styles.paginationButton} ${currentPage === number ? styles.active : ''}`}
+            >
+              {number}
+            </button>
+          ))}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={styles.paginationButton}
+            title="Page suivante"
+          >
+            <FontAwesomeIcon icon={faChevronRight} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

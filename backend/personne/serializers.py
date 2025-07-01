@@ -103,7 +103,7 @@ class PersonneHierarchieSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Personne
-        fields = ['matricule', 'first_name', 'last_name', 'role', 'subordinates']
+        fields = ['matricule', 'first_name', 'last_name', 'role','photo', 'subordinates']
     
     def get_subordinates(self, obj):
         subordinates = obj.manager_persons.all()

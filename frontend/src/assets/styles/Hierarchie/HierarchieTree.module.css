@@ -1,6 +1,43 @@
 /* ------------------------------------------------------------------
    ZONE GLOBALE
 ------------------------------------------------------------------ */
+/* Dashboard Layout */
+.dashboard {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 32px;
+  background-color: #f1f5f9;
+  min-height: calc(100vh - 58px)  ;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.dashboardTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dark);
+  position: relative;
+  display: inline-block;
+}
+
+.dashboardTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+
+
 .wrapper {
   background: radial-gradient(circle at top left,
       rgba(93, 63, 152, 0.25),
@@ -11,12 +48,6 @@
   overflow-x: auto;
 }
 
-.title {
-  text-align: center;
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
-}
 
 /* ------------------------------------------------------------------
    CONTENEUR SCROLLABLE
@@ -123,6 +154,7 @@
   position: relative;
 }
 
+
 /* ----- barre verticale reliant tous les enfants si +1 enfant */
 .children::before {
   content: "";
@@ -134,6 +166,7 @@
   background: #ababab;
   z-index: 10;
 }
+
 
 /* ----- si un seul enfant : pas de barre verticale */
 .single::before {              /* .children.single ajouté en JSX */
@@ -147,6 +180,25 @@
   content: "";
   position: absolute;
   left: -20px;                /* même coordonnée que .children::before */
+  top: 50%;
+  width: 20px;
+  border-top: 2px dashed #ffffff80;
+  transform: translateY(-50%);
+}
+
+.horizontalGroup {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  margin-left: 40px;
+  margin-top: 2rem;
+  position: relative;
+}
+
+.horizontalGroup::before {
+  content: "";
+  position: absolute;
+  left: -20px;
   top: 50%;
   width: 20px;
   border-top: 2px dashed #ffffff80;

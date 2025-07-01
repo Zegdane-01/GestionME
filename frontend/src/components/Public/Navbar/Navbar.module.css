@@ -1,0 +1,265 @@
+
+
+.cyberNav {
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1030;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 0.5rem 2%;
+    background: #1e123a;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid #00f3ff;
+    justify-content: space-between;
+}
+
+.cyberGlow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.08), transparent 70%);
+  pointer-events: none;
+}
+
+.cyberLogo {
+  height: 40px;
+  z-index: 10;
+}
+.logoImage {
+  height: 100%;
+  width: auto;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+.logoImage:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 10px #00f3ff);
+}
+
+.cyberLinks {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.cyberLink {
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5rem 0;
+  position: relative;
+  transition: color 0.3s ease;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+.linkUnderline {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: #00f3ff;
+  transition: width 0.3s ease;
+}
+.cyberLink:hover .linkUnderline {
+  width: 100%;
+}
+.cyberLink:hover {
+  color: #00f3ff;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* --- Dropdown Menu 'Gestion' --- */
+.dropdown {
+  position: relative;
+}
+.dropdownToggle {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: -100%;
+  background-color: #3a2862;
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  min-width: 220px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeInMenu 0.2s ease-out;
+}
+.dropdownItem {
+  display: block;
+  padding: 0.75rem 1.25rem;
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.dropdownItem:hover {
+  background-color: rgba(0, 243, 255, 0.1);
+  color: #00f3ff;
+}
+
+/* --- Menu Utilisateur --- */
+.userProfileContainer {
+  position: relative;
+}
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #00f3ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #3a2862;
+  font-weight: bold;
+}
+.userAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatarInitials { color: #fff; }
+.userDropdownMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 240px;
+  background-color: #3a2862;
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeInMenu 0.2s ease-out;
+}
+.userInfo {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+}
+.userName { color: #fff; font-weight: bold; }
+.userRole { color: #00f3ff; font-size: 0.8rem; opacity: 0.8; }
+.menuDivider { height: 1px; background-color: rgba(0, 243, 255, 0.3); }
+.logout { color: #ff5c5c !important; }
+
+/* --- Bouton "Se Connecter" --- */
+.cyberButton {
+  position: relative;
+  color: #ffffff;
+  margin:0rem;
+  padding: 0.4rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 600;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+  border: 1px solid #00f3ff;
+}
+
+.cyberButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+  background-color: #ffffff;
+  color:black;
+}
+.buttonPulse{
+  position: absolute;
+  background: rgba(255, 255, 255, 0.4);
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: -100%;
+}
+
+/* --- Responsive (Hamburger Menu) --- */
+.hamburgerMenu {
+  display: none; /* Caché par défaut sur grand écran */
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  z-index: 10;
+}
+
+@media (max-width: 992px) {
+  .dropdown {
+    width: 100%;
+  }
+
+  .dropdownToggle {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem 0;
+  }
+  .hamburgerMenu {
+    display: block;
+  }
+  .cyberLinks {
+    overflow: visible;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #1e123a;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    gap: 0;
+    transform: translateY(-150%);
+    transition: transform 0.3s ease-in-out;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+  }
+  .cyberLinks.mobileMenuOpen {
+    transform: translateY(0);
+  }
+  .cyberLink, .dropdown {
+    width: 100%;
+    text-align: center;
+  }
+  .cyberLink {
+    padding: 1rem 0;
+  }
+  
+  /* RÈGLE CORRIGÉE */
+  .dropdownMenu {
+    position: static;
+    width: 100%;
+    transform: none;
+    border: none;
+    box-shadow: none;
+    background-color: rgba(0, 0, 0, 0.2);
+    margin-top: 0.5rem;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .dropdownMenu .dropdownItem {
+    padding-left: 2rem; /* Indentation pour les sous-éléments */
+    text-align: center;
+    background-color: transparent; /* Assurer la transparence par défaut */
+  }
+
+  .dropdownMenu .dropdownItem:hover {
+     background-color: rgba(0, 243, 255, 0.1); /* Conserver l'effet de survol */
+  }
+}
+
+@keyframes fadeInMenu {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -29,7 +29,7 @@ const Login = () => {
       login(data.access, data.refresh, data.user);
 
       // Rediriger l'utilisateur
-      navigate('/profile');
+      navigate('/radar');
 
    } catch (error) {
       toast.error('Erreur de connexion:', error);

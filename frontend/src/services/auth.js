@@ -1,4 +1,5 @@
 import { jwtDecode } from 'jwt-decode';
+import api from '../api/api.js'; 
 
 export const getAccessToken = () => localStorage.getItem('accessToken');
 
@@ -45,6 +46,16 @@ export const getUserRole = () => {
   }
 };
 
+export const getUserId = () => {
+  try {
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+    // Suppose que le champ s’appelle `matricule`
+    return userData.matricule || null;
+  } catch {
+    return null;
+  }
+};
+
 /// Pour enregistrer les infos utilisateur après login
 export const login = (token, refreshToken, userData) => {
   localStorage.setItem('accessToken', token);
@@ -55,11 +66,26 @@ export const login = (token, refreshToken, userData) => {
   window.dispatchEvent(new Event('authChange'));
 };
 // Déconnexion
-export const logout = () => {
+export const logout = async () => {
+  const refreshToken = localStorage.getItem('refreshToken');
+
+  if (refreshToken) {
+    try {
+      // On envoie le refresh token au serveur pour qu'il l'invalide
+      await api.post('/token/logout/', {
+        refresh: refreshToken,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion sur le serveur:", error);
+      // On continue la déconnexion côté client même si le serveur échoue
+    }
+  }
+
+  // Nettoyage du localStorage (inchangé)
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('userData');
   
-  // Déclencher un événement pour notifier les autres composants
+  // Déclencher un événement pour notifier les autres composants (inchangé)
   window.dispatchEvent(new Event('authChange'));
 };

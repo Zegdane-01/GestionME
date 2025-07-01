@@ -1,245 +1,222 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate,useLocation } from 'react-router-dom'; // Retrait de useLocation qui n'est plus nécessaire
 import { isAuthenticated, getUserRole, logout } from '../../../services/auth';
 import logo from '../../../assets/images/logo.png';
-import './Navbar.css';
-import {API_URL_MEDIA} from '../../../api/api'
+import styles from './Navbar.module.css';
+import { API_URL_MEDIA } from '../../../api/api';
+import { Menu, X, ChevronDown } from 'lucide-react';
+import { path } from 'framer-motion/client';
 
 const Navbar = ({ onHeightChange }) => {
   const navRef = useRef(null);
   const navigate = useNavigate();
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const [role, setRole] = useState(null);
+   const location = useLocation();
+
+  // State
   const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [role, setRole] = useState(getUserRole());
   const [userData, setUserData] = useState(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+
   const userMenuRef = useRef(null);
 
-  // Effet pour vérifier l'état d'authentification et le rôle à chaque rendu
+  const hamburgerRef = useRef(null);
+  const mobileMenuRef = useRef(null);
+
+  // Configuration centralisée des liens de navigation
+  const navLinksConfig = {
+    TeamLead: [
+      { path: '/formations', label: 'Formations' },
+      { path: '/radar', label: 'Rapports' },
+      { path: '/hierarchie', label: 'Organisation chart' },
+      { 
+        label: 'Gestion',
+        sublinks: [
+          { path: '/collaborateurs', label: 'Collaborateurs' },
+          { path: '/projets', label: 'Projets' },
+          { path: '/activites', label: 'Activités' },
+          { path: '/manager/trainings', label: 'Formations' },
+        ]
+      },
+    ],
+    COLLABORATEUR: [
+      { path: '/profile', label: 'Profil' },
+      { path: '/trainings', label: 'Formations' },
+      { path: '/radar', label: 'Rapports' },
+      { path: '/hierarchie', label: 'Organisation chart' }
+
+    ],
+    public: [
+      { path: '/', label: 'Accueil' },
+      { path: '/A_Propos', label: 'À Propos' },
+      { path: '/services', label: 'Services' }
+    ]
+  };
+  useEffect(() => {
+    if (navRef.current && typeof onHeightChange === 'function') {
+      onHeightChange(navRef.current.offsetHeight);
+    }
+  }, [onHeightChange, isLoggedIn, role]);
+
+  // Effet pour gérer l'authentification et les données utilisateur
   useEffect(() => {
     const checkAuth = () => {
       const authStatus = isAuthenticated();
       setIsLoggedIn(authStatus);
-      
       if (authStatus) {
-        const userRole = getUserRole();
-        setRole(userRole);
-        
-        // Récupérer les données utilisateur
+        setRole(getUserRole());
         try {
           const userDataString = localStorage.getItem('userData');
-          if (userDataString) {
-            setUserData(JSON.parse(userDataString));
-          }
+          if (userDataString) setUserData(JSON.parse(userDataString));
         } catch (error) {
-          console.error('Erreur lors de la récupération des données utilisateur:', error);
+          console.error('Erreur récupération données utilisateur:', error);
         }
       } else {
         setRole(null);
         setUserData(null);
       }
     };
-
-    // Vérifier au chargement initial
     checkAuth();
 
-    // Créer un écouteur d'événements pour détecter les changements au localStorage
-    const handleStorageChange = () => {
-      checkAuth();
-    };
-
-    // Ajouter l'écouteur pour les changements au localStorage
-    window.addEventListener('storage', handleStorageChange);
-
-    // Créer un événement personnalisé pour la déconnexion/connexion
-    window.addEventListener('authChange', handleStorageChange);
-
-    // Fermer le menu utilisateur quand on clique ailleurs
+    window.addEventListener('authChange', checkAuth);
+    return () => window.removeEventListener('authChange', checkAuth);
+  }, []);
+  
+  // Effet pour fermer le menu utilisateur en cliquant à l'extérieur
+  useEffect(() => {
     const handleClickOutside = (event) => {
+      // Logique pour le menu utilisateur
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
         setShowUserMenu(false);
       }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
 
+      // Logique pour le menu déroulant "Gestion"
+      if (openDropdown && !event.target.closest(`.${styles.dropdown}`)) {
+        setOpenDropdown(null);
+      }
+
+      // Se ferme si le clic n'est NI sur le bouton hamburger, NI dans le menu lui-même
+      if (
+        isMobileMenuOpen &&
+        hamburgerRef.current && !hamburgerRef.current.contains(event.target) &&
+        mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)
+      ) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('authChange', handleStorageChange);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+    // Ce useEffect doit se mettre à jour si l'état des menus ouverts change
+  }, [openDropdown, isMobileMenuOpen, showUserMenu]);
 
-  // Effet pour notifier le parent du changement de hauteur
   useEffect(() => {
-    if (navRef.current && typeof onHeightChange === 'function') {
-      onHeightChange(navRef.current.offsetHeight);
-    }
-  }, [onHeightChange, isLoggedIn, role]); // Ajouter isLoggedIn et role comme dépendances
+    setIsMobileMenuOpen(false);
+    setShowUserMenu(false);
+    setOpenDropdown(null);
+  }, [location.pathname]);
 
-  const handleHover = (index) => {
-    setActiveIndex(index);
-  };
-
-  // Gérer la déconnexion proprement
+  // Gérer la déconnexion
   const handleLogout = (e) => {
     e.preventDefault();
     logout();
-    setIsLoggedIn(false);
-    setRole(null);
-    setShowUserMenu(false);
     navigate('/login');
   };
 
-  // Afficher/masquer le menu utilisateur
-  const toggleUserMenu = () => {
-    setShowUserMenu(!showUserMenu);
-  };
 
-  // Récupérer les initiales de l'utilisateur pour l'avatar (si pas d'image)
-  const getUserInitials = () => {
-    if (!userData) return '?';
-    
-    // Supposons que userData a des propriétés nom et prenom
-    const nom = userData.first_name || '';
-    const prenom = userData.last_name || '';
-    
-    if (nom && prenom) {
-      return `${prenom[0]}${nom[0]}`.toUpperCase();
-    } else if (nom) {
-      return nom[0].toUpperCase();
-    } else if (prenom) {
-      return prenom[0].toUpperCase();
-    }
-    
-    return '?';
-  };
+  // Rendu d'un élément de navigation (lien simple ou dropdown)
+  const renderNavItem = (link) => {
+    if (link.sublinks) {
+      const isDropdownOpen = openDropdown === link.label;
+      return (
 
-  // -------------------------
-  // Navbar pour les connectés
-  // -------------------------
-  const renderPrivateNavbar = () => (
-    <nav className="cyber-nav" ref={navRef}>
-      <div className="cyber-glow"></div>
-      <Link to="/" className="cyber-logo">
-        <img src={logo} alt="Expleo Logo" className="logo-image" />
-      </Link>
-
-      <div className="cyber-links">
-        {role === 'TeamLead' && 
-          [
-            { path: '/collaborateurs', label: 'COLLABORATEURS' },
-            { path: '/projets', label: 'PROJETS' },
-            { path: '/activites', label: 'ACTIVITES' },
-            { path: '/manager/trainings', label: 'GERER FORMATIONS' },
-            { path: '/formations', label: 'FORMATIONS' },
-            { path: '/radar', label: 'RAPPORTS' },
-          ].map(({ path, label }, index) => (
-            <Link
-              key={path}
-              to={path}
-              className={`cyber-link ${index === activeIndex ? 'active' : ''}`}
-              onMouseEnter={() => handleHover(index)}
-              onMouseLeave={() => setActiveIndex(-1)}
-            >
-              {label}
-              <span className="link-underline"></span>
-            </Link>
-          ))
-        }
-
-        {role === 'COLLABORATEUR' && 
-          [
-            { path: '/', label: '' },
-            { path: '/profile', label: 'PROFILE' },
-            { path: '/trainings', label: 'FORMATIONS' }
-          ].map(({ path, label }, index) => (
-            <Link
-              key={path}
-              to={path}
-              className={`cyber-link ${index === activeIndex ? 'active' : ''}`}
-              onMouseEnter={() => handleHover(index)}
-              onMouseLeave={() => setActiveIndex(-1)}
-            >
-              {label}
-              <span className="link-underline"></span>
-            </Link>
-          ))
-        }
-      </div>
-
-      <div className="user-profile-container" ref={userMenuRef}>
-        <div className="user-avatar" onClick={toggleUserMenu}>
-          {userData && userData.photo ? (
-            <img src={`${API_URL_MEDIA}${userData.photo}`} alt="Profil" />
-          ) : (
-            <div className="avatar-initials">{getUserInitials()}</div>
+        <div 
+          key={link.label} 
+          className={`${styles.dropdown} ${isDropdownOpen ? styles.open : ''}`}
+        >
+          <a 
+            className={`${styles.cyberLink} ${styles.dropdownToggle}`} 
+            onClick={() => setOpenDropdown(isDropdownOpen ? null : link.label)}
+          >
+            {link.label} <ChevronDown size={16} />
+          </a>
+          {isDropdownOpen && (
+            <div className={styles.dropdownMenu}>
+              {link.sublinks.map(sublink => (
+                <Link 
+                  key={sublink.path} 
+                  to={sublink.path} 
+                  className={styles.dropdownItem}
+                >
+                  {sublink.label}
+                </Link>
+              ))}
+            </div>
           )}
         </div>
-        
-        {showUserMenu && (
-          <div className="user-dropdown-menu">
-            <div className="user-info">
-              <div className="user-name">{userData?.first_name} {userData?.last_name}</div>
-              <div className="user-role">{userData?.role}</div>
+      );
+    }
+    return (
+      <Link key={link.path} to={link.path} className={styles.cyberLink}>
+        {link.label}
+        <span className={styles.linkUnderline}></span>
+      </Link>
+    );
+  };
+  
+  const linksToRender = isLoggedIn ? navLinksConfig[role] || [] : navLinksConfig.public;
+
+  return (
+    <nav className={styles.cyberNav} ref={navRef}>
+      <div className={styles.cyberGlow}></div>
+      <Link to="/" className={styles.cyberLogo} >
+        <img src={logo} alt="Expleo Logo" className={styles.logoImage} />
+      </Link>
+
+      <div className={`${styles.cyberLinks} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`} ref={mobileMenuRef}>
+        {linksToRender.map(renderNavItem)}
+      </div>
+
+      <div className={styles.navRight}>
+        {isLoggedIn ? (
+          <div className={styles.userProfileContainer} ref={userMenuRef}>
+            <div className={styles.userAvatar} onClick={() => setShowUserMenu(!showUserMenu)}>
+              {userData?.photo ? (
+                <img src={`${API_URL_MEDIA}${userData.photo}`} alt="Profil" />
+              ) : (
+                <div className={styles.avatarInitials}>{`${userData?.last_name?.[0] || ''}${userData?.first_name?.[0] || ''}`.toUpperCase()}</div>
+              )}
             </div>
-            <ul className="menu-options">
-              <li>
-                <Link to="/profile" onClick={() => setShowUserMenu(false)}>
-                  Mon Profil
-                </Link>
-              </li>
-              <li className="menu-divider"></li>
-              <li>
-                <a href="#" onClick={handleLogout}>
-                  Déconnecter
-                </a>
-              </li>
-            </ul>
+            {showUserMenu && (
+              <div className={styles.userDropdownMenu}>
+                <div className={styles.userInfo}>
+                    <div className={styles.userName}>{`${userData?.first_name || ''} ${userData?.last_name || ''}`}</div>
+                    <div className={styles.userRole}>{userData?.role || ''}</div>
+                </div>
+
+                <Link to="/profile" className={styles.dropdownItem}>Mon Profil</Link>
+                <div className={styles.menuDivider}></div>
+                <a href="#" onClick={handleLogout} className={`${styles.dropdownItem} ${styles.logout}`}>Déconnexion</a>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </nav>
-  );
-
-  // -----------------------
-  // Navbar pour les invités
-  // -----------------------
-  const renderPublicNavbar = () => (
-    <nav className="cyber-nav" ref={navRef}>
-      <div className="cyber-glow"></div>
-      <Link to="/" className="cyber-logo">
-        <img src={logo} alt="Expleo Logo" className="logo-image" />
-      </Link>
-
-      <div className="cyber-links">
-        {[
-          { path: '/', label: 'ACCUEIL' },
-          { path: '/A_Propos', label: 'A PROPOS' },
-          { path: '/services', label: 'SERVICES' }
-        ].map(({ path, label }, index) => (
-          <Link
-            key={path}
-            to={path}
-            className={`cyber-link ${index === activeIndex ? 'active' : ''}`}
-            onMouseEnter={() => handleHover(index)}
-            onMouseLeave={() => setActiveIndex(-1)}
-          >
-            {label}
-            <span className="link-underline"></span>
+        ) : (
+          <Link to="/login" className={styles.cyberButton}>
+            <span className={styles.buttonPulse}></span>
+            Se Connecter
           </Link>
-        ))}
+        )}
+        
+        <button className={styles.hamburgerMenu} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} ref={hamburgerRef}>
+          {isMobileMenuOpen ? <X /> : <Menu />}
+        </button>
       </div>
-
-      <Link to="/login" className="cyber-button">
-        <span className="button-pulse"></span>
-        Se Connecter
-      </Link>
     </nav>
   );
-
-  // Afficher la bonne navbar selon l'état d'authentification
-  return isLoggedIn ? renderPrivateNavbar() : renderPublicNavbar();
 };
 
 export default Navbar;
