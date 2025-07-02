@@ -1,13 +1,10 @@
-/* ------------------------------------------------------------------
-   ZONE GLOBALE
------------------------------------------------------------------- */
-/* Dashboard Layout */
+/* --- Styles généraux de la page --- */
 .dashboard {
   max-width: 100%;
   margin: 0 auto;
   padding: 32px;
   background-color: #f1f5f9;
-  min-height: calc(100vh - 58px)  ;
+  min-height: calc(100vh - 58px);
 }
 
 .dashboardHeader {
@@ -30,189 +27,35 @@
   position: absolute;
   bottom: -8px;
   left: 0;
-  width: 40px;
+  width: 60px;
   height: 4px;
-  background: var(--primary);
+  background: #6366f1;
   border-radius: 4px;
 }
 
 
-
+/* --- Conteneur du graphique --- */
 .wrapper {
-  background: radial-gradient(circle at top left,
-      rgba(93, 63, 152, 0.25),
-      rgba(93, 63, 152, 0.6)) , #4b3a82;
-  padding: 2rem 1.5rem;
+  background-color: #ffffff;
+  padding: 1.5rem;
   border-radius: 8px;
-  color: #fff;
-  overflow-x: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  text-align: center; /* Centre le graphique initialement */
+  overflow-x: auto; /* Permet le scroll horizontal */
 }
 
-
-/* ------------------------------------------------------------------
-   CONTENEUR SCROLLABLE
------------------------------------------------------------------- */
-.scrollWrapper {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 0.5rem;
-  /* Visibilité (facultatif) */
-  scrollbar-height: thin;
+.downloadBtn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  font-size: 14px;
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-
-/* Hauteur de la barre (facultatif, WebKit uniquement) */
-.scrollWrapper::-webkit-scrollbar {
-  height: 10px;            /* épaisseur de la barre                     */
-}
-.scrollWrapper::-webkit-scrollbar-thumb {
-  background: #5d3f98;     /* couleur violette Expleo                   */
-  border-radius: 5px;
-}
-.scrollWrapper::-webkit-scrollbar-track {
-  background: #ffffff30;   /* légèrement visible pour UX                */
-}
-
-/* ------------------------------------------------------------------
-   PREMIER NIVEAU : racine(s) centrée(s) horizontalement
------------------------------------------------------------------- */
-.roots {
-  display: flex;
-  justify-content: center; /* garde la racine centrée */
-  flex-wrap: nowrap;       /* pas de retour à la ligne  */
-  width: max-content;      /* ➜ s'étire tant que nécessaire */
-}
-
-/* ------------------------------------------------------------------
-   NŒUD GÉNÉRIQUE
------------------------------------------------------------------- */
-.node {
-  display: flex;            /* horizontale : carte puis enfants */
-  align-items: center;      /* la carte est centrée verticalement
-                               par rapport à la colonne enfants    */
-  position: relative;
-}
-
-/* ------------------------------------------------------------------
-   CARTE COLLABORATEUR
------------------------------------------------------------------- */
-.card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  position: relative;
-  padding: 0.75rem 1.25rem 0.75rem 3.75rem; /* laisse place à l’avatar */
-  background: #ffffff;
-  color: #333;
-  border-radius: 35px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.10);
-  min-width: 235px;         /* largeur mini esthétique */
-}
-
-/* ----- avatar rond qui “déborde” */
-.avatar {
-  position: absolute;
-  left: 0px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #ffffff;
-}
-
-/* ----- texte dans la carte */
-.textBox {
-  display: flex;
-  flex-direction: column;
-}
-.name { font-weight: 600; font-size: 0.95rem; }
-.role { font-size: 0.8rem; opacity: 0.75; }
-
-/* ------------------------------------------------------------------
-   LIAISON HORIZONTALE parent → colonne enfants
------------------------------------------------------------------- */
-.hasChildren::after {             /* .card.hasChildren ajouté en JSX */
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: 16px;
-  border-top: 2px dashed #ffffff80;
-  transform: translateY(-50%);
-}
-
-/* ------------------------------------------------------------------
-   COLONNE ENFANTS
------------------------------------------------------------------- */
-.children {
-  display: flex;
-  flex-direction: column;      /* pile verticalement */
-  gap: 2rem;
-  margin-left: 40px;           /* même largeur que la barre horizontale */
-  position: relative;
-}
-
-
-/* ----- barre verticale reliant tous les enfants si +1 enfant */
-.children::before {
-  content: "";
-  position: absolute;
-  left: -20px;                /* milieu entre horizontale et cartes */
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: #ababab;
-  z-index: 10;
-}
-
-
-/* ----- si un seul enfant : pas de barre verticale */
-.single::before {              /* .children.single ajouté en JSX */
-  display: none;
-}
-
-/* ------------------------------------------------------------------
-   LIAISON HORIZONTALE colonne → chaque enfant
------------------------------------------------------------------- */
-.children > .node::before {    /* petit trait pour CHAQUE enfant   */
-  content: "";
-  position: absolute;
-  left: -20px;                /* même coordonnée que .children::before */
-  top: 50%;
-  width: 20px;
-  border-top: 2px dashed #ffffff80;
-  transform: translateY(-50%);
-}
-
-.horizontalGroup {
-  display: flex;
-  flex-direction: row;
-  gap: 2rem;
-  margin-left: 40px;
-  margin-top: 2rem;
-  position: relative;
-}
-
-.horizontalGroup::before {
-  content: "";
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  width: 20px;
-  border-top: 2px dashed #ffffff80;
-  transform: translateY(-50%);
-}
-
-/* ------------------------------------------------------------------
-   RESPONSIVE (mobile)
------------------------------------------------------------------- */
-@media (max-width: 768px) {
-  .wrapper { padding: 1rem; }
-  .card   { padding: 0.75rem 1rem 0.75rem 3.5rem; min-width: 200px; }
-  .children { gap: 1.5rem; margin-left: 32px; }
-  .hasChildren::after { width: 12.8px; }
-  .children::before,
-  .children > .node::before { left: -16px; }
+.downloadBtn:hover {
+  background-color: #4f46e5;
 }

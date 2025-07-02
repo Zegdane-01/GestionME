@@ -4,11 +4,14 @@ import { toast } from 'react-hot-toast';
 import SearchBar from '../components/Personne_Projet/SearchBar';
 import PersonTable from '../components/Personne/CRUD/PersonneTable';
 import ViewPersonModal from '../components/Personne/CRUD/ViewPersonneModal';
+import ExcelImportModal from '../components/Personne/CRUD/ExcelImportModal';
 import DeletePersonModal from '../components/Personne/CRUD/DeletePersonneModal';
 import styles from '../assets/styles/List.module.css'; 
 import api from '../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+
+import { FileSpreadsheet } from 'lucide-react';
 
 const PersonList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,6 +19,7 @@ const PersonList = () => {
   const [filteredPeople, setFilteredPeople] = useState([]);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [personToDelete, setPersonToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,10 +96,16 @@ const PersonList = () => {
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
         <h1 className={styles.dashboardTitle}>Collaborateurs</h1>
-        <button className={styles.addButton} onClick={handleAdd}>
-          <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
-          <span>Nouveau Collaborateur</span>
-        </button>
+        <div className="d-flex flex-column flex-sm-row gap-2 mt-3 mt-md-0">
+          <button className={styles.addButton} onClick={() => setShowModal(true)}>
+            <FileSpreadsheet className={styles.addIcon}/>
+            <span>Importer un fichier Excel</span>
+          </button>
+          <button className={styles.addButton} onClick={handleAdd}>
+            <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
+            <span>Nouveau Collaborateur</span>
+          </button>
+        </div>
       </div>
 
       <div className={styles.searchContainer}>
@@ -126,6 +136,11 @@ const PersonList = () => {
         show={showViewModal}
         onHide={() => setShowViewModal(false)}
         person={selectedPerson}
+      />
+
+      <ExcelImportModal
+       show={showModal}
+       onHide={() => setShowModal(false)}
       />
 
       <DeletePersonModal

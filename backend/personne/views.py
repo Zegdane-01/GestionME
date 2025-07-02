@@ -5,6 +5,7 @@ from django.contrib.auth import update_session_auth_hash
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser
 from .models import Personne
 from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
@@ -109,3 +110,76 @@ def change_password(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ImportExcelPersonneView(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request, format=None):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'Aucun fichier reçu'}, status=400)
+
+        try:
+            df = pd.read_excel(file, sheet_name="Plan de charge ME 2025")
+        except Exception as e:
+            return Response({'error': f"Erreur de lecture Excel : {str(e)}"}, status=400)
+
+        created, updated, skipped = 0, 0, 0
+
+        for _, row in df.iterrows():
+            matricule = str(row.get("Matricule")).strip()
+            full_name = str(row.get("Name")).strip()
+            embauche = row.get("Date d'embauche")
+            sexe = str(row.get("Sexe")).strip() if pd.notna(row.get("Sexe")) else None
+            position = str(row.get("Position")).strip() if pd.notna(row.get("Position")) else 'T1'
+            manager_name = str(row.get("Hierarchical manager")).strip() if pd.notna(row.get("Hierarchical manager")) else None
+
+            # Skip if matricule or name is invalid
+            if not matricule or matricule == "nan" or not full_name:
+                skipped += 1
+                continue
+
+            # Séparer nom complet
+            name_parts = full_name.strip().split()
+            first_name = name_parts[-1] if len(name_parts) > 1 else ""
+            last_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else name_parts[0]
+
+            # Chercher le manager si existe
+            manager_obj = None
+            if manager_name:
+                possible_managers = Personne.objects.filter(
+                    Q(first_name__icontains=manager_name) | Q(last_name__icontains=manager_name)
+                )
+                if possible_managers.exists():
+                    manager_obj = possible_managers.first()
+
+            defaults = {
+                "first_name": first_name,
+                "last_name": last_name,
+                "sexe": sexe or "Homme",
+                "dt_Embauche": embauche if not pd.isna(embauche) else None,
+                "position": position,
+                "manager": manager_obj,
+                "role": "COLLABORATEUR",
+                "status": "En cours",
+                "is_active": True,
+            }
+
+            # Mise à jour ou création
+            obj, created_flag = Personne.objects.update_or_create(
+                matricule=matricule,
+                defaults=defaults,
+            )
+
+            if created_flag:
+                obj.set_password(matricule)  # mot de passe par défaut
+                obj.save()
+                created += 1
+            else:
+                updated += 1
+
+        return Response({
+            "message": "Import terminé.",
+            "créés": created,
+            "modifiés": updated,
+            "ignorés": skipped
+        }, status=200)
