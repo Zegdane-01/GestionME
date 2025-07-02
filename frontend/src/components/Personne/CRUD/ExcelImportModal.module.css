@@ -1,0 +1,114 @@
+.customModal {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.modalHeader {
+  background-color: #6846c6; /* Bleu Expleo */
+  color: white;
+  border-bottom: none;
+  padding: 15px 20px;
+  border-radius: 8px 8px 0 0;
+}
+
+.modalBody {
+  padding: 20px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.modalFooter {
+  display: flex;
+  border-top: 1px solid #e9ecef;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+.btnClose {
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-color: #6846c6;
+  color: #6846c6;
+}
+
+.btnClose:hover {
+  background-color: #6846c6;
+  color: white;
+}
+
+
+.title {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.description {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dropzoneDragging {
+  border-color: #3b82f6;
+  background-color: #f0f9ff;
+}
+
+.uploadIcon {
+  color: #9ca3af;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.selectLabel {
+  display: inline-block;
+  background-color: #1e40af;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.selectedFile {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.uploadButton {
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  border: none;
+}
+
+.uploadButtonEnabled {
+  background-color: #6846c6;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.uploadButtonEnabled:hover {
+  background-color: #1c3aa9;
+}
+
+.uploadButtonDisabled {
+  background-color: #9ca3af;
+  color: #ffffff;
+  cursor: not-allowed;
+}

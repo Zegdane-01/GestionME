@@ -118,18 +118,18 @@
 }
 
 .statusInProgress {
-  background-color: #e6ffed; /* Light green */
-  color: #33b679; /* Darker green */
+  background-color: #fff3cd; /* Light yellow */
+  color: #e0a800; /* Dark yellow/orange */
 }
 
 .statusOnHold {
-  background-color: #fff9e6; /* Light yellow/orange */
-  color: #e68a00; /* Darker yellow/orange */
+  background-color: #ffe5d4; /* Light orange */
+  color: #d9480f; /* Strong orange */
 }
 
 .statusClosed {
-  background-color: #e6f7ff; /* Light blue */
-  color: #1890ff; /* Darker blue */
+  background-color: #d4edda; /* Light green */
+  color: #218838; /* Dark green */
 }
 
 
