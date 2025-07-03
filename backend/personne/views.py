@@ -6,6 +6,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
+from django.db.models import Q
+import pandas as pd
 from .models import Personne
 from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
@@ -14,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 class PersonneViewSet(viewsets.ModelViewSet):
     queryset = Personne.objects.all()
     serializer_class = PersonneSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     lookup_field = 'matricule'
 
     def get_serializer_class(self):
@@ -112,8 +114,10 @@ def change_password(request):
 
 class ImportExcelPersonneView(APIView):
     parser_classes = [MultiPartParser]
-
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, format=None):
+        POSITIONS_VALIDES = {'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'}
         file = request.FILES.get('file')
         if not file:
             return Response({'error': 'Aucun fichier reçu'}, status=400)
@@ -128,54 +132,96 @@ class ImportExcelPersonneView(APIView):
         for _, row in df.iterrows():
             matricule = str(row.get("Matricule")).strip()
             full_name = str(row.get("Name")).strip()
-            embauche = row.get("Date d'embauche")
+            raw_embauche = row.get("Date d'embauche")
             sexe = str(row.get("Sexe")).strip() if pd.notna(row.get("Sexe")) else None
-            position = str(row.get("Position")).strip() if pd.notna(row.get("Position")) else 'T1'
-            manager_name = str(row.get("Hierarchical manager")).strip() if pd.notna(row.get("Hierarchical manager")) else None
 
-            # Skip if matricule or name is invalid
+            raw_position = str(row.get("Position")).strip() if pd.notna(row.get("Position")) else ''
+            position = raw_position if raw_position in POSITIONS_VALIDES else 'T1'
+
+            manager_name = str(row.get("Hierarchical manager")).strip() if pd.notna(row.get("Hierarchical manager")) else None
+            Status = str(row.get("Status")).strip() if pd.notna(row.get("Status")) else None
+
+            # Validation
             if not matricule or matricule == "nan" or not full_name:
                 skipped += 1
                 continue
 
-            # Séparer nom complet
-            name_parts = full_name.strip().split()
-            first_name = name_parts[-1] if len(name_parts) > 1 else ""
-            last_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else name_parts[0]
+            # Convertir date d'embauche
+            try:
+                if pd.isna(raw_embauche):
+                    date_embauche = None
+                elif isinstance(raw_embauche, str):
+                    date_embauche = pd.to_datetime(raw_embauche).date()
+                elif isinstance(raw_embauche, pd.Timestamp):
+                    date_embauche = raw_embauche.date()
+                else:
+                    date_embauche = raw_embauche
+            except Exception:
+                date_embauche = None
 
-            # Chercher le manager si existe
+            # Extraire last_name (2 premiers mots en MAJUSCULES), puis reste = first_name
+            parts = full_name.strip().split()
+            last_name_parts = []
+            first_name_parts = []
+
+            # On parcourt les mots pour trouver la séparation
+            for part in parts:
+                # Si le mot est entièrement en majuscules ET qu'on n'a pas encore trouvé de prénom
+                if part.isupper():
+                    last_name_parts.append(part)
+                else:
+                    first_name_parts.append(part)
+
+            last_name = " ".join(last_name_parts)
+            first_name = " ".join(first_name_parts)
+
+            # Chercher le manager si possible
             manager_obj = None
             if manager_name:
-                possible_managers = Personne.objects.filter(
-                    Q(first_name__icontains=manager_name) | Q(last_name__icontains=manager_name)
-                )
-                if possible_managers.exists():
-                    manager_obj = possible_managers.first()
+                manager_name_cleaned = manager_name.replace(" ", "").upper()
 
-            defaults = {
-                "first_name": first_name,
-                "last_name": last_name,
-                "sexe": sexe or "Homme",
-                "dt_Embauche": embauche if not pd.isna(embauche) else None,
-                "position": position,
-                "manager": manager_obj,
-                "role": "COLLABORATEUR",
-                "status": "En cours",
-                "is_active": True,
-            }
+                for m in Personne.objects.all():
+                    fn = m.first_name or ""
+                    ln = m.last_name or ""
 
-            # Mise à jour ou création
-            obj, created_flag = Personne.objects.update_or_create(
-                matricule=matricule,
-                defaults=defaults,
-            )
+                    full_1 = (fn + ln).replace(" ", "").upper()
+                    full_2 = (ln + fn).replace(" ", "").upper()
+                    ln_clean = ln.replace(" ", "").upper()
 
-            if created_flag:
-                obj.set_password(matricule)  # mot de passe par défaut
-                obj.save()
-                created += 1
-            else:
+                    if (
+                        manager_name_cleaned in full_1 or
+                        manager_name_cleaned in full_2 or
+                        manager_name_cleaned in ln_clean
+                    ):
+                        manager_obj = m
+                        break
+
+            try:
+                personne = Personne.objects.get(matricule=matricule)
+                # Mise à jour sans changer nom/prénom
+                personne.dt_Embauche = date_embauche or personne.dt_Embauche
+                personne.position = position or personne.position
+                personne.manager = manager_obj or personne.manager
+                status=Status,
+                personne.save()
                 updated += 1
+            except Personne.DoesNotExist:
+                # Création
+                personne = Personne.objects.create_user(
+                    matricule=matricule,
+                    password=matricule,
+                    first_name=first_name,
+                    last_name=last_name,
+                    sexe=sexe or "Homme",
+                    dt_Debut_Carriere=None,  # Pas de date de début de carrière dans l'import
+                    dt_Embauche=date_embauche,
+                    position=position,
+                    manager=manager_obj,
+                    role='COLLABORATEUR',
+                    status=Status,
+                    is_active=False
+                )
+                created += 1
 
         return Response({
             "message": "Import terminé.",
@@ -183,3 +229,4 @@ class ImportExcelPersonneView(APIView):
             "modifiés": updated,
             "ignorés": skipped
         }, status=200)
+

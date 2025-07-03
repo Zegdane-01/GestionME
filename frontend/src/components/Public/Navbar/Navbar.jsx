@@ -5,7 +5,6 @@ import logo from '../../../assets/images/logo.png';
 import styles from './Navbar.module.css';
 import { API_URL_MEDIA } from '../../../api/api';
 import { Menu, X, ChevronDown } from 'lucide-react';
-import { path } from 'framer-motion/client';
 
 const Navbar = ({ onHeightChange }) => {
   const navRef = useRef(null);

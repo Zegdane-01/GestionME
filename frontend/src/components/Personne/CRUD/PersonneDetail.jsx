@@ -63,12 +63,16 @@ const PersonDetail = ({ person }) => {
       <FieldRow label="Spécialité diplôme" value={person.specialite_diplome} />
       <FieldRow 
         label="Date début carrière"
-        value={new Date(person.dt_Debut_Carriere).toLocaleDateString('fr-FR', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        })} 
-        icon="calendar-date" 
+        value={
+          person.dt_Debut_Carriere
+            ? new Date(person.dt_Debut_Carriere).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })
+            : '—'
+        }
+        icon="calendar-date"
       />
       <FieldRow 
         label="Date d'embauche"

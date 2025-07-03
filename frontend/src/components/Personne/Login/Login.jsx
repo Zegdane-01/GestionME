@@ -32,7 +32,6 @@ const Login = () => {
       navigate('/radar');
 
    } catch (error) {
-      toast.error('Erreur de connexion:', error);
       
       // Nettoyage en cas d'erreur
       localStorage.removeItem('accessToken');

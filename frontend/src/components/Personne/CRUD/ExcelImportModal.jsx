@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import { UploadCloud } from 'lucide-react';
 import styles from './ExcelImportModal.module.css';
+import { toast } from 'react-hot-toast';
 
 const ExcelImportModal = ({ show, onHide }) => {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -25,31 +28,45 @@ const ExcelImportModal = ({ show, onHide }) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    try {
-      const res = await fetch('http://localhost:8000/api/import-excel/', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert('Importation réussie : ' + data.message);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://localhost:8000/api/personne/import-excel/', true);
+    xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('accessToken')}`); // si JWT
+    setIsUploading(true);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded * 100) / e.total);
+        setUploadProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (xhr.status === 200) {
+        toast.success('Importation réussie');
         onHide();
       } else {
-        alert('Erreur : ' + data.error);
+        try {
+          const err = JSON.parse(xhr.responseText);
+          toast.error('❌ ' + (err.error || err.message || 'Erreur inconnue'));
+        } catch {
+          toast.error('❌ Erreur serveur');
+        }
       }
-    } catch (err) {
-      alert('Erreur réseau : ' + err.message);
-    }
+    };
+
+    xhr.onerror = () => {
+      setIsUploading(false);
+      setUploadProgress(0);
+      toast.error('Erreur réseau');
+    };
+
+    xhr.send(formData);
   };
 
   return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      centered
-      size="lg"
-      className={styles.customModal}
-    >
+    <Modal show={show} onHide={onHide} centered size="lg" className={styles.customModal}>
       <Modal.Header closeButton className={styles.modalHeader}>
         <Modal.Title>Import Excel</Modal.Title>
       </Modal.Header>
@@ -74,7 +91,6 @@ const ExcelImportModal = ({ show, onHide }) => {
             type="file"
             accept=".xlsx, .xls"
             onChange={handleFileChange}
-            className="hidden"
             id="fileInput"
             style={{ display: 'none' }}
           />
@@ -84,20 +100,27 @@ const ExcelImportModal = ({ show, onHide }) => {
 
           {file && <p className={styles.selectedFile}>Fichier sélectionné : {file.name}</p>}
         </div>
+
+        {isUploading && (
+          <div className="mt-3">
+            <ProgressBar now={uploadProgress} label={`${uploadProgress}%`} animated />
+          </div>
+        )}
       </Modal.Body>
 
       <Modal.Footer className={styles.modalFooter}>
         <Button
           onClick={handleUpload}
-          disabled={!file}
+          disabled={!file || isUploading}
           className={`${styles.uploadButton} ${file ? styles.uploadButtonEnabled : styles.uploadButtonDisabled}`}
         >
-          Importer les données
+          {isUploading ? 'Importation...' : 'Importer les données'}
         </Button>
         <Button
           variant="outline-secondary"
           onClick={onHide}
           className={styles.btnClose}
+          disabled={isUploading}
         >
           Fermer
         </Button>

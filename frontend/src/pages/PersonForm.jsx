@@ -193,7 +193,7 @@ const PersonForm = () => {
   return (
     <div className="container py-5">
       <h1 className={`${styles.formTitle} mb-5 text-center`}>
-        {isEditMode ? 'Modifier un projet' : 'Créer un nouveau collaborateur'}
+        {isEditMode ? 'Modifier un collaborateur' : 'Créer un nouveau collaborateur'}
       </h1>
 
       <form onSubmit={handleSubmit} className={styles.projetFormCard}>
