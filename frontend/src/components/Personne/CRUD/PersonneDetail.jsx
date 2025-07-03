@@ -58,9 +58,12 @@ const PersonDetail = ({ person }) => {
       <FieldRow label="Téléphone" value={person.telephone} />
       <FieldRow label="Sexe" value={person.sexe} />
       <FieldRow label="Position" value={person.position} />
-      <FieldRow label="Status" value={person.status} />
+      <FieldRow label="Statut" value={person.status} />
       <FieldRow label="Diplôme" value={person.diplome} />
       <FieldRow label="Spécialité diplôme" value={person.specialite_diplome} />
+      <FieldRow label="Profile" value={person.Profile} />
+      <FieldRow label="I/E" value={person.i_e} />
+
       <FieldRow 
         label="Date début carrière"
         value={

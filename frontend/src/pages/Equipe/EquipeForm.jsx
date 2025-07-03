@@ -328,7 +328,6 @@ const EquipeForm = () => {
                       <button
                         type="button"
                         className={styles.removeButton}
-                        // MODIFIÉ : Le clic ouvre maintenant la modale de confirmation
                         onClick={() => promptRemoveUser(user)}
                         title={`Retirer ${user.first_name}`}
                       >

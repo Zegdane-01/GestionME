@@ -58,6 +58,13 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         ('COLLABORATEUR', 'Collaborateur')
     ]
 
+    IE_CHOICES = [
+        ('Intern', 'Intern'),
+        ('Extern', 'Extern'),
+    ]
+
+    
+
 
 
     matricule = models.CharField(max_length=50, primary_key=True)
@@ -77,8 +84,10 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     diplome = models.CharField(max_length=100,choices=DIPLOME_CHOICES, blank=True, null=True)
     specialite_diplome = models.CharField(max_length=100, blank=True, null=True)
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')
+    profile = models.CharField(max_length=100, blank=True, null=True)  # Saisissable librement
+    i_e = models.CharField(max_length=6, choices=IE_CHOICES, blank=True, null=True)
 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')
     ddc = models.FileField(upload_to='ddc/', blank=True, null=True)
 
     manager = models.ForeignKey(

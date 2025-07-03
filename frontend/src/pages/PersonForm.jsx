@@ -8,6 +8,29 @@ const PersonForm = () => {
   const matricule = params.matricule || params.id;
   const navigate = useNavigate();
   const isEditMode = matricule !== undefined;
+
+  const PROFILE_OPTIONS = [
+  'AUT/AGV',
+  'Automatisme',
+  'CAMI',
+  'RPOE',
+  'Prép-Méthode',
+  'Réferent PLM',
+  'TSQ Châssis',
+  'Qualité',
+  'Achats',
+  'Supply chain',
+  'Industrial process leader',
+  'CP',
+  'Pilote Synthèse',
+  'Expert embout',
+  'RFE',
+  'Chef de projet',
+  'RG moyens',
+  'RCDR',
+  'Autre',
+];
+
   
   // États initiaux du formulaire
   const [formData, setFormData] = useState({
@@ -24,6 +47,8 @@ const PersonForm = () => {
     position: '',
     diplome: '',
     specialite_diplome: '',
+    profile: '',
+    i_e: '',
     status: '',
     ddc: null,
     manager: null,
@@ -45,6 +70,7 @@ const PersonForm = () => {
     if (!formData.role) newErrors.role = "Le rôle est requis.";
     if (!formData.dt_Embauche) newErrors.dt_Embauche = "La date d'embauche est requise.";
     if (!formData.position) newErrors.position = "La position est requise.";
+    if (!formData.i_e) newErrors.i_e = "Le type I/E est requis.";
     if (!formData.status) newErrors.status = "Le statut est requis.";
     if (formData.email) {
     const emailRegex = /^[a-zA-Z0-9._-]+@expleogroup\.com$/;
@@ -60,6 +86,22 @@ const PersonForm = () => {
   const [collaborateurs, setCollaborateurs] = useState([]);
   const [projets, setProjets] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [profileSearch, setProfileSearch] = useState('');
+  const [profileResults, setProfileResults] = useState([]);
+
+    // Mettre à jour la liste filtrée à chaque frappe
+  useEffect(() => {
+    if (profileSearch.trim() === '') {
+      setProfileResults([]);
+      return;
+    }
+    const res = PROFILE_OPTIONS.filter(opt =>
+      opt.toLowerCase().includes(profileSearch.toLowerCase()) &&
+      opt.toLowerCase() !== profileSearch.toLowerCase()
+    );
+    setProfileResults(res);
+  }, [profileSearch]);
 
   // Charger les données initiales pour le mode édition
   useEffect(() => {
@@ -109,6 +151,10 @@ const PersonForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
+
+    if (name === 'profile') {
+      setProfileSearch(value);
+    }
     
     setFormData(prev => ({
       ...prev,
@@ -188,6 +234,28 @@ const PersonForm = () => {
       }
     }};
 
+  
+  // Afficher la liste complète (ou filtrée) quand l'input reçoit le focus
+  const handleProfileFocus = () => {
+    const filtered = profileSearch
+      ? PROFILE_OPTIONS.filter(opt =>
+          opt.toLowerCase().includes(profileSearch.toLowerCase()) &&
+          opt.toLowerCase() !== profileSearch.toLowerCase()
+        )
+      : PROFILE_OPTIONS;
+    setProfileResults(filtered);
+  };
+
+  // Masquer la liste quand on quitte l'input (on laisse un court délai pour laisser le temps au onMouseDown)
+  const handleProfileBlur = () => {
+    setTimeout(() => setProfileResults([]), 100);
+  };
+
+  const handleSelectProfileFromSearch = (opt) => {
+    setFormData(prev => ({ ...prev, profile: opt })); // on stocke la valeur retenue
+    setProfileSearch(opt);                            // on reflète dans l’input
+    setProfileResults([]);                            // on ferme la liste
+  };
 
 
   return (
@@ -209,6 +277,7 @@ const PersonForm = () => {
                 value={formData.matricule}
                 onChange={handleChange}
                 className={`${styles.formControl} ${errors.matricule ? styles.inputError : ''}`}
+                autoComplete="off" 
                 disabled={isEditMode}
               />
               {errors.matricule && <p className={styles.errorText}>{errors.matricule}</p>}
@@ -244,6 +313,7 @@ const PersonForm = () => {
                 value={formData.first_name}
                 onChange={handleChange}
                 className={`${styles.formControl} ${errors.first_name ? styles.inputError : ''}`}
+                autoComplete="off" 
               />
               {errors.first_name && <p className={styles.errorText}>{errors.first_name}</p>}
             </div>
@@ -258,6 +328,7 @@ const PersonForm = () => {
               value={formData.last_name}
               onChange={handleChange}
               className={`${styles.formControl} ${errors.last_name ? styles.inputError : ''}`}
+              autoComplete="off" 
             />
             {errors.last_name && <p className={styles.errorText}>{errors.last_name}</p>}
           </div>
@@ -275,6 +346,7 @@ const PersonForm = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className={`${styles.formControl} ${errors.email ? styles.inputError : ''}`}
+                  autoComplete="off" 
                 />
                 {errors.email && <p className={styles.errorText}>{errors.email}</p>}
               </div>
@@ -289,6 +361,7 @@ const PersonForm = () => {
                   value={formData.telephone}
                   onChange={handleChange}
                   className={styles.formControl}
+                  autoComplete="off" 
                 />
               </div>
             </div>
@@ -306,6 +379,7 @@ const PersonForm = () => {
                   value={formData.dt_Embauche}
                   onChange={handleChange}
                   className={`${styles.formControl} ${errors.dt_Embauche ? styles.inputError : ''}`}
+                  autoComplete="off" 
                 />
                 {errors.dt_Embauche && <p className={styles.errorText}>{errors.dt_Embauche}</p>}
               </div>
@@ -320,6 +394,7 @@ const PersonForm = () => {
                   value={formData.dt_Debut_Carriere}
                   onChange={handleChange}
                   className={styles.formControl}
+                  autoComplete="off" 
                 />
               </div>
             </div>
@@ -354,6 +429,7 @@ const PersonForm = () => {
                 value={formData.specialite_diplome}
                 onChange={handleChange}
                 className={styles.formControl}
+                autoComplete="off" 
               />
             </div>
           </div>
@@ -398,6 +474,71 @@ const PersonForm = () => {
                   ))}
                 </select>
                 {errors.position && <p className={styles.errorText}>{errors.position}</p>}
+              </div>
+            </div>
+
+        </div>
+
+        <div className="row g-4 mb-4"> 
+
+          <div className="col-md-6">
+            <div className={`${styles.formGroup} position-relative`}>
+              <label htmlFor="profileSearch" className={styles.formLabel}>
+                Profile 
+                <small className="form-text text-muted">
+                  &nbsp;(votre saisie sera utilisée telle quelle.)
+                </small>
+              </label>
+              <input
+                type="text"
+                id="profileSearch"
+                name="profile"
+                onFocus={handleProfileFocus}
+                onBlur={handleProfileBlur}
+                placeholder="Commencez à taper pour rechercher..."
+                autoComplete="off" 
+                className={styles.formControl}
+                value={profileSearch}
+                onChange={handleChange}
+              />
+              {profileResults.length > 0 && (
+                <div className={styles.searchResults}
+                  style={{
+                    position: 'absolute',        // ← nouveau : se superpose
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 1000,
+                  }}
+                >
+                  {profileResults.map((opt) => (
+                    <div
+                      key={opt}
+                      className={styles.searchResultItem}
+                      onClick={() => handleSelectProfileFromSearch(opt)}
+                    >
+                      {opt}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="col-md-6">
+             <div className={styles.formGroup}>
+                <label className={styles.formLabel}>I/E<span style={{ color: 'red' }}> *</span></label>
+                <select
+                  name="i_e"
+                  value={formData.i_e}
+                  onChange={handleChange}
+                  className={`${styles.formControl} ${errors.i_e ? styles.inputError : ''}`}
+                >
+                  <option value="">-- Choisir --</option>
+                  <option value="Intern">Intern</option>
+                  <option value="Extern">Extern</option>
+                </select>
+                {errors.i_e && <p className={styles.errorText}>{errors.i_e}</p>}
               </div>
             </div>
 

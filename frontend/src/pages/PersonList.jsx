@@ -49,7 +49,8 @@ const PersonList = () => {
       person.matricule.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.position.toLowerCase().includes(searchTerm.toLowerCase())
+      person.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredPeople(results);
   }, [searchTerm, people]);
