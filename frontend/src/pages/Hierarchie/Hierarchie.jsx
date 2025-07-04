@@ -6,6 +6,7 @@ import { Download } from "lucide-react";
 import api, { mediaApi } from "../../api/api";
 import defaultAvatar from "../../assets/images/default-avatar.png";
 import styles from "../../assets/styles/Hierarchie/HierarchieTree.module.css";
+import logo from '../../assets/images/Expleo_Group_Logo.png';
 
 const HierarchieTree = () => {
   const chartRef = useRef(null);
@@ -75,7 +76,7 @@ const HierarchieTree = () => {
   };
 
   const handleDownload = () => {
-    const chartContainer = document.getElementById("chart");
+    const chartContainer = document.getElementById("chart-export-wrapper");
     if (!chartContainer) return;
 
     html2canvas(chartContainer, {
@@ -165,7 +166,11 @@ OrgChart.templates.myTemplate.ripple = {
             <Download size={16} className="me-1" /> &nbsp;Télécharger l’organigramme
           </button>
       </div>
-      <section className={styles.wrapper}>
+      <section id="chart-export-wrapper" className={styles.wrapper}>
+        <div className={styles.exportHeader}>
+          <img src={logo} alt="Logo Expleo" className={styles.logo} />
+          <h2 className={styles.exportTitle}>Organigramme ME</h2>
+        </div>
         <div
           id="chart"
           ref={chartRef}
