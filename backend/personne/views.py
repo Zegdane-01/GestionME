@@ -119,11 +119,15 @@ class ImportExcelPersonneView(APIView):
     def post(self, request, format=None):
         POSITIONS_VALIDES = {'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'}
         file = request.FILES.get('file')
+        sheetName = request.POST.get('sheet_name') or 'Plan de charge ME 2025'
         if not file:
             return Response({'error': 'Aucun fichier reçu'}, status=400)
 
         try:
-            df = pd.read_excel(file, sheet_name="Plan de charge ME 2025")
+            xls = pd.ExcelFile(file)
+            if sheetName not in xls.sheet_names:
+                return Response({'error': f"La feuille '{sheetName}' n'existe pas dans le fichier Excel."}, status=400)
+            df = pd.read_excel(xls, sheet_name=sheetName)
         except Exception as e:
             return Response({'error': f"Erreur de lecture Excel : {str(e)}"}, status=400)
 
@@ -136,11 +140,11 @@ class ImportExcelPersonneView(APIView):
             sexe = str(row.get("Sexe")).strip() if pd.notna(row.get("Sexe")) else None
 
             raw_position = str(row.get("Position")).strip() if pd.notna(row.get("Position")) else ''
-            position = raw_position if raw_position in POSITIONS_VALIDES else 'T1'
+            position_f = raw_position if raw_position in POSITIONS_VALIDES else 'T1'
 
             manager_name = str(row.get("Hierarchical manager")).strip() if pd.notna(row.get("Hierarchical manager")) else None
             Status = str(row.get("Status")).strip() if pd.notna(row.get("Status")) else None
-
+            profile_f = str(row.get("Profil")).strip() if pd.notna(row.get("Profil")) else None
             # Validation
             if not matricule or matricule == "nan" or not full_name:
                 skipped += 1
@@ -200,9 +204,10 @@ class ImportExcelPersonneView(APIView):
                 personne = Personne.objects.get(matricule=matricule)
                 # Mise à jour sans changer nom/prénom
                 personne.dt_Embauche = date_embauche or personne.dt_Embauche
-                personne.position = position or personne.position
+                personne.position = position_f or personne.position
                 personne.manager = manager_obj or personne.manager
-                status=Status,
+                personne.status=Status or personne.status
+                personne.profile=profile_f or personne.profile
                 personne.save()
                 updated += 1
             except Personne.DoesNotExist:
@@ -215,10 +220,11 @@ class ImportExcelPersonneView(APIView):
                     sexe=sexe or "Homme",
                     dt_Debut_Carriere=None,  # Pas de date de début de carrière dans l'import
                     dt_Embauche=date_embauche,
-                    position=position,
+                    position=position_f,
                     manager=manager_obj,
                     role='COLLABORATEUR',
                     status=Status,
+                    profile=profile_f,
                     is_active=False
                 )
                 created += 1

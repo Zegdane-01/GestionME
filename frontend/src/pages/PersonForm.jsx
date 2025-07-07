@@ -48,7 +48,6 @@ const PersonForm = () => {
     diplome: '',
     specialite_diplome: '',
     profile: '',
-    i_e: '',
     status: '',
     ddc: null,
     manager: null,
@@ -70,7 +69,6 @@ const PersonForm = () => {
     if (!formData.role) newErrors.role = "Le rôle est requis.";
     if (!formData.dt_Embauche) newErrors.dt_Embauche = "La date d'embauche est requise.";
     if (!formData.position) newErrors.position = "La position est requise.";
-    if (!formData.i_e) newErrors.i_e = "Le type I/E est requis.";
     if (!formData.status) newErrors.status = "Le statut est requis.";
     if (formData.email) {
     const emailRegex = /^[a-zA-Z0-9._-]+@expleogroup\.com$/;
@@ -524,23 +522,6 @@ const PersonForm = () => {
               )}
             </div>
           </div>
-
-          <div className="col-md-6">
-             <div className={styles.formGroup}>
-                <label className={styles.formLabel}>I/E<span style={{ color: 'red' }}> *</span></label>
-                <select
-                  name="i_e"
-                  value={formData.i_e}
-                  onChange={handleChange}
-                  className={`${styles.formControl} ${errors.i_e ? styles.inputError : ''}`}
-                >
-                  <option value="">-- Choisir --</option>
-                  <option value="Intern">Intern</option>
-                  <option value="Extern">Extern</option>
-                </select>
-                {errors.i_e && <p className={styles.errorText}>{errors.i_e}</p>}
-              </div>
-            </div>
 
         </div>
 

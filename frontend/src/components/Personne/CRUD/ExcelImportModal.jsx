@@ -9,6 +9,7 @@ const ExcelImportModal = ({ show, onHide }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [sheetName, setSheetName] = useState('Plan de charge ME 2025');
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -27,6 +28,7 @@ const ExcelImportModal = ({ show, onHide }) => {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('sheet_name', sheetName);
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', 'http://localhost:8000/api/personne/import-excel/', true);
@@ -46,6 +48,7 @@ const ExcelImportModal = ({ show, onHide }) => {
       if (xhr.status === 200) {
         toast.success('Importation réussie');
         onHide();
+        window.location.reload();
       } else {
         try {
           const err = JSON.parse(xhr.responseText);
@@ -63,6 +66,7 @@ const ExcelImportModal = ({ show, onHide }) => {
     };
 
     xhr.send(formData);
+    
   };
 
   return (
@@ -73,32 +77,45 @@ const ExcelImportModal = ({ show, onHide }) => {
 
       <Modal.Body className={styles.modalBody}>
         <p className={styles.description}>Importez vos données depuis un fichier Excel (.xlsx, .xls)</p>
-
-        <div
-          className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ''}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-        >
-          <UploadCloud className={styles.uploadIcon} />
-          <p><strong>Glissez-déposez votre fichier Excel ici</strong></p>
-          <p className={styles.description}>ou cliquez pour sélectionner un fichier</p>
-
+        <div className="mt-3">
+          <label className={styles.sheetLabel}>Nom de la feuille Excel</label>
           <input
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={handleFileChange}
-            id="fileInput"
-            style={{ display: 'none' }}
+            type="text"
+            value={sheetName}
+            onChange={(e) => setSheetName(e.target.value)}
+            className={styles.sheetInput}
+            placeholder="Ex: Plan de charge ME 2025"
           />
-          <label htmlFor="fileInput" className={styles.selectLabel}>
-            Sélectionner un fichier
-          </label>
+        </div>
 
-          {file && <p className={styles.selectedFile}>Fichier sélectionné : {file.name}</p>}
+        <div className="mt-3">
+          <label className={styles.sheetLabel}>Sélectionner un fichier</label>
+          <div
+            className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ''}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+          >
+            <UploadCloud className={styles.uploadIcon} />
+            <p><strong>Glissez-déposez votre fichier Excel ici</strong></p>
+            <p className={styles.description}>ou cliquez pour sélectionner un fichier</p>
+
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileChange}
+              id="fileInput"
+              style={{ display: 'none' }}
+            />
+            <label htmlFor="fileInput" className={styles.selectLabel}>
+              Sélectionner un fichier
+            </label>
+
+            {file && <p className={styles.selectedFile}>Fichier sélectionné : {file.name}</p>}
+          </div>
         </div>
 
         {isUploading && (

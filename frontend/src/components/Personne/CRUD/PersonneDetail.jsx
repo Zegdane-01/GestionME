@@ -62,7 +62,6 @@ const PersonDetail = ({ person }) => {
       <FieldRow label="Diplôme" value={person.diplome} />
       <FieldRow label="Spécialité diplôme" value={person.specialite_diplome} />
       <FieldRow label="Profile" value={person.Profile} />
-      <FieldRow label="I/E" value={person.i_e} />
 
       <FieldRow 
         label="Date début carrière"
@@ -79,17 +78,27 @@ const PersonDetail = ({ person }) => {
       />
       <FieldRow 
         label="Date d'embauche"
-        value={new Date(person.dt_Embauche).toLocaleDateString('fr-FR', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        })} 
+        value={
+          person.dt_Embauche
+            ? new Date(person.dt_Embauche).toLocaleDateString('fr-FR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })
+          : '—'
+        } 
         icon="calendar-date" 
       />
       
-      <FieldRow label="Expérience totale" value={getExperienceText(person.experience_total)} />
+      <FieldRow
+       label="Expérience totale" 
+       value={
+          person.dt_Debut_Carriere
+            ? getExperienceText(person.experience_total)
+            : '—'
+        } />
       <FieldRow label="Expérience Expleo" value={getExperienceText(person.experience_expleo)}  />
-      <FieldRow label="Manager" value={`${person.manager_info?.first_name || "—"} ${person.manager_inf?.last_name || ''}`} />
+      <FieldRow label="Manager" value={`${person.manager_info?.first_name || "—"} ${person.manager_info?.last_name || ''}`} />
       <FieldRow label="Backup" value={`${person.backup_info?.first_name || "—"} ${person.backup_info?.last_name || ''}`} />
       <FieldRow label="Projet" value={person.projet_info?.nom || "—"} />
       <FieldRow label="Equipe" value={person.equipe_info?.name || "—"} />
