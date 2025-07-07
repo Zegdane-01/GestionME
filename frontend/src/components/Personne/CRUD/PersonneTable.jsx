@@ -37,8 +37,9 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
             <th>Nom</th>
             <th>Prénom</th>
             <th>Role</th>
-            <th>Status</th>
+            <th>Statut</th>
             <th>Position</th>
+            <th>Profile</th>
             <th>Manager</th>
             <th>Back up</th>
             <th>Actif</th>
@@ -55,6 +56,7 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
                         <td>{person.role}</td>
                         <td>{person.status}</td>
                         <td>{person.position}</td>
+                        <td>{person.profile}</td>
                         <td>{`${person.manager_info?.first_name || ''} ${person.manager_info?.last_name || ''}`}</td>
                         <td>{`${person.backup_info?.first_name || ''} ${person.backup_info?.last_name || ''}`}</td>
                         <td>

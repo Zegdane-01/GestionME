@@ -471,45 +471,27 @@ const RadarCompetence = () => {
           </div>
         </div>
       )}
-{role === "COLLABORATEUR" && (
-  <div className="mb-4 d-flex flex-wrap gap-3">
-    <div className="btn-group">
-      <button
-        className={`btn ${radarViewScope === 'me' ? 'btn-primary' : 'btn-outline-secondary'}`}
-        onClick={() => setRadarViewScope("me")}
-      >
-        Mon radar
-      </button>
-      <button
-        className={`btn ${radarViewScope === 'team' ? 'btn-primary' : 'btn-outline-secondary'}`}
-        onClick={() => setRadarViewScope("team")}
-      >
-        {(() => {
-          const me = users.find(u => u.matricule === myUserId);
-          return `Mon équipe${me?.equipe_info?.name ? ` : ${me.equipe_info.name}` : ''}`;
-        })()}
-      </button>
-    </div>
-  </div>
-)}
-
-{/* TOGGLE VUE RADAR / TABLEAU */}
-<div className="mb-4 d-flex flex-wrap gap-3">
-  <div className="btn-group">
-    <button
-      className={`btn ${viewMode === 'radar' ? 'btn-primary' : 'btn-outline-secondary'}`}
-      onClick={() => setViewMode('radar')}
-    >
-      <BarChart3 size={16} className="me-1" /> Vue Radar
-    </button>
-    <button
-      className={`btn ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
-      onClick={() => setViewMode('table')}
-    >
-      <Table2 size={16} className="me-1" /> Vue Tableau
-    </button>
-  </div>
-</div>
+      {role === "COLLABORATEUR" && (
+        <div className="mb-4 d-flex flex-wrap gap-3">
+          <div className="btn-group">
+            <button
+              className={`btn ${radarViewScope === 'me' ? 'btn-primary' : 'btn-outline-secondary'}`}
+              onClick={() => setRadarViewScope("me")}
+            >
+              Mon radar
+            </button>
+            <button
+              className={`btn ${radarViewScope === 'team' ? 'btn-primary' : 'btn-outline-secondary'}`}
+              onClick={() => setRadarViewScope("team")}
+            >
+              {(() => {
+                const me = users.find(u => u.matricule === myUserId);
+                return `Mon équipe${me?.equipe_info?.name ? ` : ${me.equipe_info.name}` : ''}`;
+              })()}
+            </button>
+          </div>
+        </div>
+      )}
         {viewMode === 'radar' ? (
           <>
             <div className="row g-4 mb-4">
@@ -547,7 +529,7 @@ const RadarCompetence = () => {
                 </div>
             </div>
             <div className="row g-4 mb-4">
-                <div className="col-lg-8">
+                <div className={role === "TeamLead" ? "col-lg-8" : "col-lg-12"}>
                   <div className="card shadow-sm h-100 p-4">
                     <div className="card-body">
                       <h4 className="card-title mb-0">Répartition par compétence</h4>
@@ -607,26 +589,28 @@ const RadarCompetence = () => {
                     </div>
                   </div>
                 </div>
-                <div className="col-lg-4">
-                    <div className="card shadow-sm h-100 p-4">
-                        <div className="card-body">
-                        <h4 className="card-title mb-3">Top performers</h4>
-                        {top3.length===0 && <>N/A</>}
-                        {top3.map((p,i)=>(
-                            <div key={i} className="d-flex justify-content-between align-items-center bg-light rounded-3 p-3 mb-2">
-                            <div>
-                                <strong>{p.user}</strong><br/>
-                                <span className="text-muted small">{p.equipe}</span>
-                            </div>
-                            <span className="fw-bold text-primary">{p.average}%</span>
-                            </div>
-                        ))}
-                        </div>
-                    </div>
-                </div>
+                {role === "TeamLead" && (
+                  <div className="col-lg-4">
+                      <div className="card shadow-sm h-100 p-4">
+                          <div className="card-body">
+                          <h4 className="card-title mb-3">Top performers</h4>
+                          {top3.length===0 && <>N/A</>}
+                          {top3.map((p,i)=>(
+                              <div key={i} className="d-flex justify-content-between align-items-center bg-light rounded-3 p-3 mb-2">
+                              <div>
+                                  <strong>{p.user}</strong><br/>
+                                  <span className="text-muted small">{p.equipe}</span>
+                              </div>
+                              <span className="fw-bold text-primary">{p.average}%</span>
+                              </div>
+                          ))}
+                          </div>
+                      </div>
+                  </div>
+                )}
             </div>
           </>
-          ) : (
+          ) : (role === "TeamLead" && (
             <div className="row g-4">
                 {/* MAIN PANEL */}
                 <div className="col">
@@ -648,7 +632,7 @@ const RadarCompetence = () => {
                   </div>
                 </div>
             </div>
-        )}
+        ))}
 
     </div>
   );

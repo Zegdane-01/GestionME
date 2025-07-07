@@ -59,3 +59,31 @@
 .downloadBtn:hover {
   background-color: #4f46e5;
 }
+
+.exportWrapper {
+  padding: 24px;
+  background: white;
+}
+.exportHeader {
+  display: flex;
+  align-items: center;
+  /* Pousse le logo à gauche et le titre à droite */
+  justify-content: space-between; 
+  margin-bottom: 20px;
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0; /* Ajoute une ligne de séparation subtile */
+  border-radius: 20px; /* Coins arrondis pour un look moderne */
+  background-color: #f9f9f9; /* Un fond très léger pour distinguer l'en-tête */
+}
+
+.logo {
+  height: 50px;
+  object-fit: contain;
+}
+
+.exportTitle {
+  font-size: 24px; /* Un peu plus grand pour plus d'impact */
+  font-weight: 600; /* Un peu moins gras que 'bold' pour un look moderne */
+  color: #4f46e5;
+  margin: 0; /* Important pour éviter les marges par défaut du h2 */
+}

@@ -26,12 +26,22 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // MODIFIÉ : Condition de détection plus flexible
-    // On considère qu'il y a une erreur de token si le statut est 401 OU si le code d'erreur spécifique est présent.
-    const isApiAuthError = error.response?.status === 401;
-    const isTokenNotValidCode = error.response?.data?.code === 'token_not_valid';
+    // ▶︎  A.  Ne JAMAIS tenter de refresh pour ces endpoints publics
+    const publicEndpoints = [
+      'personne/login/',
+      'token/refresh/',
+      'token/logout/',
+    ];
+    if (publicEndpoints.some((ep) => originalRequest.url?.includes(ep))) {
+      // on laisse l’erreur remonter au catch du composant
+      return Promise.reject(error);
+    }
 
-    if ((isApiAuthError || isTokenNotValidCode) && !originalRequest._retry) {
+    // ▶︎  B.  Reste du code inchangé …
+    const isApiAuthError   = error.response?.status === 401;
+    const isTokenNotValid  = error.response?.data?.code === 'token_not_valid';
+
+    if ((isApiAuthError || isTokenNotValid) && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
