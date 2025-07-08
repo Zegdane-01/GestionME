@@ -865,16 +865,33 @@ class FormationProgressSerializer(serializers.ModelSerializer):
     dernier_acces = serializers.SerializerMethodField()
     progression_par_chapitre = serializers.SerializerMethodField()
     resultats_du_quiz = serializers.SerializerMethodField()
+    statut_formation = serializers.SerializerMethodField()
+    tabsCompleted = serializers.SerializerMethodField()
+    has_quiz = serializers.SerializerMethodField()
+    has_chapters = serializers.SerializerMethodField()
+
+    domain = serializers.PrimaryKeyRelatedField(
+        queryset=Domain.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    domain_info = DomainSerializer(source='domain', read_only=True)
 
     class Meta:
         model = Formation
         fields = (
             'id',
             'titre',
+            'domain',
+            'domain_info',
+            'statut_formation',
+            'tabsCompleted',
             'progression_generale',
             'chapitres_termines',
             'temps_passe_minutes',
             'dernier_acces',
+            'has_quiz',
+            'has_chapters',
             'progression_par_chapitre',
             'resultats_du_quiz',
         )
@@ -929,5 +946,70 @@ class FormationProgressSerializer(serializers.ModelSerializer):
             
         return QuizResultSerializer(user_quiz, context=self.context).data
     
+    def get_statut_formation(self, obj):
+        user_formation = self._get_user_formation(obj)
+        return user_formation.status
+    
+    def get_has_quiz(self, obj):
+        """Renvoie True si un quiz existe pour cette formation."""
+        return Quiz.objects.filter(formation=obj).exists()
+    
+    def get_has_chapters(self, obj):
+        """Renvoie True si la formation a des modules."""
+        return obj.modules.exists()
+    
+    def get_has_resources(self, obj):
+        """Renvoie True si la formation a des ressources."""
+        return obj.ressources.exists()
+    
+    def get_quiz_done(self, obj):
+        # Utiliser le 'user' du contexte (le collaborateur) et non celui de la requête.
+        user = self.context.get("user")
+        if not user or not hasattr(obj, 'quiz'):
+            return False
+        
+        return UserQuiz.objects.filter(
+            user=user,
+            quiz=obj.quiz,
+            completed=True
+        ).exists()
+    
+
+    def get_tabsCompleted(self, obj):
+        user = self.context.get("user")
+        user_formation = self._get_user_formation(obj)
+
+        if not user_formation or not user:
+            return {} # Retourne un dictionnaire vide si pas de contexte
+
+        # On commence avec un dictionnaire vide
+        completed_tabs = {}
+
+        # L'onglet "overview" est toujours présent
+        completed_tabs['overview'] = user_formation.completed_steps.get('overview', False)
+
+        # On ajoute la clé 'modules' SEULEMENT si la formation a des chapitres
+        if self.get_has_chapters(obj):
+            completed_module_count = UserModule.objects.filter(
+                user=user,
+                module__in=obj.modules.all(),
+                completed=True
+            ).count()
+            completed_tabs['modules'] = (completed_module_count == obj.modules.count())
+
+        # On ajoute la clé 'resources' SEULEMENT si la formation a des ressources
+        if self.get_has_resources(obj):
+            read_resource_count = UserResource.objects.filter(
+                user=user,
+                resource__in=obj.ressources.all(),
+                read=True
+            ).count()
+            completed_tabs['resources'] = (read_resource_count == obj.ressources.count())
+
+        # On ajoute la clé 'quiz' SEULEMENT si la formation a un quiz
+        if self.get_has_quiz(obj):
+            completed_tabs['quiz'] = self.get_quiz_done(obj)
+
+        return completed_tabs
 
     

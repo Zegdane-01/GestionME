@@ -1,46 +1,96 @@
-/* src/assets/styles/Training/TrainingProgress.module.css */
-
 /* Global styles for the body can be in a separate, global CSS file like index.css */
-/* For example: 
+/* For example:
 body {
     background-color: #f4f5f7;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     color: #172b4d;
 }
 */
-
-.progressContainer {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 24px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Dashboard Layout */
+.dashboard {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 32px;
+  background-color: #f1f5f9;
+  min-height: calc(100vh - 58px)  ;
 }
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.dashboardTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dark);
+  position: relative;
+  display: inline-block;
+}
+
+.dashboardTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 50px;
+  height: 5px;
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+
+
 
 /* --- Header & Filters --- */
 .pageHeader {
+    margin-bottom: 24px;
+}
+
+.headerTop {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    border-bottom: 1px solid #dfe1e6;
-    padding-bottom: 16px;
+    margin-bottom: 16px;
 }
 
-.pageHeader h1 {
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: #0052cc;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0;
+}
+.backLink:hover {
+    text-decoration: underline;
+}
+
+.statusPill {
+    background-color: #e3fcef;
+    color: #006644;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+
+
+.titleWrapper h1 {
     font-size: 24px;
     font-weight: 600;
     color: #091e42;
+    margin: 0 0 4px 0;
 }
 
-.filters select {
-    margin-left: 12px;
-    padding: 8px 12px;
-    border: 1px solid #dfe1e6;
-    border-radius: 4px;
-    background-color: #fafbfc;
-}
+
 
 /* --- Progress Cards --- */
 .progressCards {
@@ -92,9 +142,14 @@ body {
     transition: width 0.3s ease-in-out;
 }
 
-/* --- Chapter Progression --- */
+/* --- Chapter Progression & Quiz Results Section --- */
 .chapterSection, .quizSection {
-    margin-bottom: 40px;
+    background-color: #fafbfc;
+    border: 1px solid #dfe1e6;
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 24px;
+    margin-bottom: 24px;
 }
 
 .chapterSection h2, .quizSection h2 {
@@ -106,9 +161,26 @@ body {
     gap: 8px;
 }
 
+.titleIcon {
+    /* Style for Lucide icons in titles */
+}
+
+.noQuizMessage {
+    /* Style for the "no quiz" message box */
+}
+
+
 .chapterList {
     list-style: none;
     padding: 0;
+}
+
+.chapterList li {
+    margin-bottom: 16px;
+    background-color: #ffffff;
+    border: 1px solid #dfe1e6;
+    border-radius: 8px;
+    padding: 16px;
 }
 
 .chapterItem {
@@ -131,20 +203,29 @@ body {
     gap: 16px;
 }
 
+.chapterNumberValue {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
 .chapterNumber {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background-color: #ebecf0;
     border: 2px solid #dfe1e6;
     color: #42526e;
-    font-weight: 600;
 }
 
-.chapterNumber.completed {
+/* CORRIGÉ: S'applique lorsque l'élément a la classe .completed */
+.completed {
     background-color: #e3fcef;
     border-color: #36b37e;
     color: #006644;
@@ -166,6 +247,8 @@ body {
     align-items: center;
     gap: 16px;
     color: #6b778c;
+    min-width: 20%;
+    margin-left: 1rem;
 }
 
 .statusBadge {
@@ -189,17 +272,11 @@ body {
 }
 
 /* --- Quiz Results --- */
-.quizSubtitle {
-    color: #6b778c;
-    margin-top: -16px;
-    margin-bottom: 24px;
-}
-
 .quizSummaryCard {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #fafbfc;
+    background-color: #ffffff;
     border: 1px solid #dfe1e6;
     border-radius: 5px;
     padding: 24px;
@@ -227,22 +304,8 @@ body {
     margin: 0 0 4px 0;
 }
 
-.resultBadge {
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-weight: 600;
-}
-
-.resultSuccess {
-    background-color: #e3fcef;
-    color: #006644;
-    border: 1px solid #006644;
-}
-
-.resultFail {
-    background-color: #ffebe6;
-    color: #bf2600;
-    border: 1px solid #bf2600;
+.answersList {
+    /* Container for the list of answers */
 }
 
 .answersList .answerItem {
@@ -274,10 +337,6 @@ body {
     gap: 4px;
 }
 
-.iconCheck { color: #36b37e; }
-.iconWrong { color: #de350b; }
-.iconClock { color: #6b778c; }
-
 .yourResponse {
     margin: 4px 0;
     color: #42526e;
@@ -290,30 +349,93 @@ body {
     font-weight: 500;
 }
 
-/* --- Footer --- */
-.pageFooter {
-    margin-top: 40px;
-    text-align: left;
+/* --- Filter Sections & Collaborator Card --- */
+.filterSection {
+    background-color: #fafbfc;
+    border: 1px solid #dfe1e6;
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 24px;
+    margin-bottom: 24px;
 }
 
-.continueButton {
+.filterLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: #172b4d;
+}
+
+.filterSelect {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #dfe1e6;
+    border-radius: 4px;
+    background-color: #ffffff;
+}
+
+.collaboratorCard {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #ffffff;
+    border: 1px solid #dfe1e6;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 24px;
+}
+
+.avatarPlaceholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
     background-color: #0052cc;
     color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 4px;
-    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
     font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    flex-shrink: 0;
 }
 
-.continueButton:hover {
-    background-color: #0065ff;
+.collaboratorDetails {
+    display: flex;
+    flex-direction: column;
 }
 
-.loading, .error {
+.collaboratorName {
+    font-weight: 600;
+    font-size: 16px;
+    color: #172b4d;
+}
+
+.collaboratorEmail {
+    color: #6b778c;
+    font-size: 14px;
+}
+
+.collaboratorRole {
+    background-color: #ebecf0;
+    color: #42526e;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+/* --- Misc --- */
+.noProgress {
+    border: 1px dashed #dfe1e6;
+    padding: 40px;
     text-align: center;
-    padding: 50px;
-    font-size: 18px;
+    margin-top: 24px;
+    border-radius: 8px;
+    color: #6b778c;
 }

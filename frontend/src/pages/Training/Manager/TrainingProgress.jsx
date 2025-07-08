@@ -1,269 +1,437 @@
-// src/components/FormationProgressPage.js
+// src/pages/Training/Manager/FormationProgressPage.jsx
+// ------------------------------------------------------
+// Remplacé l'ancien composant par une version complète :
+// • Icônes Lucide (check / clock / wrong)
+// • Filtre Équipe ➜ charge collaborateurs dyn.  
+// • Gestion du cas « collaborateur n’a jamais commencé »
+// • Axios centralisé (api)
+// • CSS Modules (styles)
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import styles from '../../../assets/styles/Training/TrainingProgress.module.css';
-import api from '../../../api/api';
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+  CheckCircle,
+  Clock,
+  XCircle,
+  Play,
+  ChevronLeft,
+  Users,
+  User,
+  ListChecks,
+  Award,    
+} from "lucide-react";
+import toast from "react-hot-toast";
 
-import { Train } from 'lucide-react';
+import styles from "../../../assets/styles/Training/TrainingProgress.module.css";
+import api from "../../../api/api";
 
-// Une icône simple pour les coches et les horloges (vous pouvez utiliser une bibliothèque comme react-icons)
-const Icon = ({ name }) => {
-    if (name === 'check') return <span className="icon-check">✓</span>;
-    if (name === 'clock') return <span className="icon-clock">🕒</span>;
-    if (name === 'wrong') return <span className="icon-wrong">✗</span>;
-    return null;
+/** ----------------------------------------------------------------
+ *  Utilitaires
+ * ----------------------------------------------------------------*/
+const Icon = ({ name, className = "" }) => {
+  switch (name) {
+    case "check":
+      return <CheckCircle size={16} className={className} />;
+    case "clock":
+      return <Clock size={16} className={className} />;
+    case "wrong":
+      return <XCircle size={16} className={className} />;
+    default:
+      return null;
+  }
 };
 
-// --- Sous-composants pour chaque section ---
-const ProgressHeader = ({ data }) => (
-    <div className={styles.progressCards}>
-        <div className={styles.card}>
-            <span className={styles.cardTitle}>Progression générale</span>
-            <span className={styles.cardValueLarge}>{data.progression_generale}%</span>
-            <div className={styles.progressBarContainer}>
-                <div className={styles.progressBar} style={{ width: `${data.progression_generale}%` }}></div>
-            </div>
-        </div>
-        <div className={styles.card}>
-            <span className={styles.cardTitle}>Chapitres terminés</span>
-            <span className={styles.cardValueLarge}>{data.chapitres_termines.completed}/{data.chapitres_termines.total}</span>
-            <span className={styles.cardSubtitle}>chapitres</span>
-        </div>
-        <div className={styles.card}>
-            <span className={styles.cardTitle}>Temps passé</span>
-            <span className={styles.cardValueLarge}>{data.temps_passe_minutes}</span>
-            <span className={styles.cardSubtitle}>minutes</span>
-        </div>
-        <div className={styles.card}>
-            <span className={styles.cardTitle}>Dernier accès</span>
-            <span className={styles.cardValueLarge}>{data.dernier_acces}</span>
-            <span className={styles.cardSubtitle}></span>
-        </div>
-    </div>
+/** ----------------------------------------------------------------
+ *  Sous‑composants
+ * ----------------------------------------------------------------*/
+const StatCard = ({ title, value, subtitle, progress }) => (
+  <div className={styles.card}>
+    <span className={styles.cardTitle}>{title}</span>
+    <span className={styles.cardValueLarge}>{value}</span>
+    {subtitle && <span className={styles.cardSubtitle}>{subtitle}</span>}
+    {typeof progress === "number" && (
+      <div className={styles.progressBarContainer}>
+        <div
+          className={styles.progressBar}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    )}
+  </div>
 );
 
-const ChapterList = ({ chapters }) => (
-    <div className={styles.chapterSection}>
-        <h2><span role="img" aria-label="chart">📊</span> Progression par chapitre</h2>
-        <ul className={styles.chapterList}>
-            {chapters.map((chapter, index) => (
-                <li key={chapter.id} className={styles.chapterItem}>
-                    <div className={styles.chapterInfo}>
-                        <span className={`${styles.chapterNumber} ${chapter.status === 'Terminé' ? styles.completed : ''}`}>{index + 1}</span>
-                        <div>
-                            <p className={styles.chapterTitle}>{chapter.titre}</p>
-                            <p className={styles.chapterDescription}>{chapter.description}</p>
-                        </div>
-                    </div>
-                    <div className={styles.chapterStatus}>
-                        <Icon name="clock" /> {chapter.estimated_time_min} min
-                        <span className={`${styles.statusBadge} ${chapter.status === 'Terminé' ? styles.statusCompleted : styles.statusTodo}`}>
-                            {chapter.status === 'Terminé' ? <><Icon name="check"/> Terminé</> : 'À faire'}
-                        </span>
-                    </div>
-                </li>
-            ))}
-        </ul>
-    </div>
-);
+const ProgressHeader = ({ data }) => {
+    const totalTabs = Object.keys(data.tabsCompleted).length;
+    const completedTabs = Object.values(data.tabsCompleted).filter(
+        (isCompleted) => isCompleted === true
+    ).length;
+    return (
+        <div className={styles.progressCards}>
+            <StatCard
+            title="Progression générale"
+            value={`${data.progression_generale}%`}
+            progress={data.progression_generale}
+            />
+            <StatCard
+            title="Chapitres terminés"
+            value={`${completedTabs}/${totalTabs}`}
+            subtitle="chapitres"
+            />
+            <StatCard
+            title="Temps passé"
+            value={data.temps_passe_minutes}
+            subtitle="minutes"
+            />
+            <StatCard title="Dernier accès" value={data.dernier_acces || "—"} />
+        </div>
+    )};
 
-const QuizResults = ({ quiz }) => {
-    if (!quiz) return null;
-    
-    const isSuccess = quiz.score_final.percentage >= 80;
-
+const ChapterList = ({ chapters, has_chapters }) => {
+    if (!has_chapters) {
     return (
         <div className={styles.quizSection}>
-            <h2><span role="img" aria-label="medal">🏆</span> Résultats du Quiz</h2>
-            <p className={styles.quizSubtitle}>Quiz terminé le {quiz.quiz_termine_le}</p>
-            
-            <div className={styles.quizSummaryCard}>
-                <div>
-                    <p className={styles.finalScoreTitle}>Score final</p>
-                    <p className={styles.quizTime}>Temps passé: {quiz.temps_passe_minutes} minutes</p>
+            <h2>
+                <ListChecks size={22} className={styles.titleIcon} />
+                &nbsp;Progression par chapitre
+            </h2>
+            <div className={styles.noQuizMessage}>
+            <p>Aucun chapitre n'est associé à cette formation.</p>
+            </div>
+        </div>
+        );
+    }
+    else{
+        return (
+        <div className={styles.chapterSection}>
+            <h2>
+            <ListChecks size={22} className={styles.titleIcon} />
+            &nbsp;Progression par chapitre
+            </h2>
+            <ul className={styles.chapterList}>
+            {chapters.map((c, i) => (
+                <li key={c.id} className={styles.chapterItem}>
+                <div className={styles.chapterInfo}>
+                    <div className={`${styles.chapterNumber} ${c.status === "Terminé" ? styles.completed : ""}`}>
+                        <span className={styles.chapterNumberValue}>
+                            {i + 1}
+                        </span>
+                    
+                    </div>
+                    <div>
+                    <p className={styles.chapterTitle}>{c.titre}</p>
+                    {c.description && (
+                        <p className={styles.chapterDescription}>{c.description}</p>
+                    )}
+                    </div>
                 </div>
-                <div className={styles.scoreDisplay}>
-                    <p className={styles.scoreValue}>{quiz.score_final.score}/{quiz.score_final.total}</p>
-                    <span className={`${styles.resultBadge} ${isSuccess ? styles.resultSuccess : styles.resultFail}`}>
-                        {quiz.score_final.percentage}% - {isSuccess ? 'Réussi' : 'Échoué'}
+                <div className={styles.chapterStatus}>
+                    <Icon name="clock" /> {c.estimated_time_min} min
+                    <span className={`${styles.statusBadge} ${c.status === "Terminé" ? styles.statusCompleted : styles.statusTodo}`}>
+                    {c.status === "Terminé" ? (
+                        <>
+                        <Icon name="check" /> Terminé
+                        </>
+                    ) : (
+                        "À faire"
+                    )}
                     </span>
                 </div>
-            </div>
-
-            <h3>Détail des réponses</h3>
-            <div className={styles.answersList}>
-                {quiz.detail_des_reponses.map((answer, index) => {
-                    const isCorrect = answer.points_awarded > 0;
-                    const yourResponse = Array.isArray(answer.user_response) ? answer.user_response.join(', ') : answer.user_response;
-                    const correctResponse = Array.isArray(answer.correct_response) ? answer.correct_response.join(', ') : answer.correct_response;
-
-                    return (
-                        <div key={answer.id} className={styles.answerItem}>
-                           <div className={styles.answerHeader}>
-                                <p>Question {index + 1}: {answer.texte}</p>
-                                <span className={styles.points}>{isCorrect ? <Icon name="check"/> : <Icon name="wrong"/>} {answer.points_awarded} pts</span>
-                           </div>
-                           <p className={styles.yourResponse}>Votre réponse: {yourResponse}</p>
-                           {!isCorrect && <p className={styles.correctResponse}>Bonne réponse: {correctResponse}</p>}
-                        </div>
-                    );
-                })}
-            </div>
+                </li>
+            ))}
+            </ul>
         </div>
-    );
+    )}
+
 };
 
 
-// --- Composant Principal ---
-
-const TrainingProgress = () => {
-    const { formationId } = useParams();
-    const [progressData, setProgressData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    
-    // États pour les filtres
-    const [teams, setTeams] = useState([]); // Seraient chargés depuis /api/equipes
-    const [collaborators, setCollaborators] = useState([]); // Seraient chargés depuis /api/personnes
-    const [filtersLoading, setFiltersLoading] = useState(true);
-    
-    const [selectedTeam, setSelectedTeam] = useState('');
-    const [selectedCollaborator, setSelectedCollaborator] = useState('');
-
-    useEffect(() => {
-        const fetchFilterOptions = async () => {
-            if (!formationId) return;
-            setFiltersLoading(true);
-            try {
-                const response = await api.get(`/formations/${formationId}/filter-options/`);
-                setTeams(response.data.equipes);
-                setCollaborators(response.data.collaborateurs);
-            } catch (err) {
-                console.error("Failed to fetch filter options:", err);
-                // Optionnellement, afficher une erreur à l'utilisateur
-            } finally {
-                setFiltersLoading(false);
-            }
-        };
-
-        fetchFilterOptions();
-    }, [formationId]);
-
-    useEffect(() => {
-        const fetchProgress = async () => {
-            setLoading(true);
-            setError(null);
-            
-            let url = `/formations/${formationId}/progress/`; 
-            
-            // Axios handles query parameters cleanly
-            const config = {
-                params: {}
-            };
-            if (selectedTeam) config.params.equipe_id = selectedTeam;
-            if (selectedCollaborator) config.params.collaborateur_id = selectedCollaborator;
-
-            try {
-                // Use .get() for GET requests. The data is in response.data
-                const response = await api.get(url, config);
-                
-                const data = response.data; // With Axios, the JSON is already parsed in .data
-                
-                setProgressData(Array.isArray(data) ? data[0] : data);
-
-            } catch (e) {
-                setError(e.message);
-                console.error("Failed to fetch formation progress:", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (formationId) {
-            fetchProgress();
-        }
-    }, [formationId, selectedTeam, selectedCollaborator]);
-
-    const filteredCollaborators = useMemo(() => {
-        if (!selectedTeam) {
-            // Si aucune équipe n'est sélectionnée, on peut choisir d'afficher tous les collaborateurs ou aucun.
-            // Afficher uniquement ceux de l'équipe est plus clair.
-            return [];
-        }
-        // N'oubliez pas de comparer les types (string vs number)
-        return collaborators.filter(c => c.equipe_id === parseInt(selectedTeam, 10));
-    }, [selectedTeam, collaborators]);
-
-
-    // NOUVEAU : Fonction pour gérer la sélection d'une équipe
-    const handleTeamChange = (e) => {
-        const teamId = e.target.value;
-        setSelectedTeam(teamId);
-
-        if (teamId) {
-            // Filtrer les collaborateurs pour la nouvelle équipe sélectionnée
-            const membersOfSelectedTeam = collaborators.filter(c => c.equipe_id === parseInt(teamId, 10));
-            
-            // Si cette équipe a des membres, sélectionner automatiquement le premier
-            if (membersOfSelectedTeam.length > 0) {
-                setSelectedCollaborator(membersOfSelectedTeam[0].matricule);
-            } else {
-                // Si l'équipe est vide, désélectionner le collaborateur
-                setSelectedCollaborator('');
-            }
-        } else {
-            // Si l'utilisateur désélectionne l'équipe, on vide aussi le collaborateur
-            setSelectedCollaborator('');
-        }
-    };
-
-
-    if (loading) return <div className="loading">Chargement de la progression...</div>;
-    if (error) return <div className="error">Erreur: {error}</div>;
-    if (!progressData) return <div>Aucune donnée de progression à afficher.</div>;
-
-    
+const QuizResults = ({ quiz, has_quiz }) => {
+  if (!has_quiz) {
     return (
-        <div className={styles.progressContainer}>
-            <div className={styles.pageHeader}>
-                <h1>{progressData.titre}</h1>
-                <div className={styles.filters}>
-                    <select 
-                        value={selectedTeam} 
-                        onChange={handleTeamChange} // Utiliser la nouvelle fonction
-                        disabled={filtersLoading}
-                    >
-                        <option value="">
-                            {filtersLoading ? "Chargement..." : "Filtrer par équipe"}
-                        </option>
-                        {teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}
-                    </select>
+      <div className={styles.quizSection}>
+        <h2>
+          <Award size={22} className={styles.titleIcon} />
+          Résultats du Quiz
+        </h2>
+        <div className={styles.noQuizMessage}>
+          <p>Aucun quiz n'est associé à cette formation.</p>
+        </div>
+      </div>
+    );
+  }
+  if (quiz) {
+    return (
+        <div className={styles.quizSection}>
+        <h2>
+            {/* On remplace l'emoji par une icône Lucide */}
+            <Award size={22} className={styles.titleIcon} />
+            Résultats du Quiz
+        </h2>
+        <div className={styles.quizSummaryCard}>
+            <div>
+            <p className={styles.finalScoreTitle}>Score final</p>
+            <p className={styles.quizTime}>Temps: {quiz.temps_passe_minutes} min</p>
+            </div>
+            <div className={styles.scoreDisplay}>
+            <p className={styles.scoreValue}>
+                {quiz.score_final.score/quiz.score_final.total * 100}%
+            </p>
 
-                    {/* Le select pour les collaborateurs est maintenant basé sur la liste filtrée */}
-                    <select 
-                        value={selectedCollaborator} 
-                        onChange={(e) => setSelectedCollaborator(e.target.value)}
-                        disabled={filtersLoading || !selectedTeam} // Désactivé si aucune équipe n'est choisie
-                    >
-                        <option value="">
-                            {selectedTeam ? "Choisir un collaborateur" : "Choisir une équipe d'abord"}
-                        </option>
-                        {/* On mappe sur la liste filtrée */}
-                        {filteredCollaborators.map(collab => <option key={collab.matricule} value={collab.matricule}>{collab.full_name}</option>)}
-                    </select>
+            </div>
+        </div>
+        <h3>Détail des réponses</h3>
+        <div className={styles.answersList}>
+            {quiz.detail_des_reponses.map((ans, idx) => {
+            const corr = ans.points_awarded > 0;
+            const userResp = Array.isArray(ans.user_response)
+                ? ans.user_response.join(", ")
+                : ans.user_response;
+            const corrResp = Array.isArray(ans.correct_response)
+                ? ans.correct_response.join(", ")
+                : ans.correct_response;
+            return (
+                <div key={ans.id} className={styles.answerItem}>
+                <div className={styles.answerHeader}>
+                    <p>
+                    Q{idx + 1}: {ans.texte}
+                    </p>
+                    <span className={styles.points}>
+                    <Icon name={corr ? "check" : "wrong"} /> {ans.points_awarded} pts
+                    </span>
+                </div>
+                <p className={styles.yourResponse}>La réponse: {userResp || "—"}</p>
+                {!corr && (
+                    <p className={styles.correctResponse}>Bonne réponse: {corrResp}</p>
+                )}
+                </div>
+            );
+            })}
+        </div>
+        </div>
+    );
+  }
+  else {
+    return (
+      <div className={styles.quizSection}>
+        <h2>
+          <Award size={22} className={styles.titleIcon} />
+          Résultats du Quiz
+        </h2>
+        <div className={styles.noQuizMessage}>
+          <p>Ce collaborateur n’a pas encore passé le quiz.</p>
+        </div>
+      </div>
+    );
+  }
+};
+
+const CollaboratorInfoCard = ({ collaborator }) => {
+  if (!collaborator) return null;
+
+  return (
+    <div className={styles.collaboratorCard}>
+      {/* Vous pouvez remplacer ceci par une vraie image si vous l'avez */}
+      <div className={styles.avatarPlaceholder}>
+        {collaborator.full_name.charAt(0)}
+      </div>
+      <div className={styles.collaboratorDetails}>
+        <span className={styles.collaboratorName}>{collaborator.full_name}</span>
+        {/* L'email et le rôle peuvent être ajoutés à l'API si nécessaire */}
+        <span className={styles.collaboratorEmail}>
+          {collaborator.mail || "__"}
+        </span>
+        <div>
+          <span className={styles.collaboratorRole}>COLLABORATEUR</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+/** ----------------------------------------------------------------
+ *  Composant principal
+ * ----------------------------------------------------------------*/
+const FormationProgressPage = () => {
+  const { formationId } = useParams();
+
+  // core data
+  const [progress, setProgress] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // filters data
+  const [teams, setTeams] = useState([]);
+  const [collabs, setCollabs] = useState([]);
+  const [filtersLoading, setFiltersLoading] = useState(true);
+  const [teamId, setTeamId] = useState("");
+  const [collabId, setCollabId] = useState("");
+
+  /** Fetch select options */
+  useEffect(() => {
+    if (!formationId) return;
+    (async () => {
+      setFiltersLoading(true);
+      try {
+        const { data } = await api.get(`/formations/${formationId}/filter-options/`);
+        setTeams(data.equipes);
+        setCollabs(data.collaborateurs);
+      } catch (e) {
+        toast.error("Impossible de charger les filtres");
+      } finally {
+        setFiltersLoading(false);
+      }
+    })();
+  }, [formationId]);
+
+  /** Filtered collabs for current team */
+  const collabsForTeam = useMemo(() => {
+    if (!teamId) return [];
+    return collabs.filter((c) => c.equipe_id === Number(teamId));
+  }, [teamId, collabs]);
+
+  /** Fetch progress each time filters change */
+  useEffect(() => {
+    if (!formationId) return;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await api.get(`/formations/${formationId}/progress/`, {
+          params: {
+            ...(teamId && { equipe_id: teamId }),
+            ...(collabId && { collaborateur_id: collabId }),
+          },
+        });
+        // Backend peut renvoyer [] si collab n’a jamais commencé.
+        if (!data || (Array.isArray(data) && data.length === 0)) {
+          setProgress(null);
+        } else {
+          setProgress(Array.isArray(data) ? data[0] : data);
+        }
+      } catch (e) {
+        if (e.response?.status === 404) {
+          // cas « jamais commencé »
+          setProgress(null);
+        } else {
+          setError(e.message || "Erreur inconnue");
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [formationId, teamId, collabId]);
+
+  useEffect(() => {
+    if (!filtersLoading && teams.length > 0 && !teamId) {
+        setTeamId(teams[0].id);          // ⬅️  sélection par défaut
+        onTeamChange({ target: { value: teams[0].id } }); 
+    }
+    }, [filtersLoading, teams, teamId]);
+
+  /** Handlers */
+  const onTeamChange = (e) => {
+    const id = e.target.value;
+    setTeamId(id);
+    // auto‑select first collab if exists, else clear
+    if (id) {
+      const first = collabs.find((c) => c.equipe_id === Number(id));
+      setCollabId(first ? first.matricule : "");
+    } else {
+      setCollabId("");
+    }
+  };
+
+  const selectedCollaboratorObject = useMemo(() => {
+    if (!collabId) return null;
+    return collabs.find((c) => c.matricule === collabId);
+  }, [collabId, collabs]);
+
+  /** Render */
+  if (loading) return <p>Chargement…</p>;
+  if (error) return <p className="text-danger">{error}</p>;
+
+  return (
+    <div className={styles.dashboard}>
+       <div className={styles.pageHeader}>
+    
+            <div className={styles.headerTop}>
+            <button className={styles.backLink} onClick={() => window.history.back()}>
+                <ChevronLeft size={18} /> Retour
+            </button>
+            {progress && (
+                <span className={styles.statusPill}>
+                {progress.statut_formation}
+                </span>
+            )}
+            </div>
+
+            <div className={styles.dashboardHeader}>
+                <div className={styles.dashboardTitle}>
+                    <h1>Progression - {progress?.titre || "..."}</h1>
                 </div>
             </div>
-            
-            <ProgressHeader data={progressData} />
-            <ChapterList chapters={progressData.progression_par_chapitre} />
-            <QuizResults quiz={progressData.resultats_du_quiz} />
-
-            <div className={styles.pageFooter}>
-                <button className={styles.continueButton}>Continuer la formation</button>
-            </div>
         </div>
-    );
+           <div className={styles.filterSection}>
+                <label className={styles.filterLabel}>
+                <Users size={20} /> Sélectionner une équipe
+                </label>
+                <select
+                className={styles.filterSelect}
+                value={teamId}
+                onChange={onTeamChange}
+                disabled={filtersLoading}
+                >
+                {filtersLoading ? (
+                    <option>Chargement…</option>
+                ) : (
+                    <>
+                    {teams.map((t) => (
+                        <option key={t.id} value={t.id}>
+                        {t.name}
+                        </option>
+                    ))}
+                    </>
+                )}
+                </select>
+            </div>
+            {teamId && (
+                <div className={styles.filterSection}>
+                <label className={styles.filterLabel}>
+                    <User size={20} /> Sélectionner un collaborateur
+                </label>
+                <select
+                    className={styles.filterSelect}
+                    value={collabId}
+                    onChange={(e) => setCollabId(e.target.value)}
+                    disabled={!teamId}
+                >
+                    {collabsForTeam.map((c) => (
+                    <option key={c.matricule} value={c.matricule}>
+                        {c.full_name}
+                    </option>
+                    ))}
+                </select>
+                {loading ? (
+                    <p>Chargement des données du collaborateur...</p>
+                ) : (
+                    <CollaboratorInfoCard collaborator={selectedCollaboratorObject} />
+                )}
+                </div>
+            )}
+
+      {/* Cas no‑progress */}
+      {progress.progression_generale ===0 ? (
+        <div className={styles.noProgress}>Ce collaborateur n’a pas encore commencé cette formation.</div>
+      ) : (
+        <>
+          <ProgressHeader data={progress} />
+          <ChapterList chapters={progress.progression_par_chapitre} has_chapters={progress.has_chapters}/>
+          <QuizResults quiz={progress.resultats_du_quiz} has_quiz={progress.has_quiz}/>
+        </>
+      )}
+    </div>
+  );
 };
 
-export default TrainingProgress;
+export default FormationProgressPage;
