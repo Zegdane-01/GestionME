@@ -20,6 +20,7 @@ import {
   ListChecks,
   Award,    
 } from "lucide-react";
+import { formatDuration } from "../../../utils/formatters";
 import toast from "react-hot-toast";
 
 import styles from "../../../assets/styles/Training/TrainingProgress.module.css";
@@ -65,6 +66,7 @@ const ProgressHeader = ({ data }) => {
     const completedTabs = Object.values(data.tabsCompleted).filter(
         (isCompleted) => isCompleted === true
     ).length;
+    const f_time =formatDuration(data.temps_passe);
     return (
         <div className={styles.progressCards}>
             <StatCard
@@ -79,7 +81,7 @@ const ProgressHeader = ({ data }) => {
             />
             <StatCard
             title="Temps passé"
-            value={data.temps_passe_minutes}
+            value={data.temps_passe/60}
             subtitle="minutes"
             />
             <StatCard title="Dernier accès" value={data.dernier_acces || "—"} />

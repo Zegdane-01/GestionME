@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../api/api";
@@ -29,6 +29,7 @@ const TrainingDetail = () => {
   const [training, setTraining] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("overview");
+  const startTimeRef = useRef(Date.now());
 
   /* ----------------------------------------------------------- */
   /* 1. Récupération formation + état utilisateur                */
@@ -51,17 +52,44 @@ const TrainingDetail = () => {
     })();
   }, [formationId]);
 
+  useEffect(() => {
+    const handleUnload = () => {
+      // même logique que persist mais sans attendre la réponse
+      const deltaSecs = Math.round((Date.now() - startTimeRef.current) / 1000);
+      if (deltaSecs > 0) {
+        navigator.sendBeacon(
+          `${import.meta.env.VITE_API_URL}/user-formations/${formationId}/complete_step/`,
+          JSON.stringify({
+            updates: { delta_time: deltaSecs },
+            formation_id: formationId,
+          })
+        );
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [formationId]);
+
   /* ----------------------------------------------------------- */
   /* 2. Helpers persistance                                       */
   /* ----------------------------------------------------------- */
-  const persist = async (updates) => {
+  const persist = async (updates = {}) => {
     if(!formationId) return;
+
+    const now       = Date.now();
+    const deltaSecs = Math.round((now - startTimeRef.current) / 1000);
+    startTimeRef.current = now;
+        const finalUpdates = {
+        ...updates,
+        delta_time: deltaSecs, // On ajoute le temps écoulé ici
+    };
+
     try {
       // On envoie la mise à jour et on attend la nouvelle version complète de l'objet "training"
       const { data: updatedTraining } = await api.post(
         `/user-formations/${formationId}/complete_step/`, // URL corrigée
         {
-          updates,
+          updates: finalUpdates, 
           formation_id: formationId
         },
         {

@@ -131,12 +131,6 @@ class FormationViewSet(viewsets.ModelViewSet):
         if not personnes.exists():
             return Response([], status=status.HTTP_200_OK)
 
-        # — MAJ du last_accessed (pour l’utilisateur qui consulte la page)
-        uf, _ = UserFormation.objects.get_or_create(
-            user=request.user, formation=formation
-        )
-        uf.last_accessed = timezone.now()
-        uf.save(update_fields=['last_accessed'])
 
         # — sérialisation
         resp = []
@@ -532,6 +526,9 @@ class UserFormationViewSet(viewsets.ModelViewSet):
 
         user_formation, _ = UserFormation.objects.get_or_create(user=user, formation=formation)
 
+        user_formation.last_accessed = timezone.now()
+        user_formation.save(update_fields=['last_accessed'])
+
         serializer = FormationDetailSerializer(formation, context={"request": request})
         return Response(serializer.data)
 
@@ -561,6 +558,14 @@ class UserFormationViewSet(viewsets.ModelViewSet):
                 formation=formation
             )
 
+            delta_time_seconds = data.get("updates", {}).get("delta_time")
+            if delta_time_seconds:
+                try:
+                    # On l'ajoute au temps total existant
+                    user_formation.time_spent += timedelta(seconds=int(delta_time_seconds))
+                except (TypeError, ValueError):
+                    # Ignorer si la valeur n'est pas un nombre valide
+                    pass
 
             if module_id:
                 try:
@@ -577,17 +582,16 @@ class UserFormationViewSet(viewsets.ModelViewSet):
 
                 if tab_name == 'overview':
                     user_formation.completed_steps['overview'] = True
-                    user_formation.update_progress()
                 elif tab_name == 'resources':
                     for resource in formation.ressources.all():
                         user_resource, _ = UserResource.objects.get_or_create(user=user, resource=resource)
                         user_resource.read = True
                         user_resource.save()
                     user_formation.completed_steps['resources'] = True
-                    user_formation.update_progress()
                 elif tab_name == 'quiz' and hasattr(formation, 'quiz'):
                     user_formation.completed_steps['quiz'] = True
-                    user_formation.update_progress()
+                    
+                user_formation.update_progress()
                 
                 user_formation.save()
 

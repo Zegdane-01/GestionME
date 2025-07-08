@@ -863,12 +863,14 @@ class FormationProgressSerializer(serializers.ModelSerializer):
     chapitres_termines = serializers.SerializerMethodField()
     temps_passe_minutes = serializers.SerializerMethodField()
     dernier_acces = serializers.SerializerMethodField()
+    temps_passe = serializers.SerializerMethodField()
     progression_par_chapitre = serializers.SerializerMethodField()
     resultats_du_quiz = serializers.SerializerMethodField()
     statut_formation = serializers.SerializerMethodField()
     tabsCompleted = serializers.SerializerMethodField()
     has_quiz = serializers.SerializerMethodField()
     has_chapters = serializers.SerializerMethodField()
+
 
     domain = serializers.PrimaryKeyRelatedField(
         queryset=Domain.objects.all(),
@@ -890,6 +892,7 @@ class FormationProgressSerializer(serializers.ModelSerializer):
             'chapitres_termines',
             'temps_passe_minutes',
             'dernier_acces',
+            'temps_passe',
             'has_quiz',
             'has_chapters',
             'progression_par_chapitre',
@@ -929,6 +932,12 @@ class FormationProgressSerializer(serializers.ModelSerializer):
         user_formation = self._get_user_formation(obj)
         if user_formation and user_formation.last_accessed:
             return user_formation.last_accessed.strftime("%d/%m/%Y")
+        return None
+    
+    def get_temps_passe(self, obj):
+        user_formation = self._get_user_formation(obj)
+        if user_formation and user_formation.time_spent:
+            return user_formation.time_spent
         return None
 
     def get_progression_par_chapitre(self, obj):

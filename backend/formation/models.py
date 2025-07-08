@@ -306,31 +306,6 @@ class UserFormation(models.Model):
         else:
             self.status = 'nouvelle'
 
-        total_duration = timedelta()
-
-        # Temps des modules complétés
-        module_time = UserModule.objects.filter(
-            user=self.user,
-            module__in=self.formation.modules.all(),
-            completed=True
-        ).aggregate(total=Sum('module__estimated_time'))['total'] or timedelta(0)
-        total_duration += module_time
-
-        # Temps des ressources lues
-        resource_time = UserResource.objects.filter(
-            user=self.user,
-            resource__in=self.formation.ressources.all(),
-            read=True
-        ).aggregate(total=Sum('resource__estimated_time'))['total'] or timedelta(0)
-        total_duration += resource_time
-        
-        # Temps passé sur le quiz
-        if has_quiz:
-            user_quiz = UserQuiz.objects.filter(user=self.user, quiz=self.formation.quiz).first()
-            if user_quiz and user_quiz.completed:
-                 total_duration += user_quiz.time_spent
-
-        self.time_spent = total_duration
         
         self.save()
 
