@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-    faTrash, faPencilAlt, faRocket, faCheckCircle, faTimesCircle, 
+    faEye, faTrash, faPencilAlt, faRocket, faCheckCircle, faTimesCircle, 
     faChevronLeft, faChevronRight 
 } from '@fortawesome/free-solid-svg-icons';
 import styles from '../../../assets/styles/Table.module.css';
@@ -9,6 +10,7 @@ import styles from '../../../assets/styles/Table.module.css';
 const TrainingTable = ({ trainings, onEdit, onDelete }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5); // Vous pouvez changer ce nombre
+  const navigate = useNavigate();
 
   // NOUVEAU : Logique de calcul pour la pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -32,6 +34,14 @@ const TrainingTable = ({ trainings, onEdit, onDelete }) => {
       }
       return ((passed / total) * 100).toFixed(2);
   };
+
+    
+
+  const handleView = (formationId) => {
+    navigate(`/manager/trainings/progress/${formationId}`); // Replace with your actual route
+    // Or navigate with state: navigate('/details', { state: { id: itemId } });
+  };
+
  
   
   return (
@@ -88,6 +98,9 @@ const TrainingTable = ({ trainings, onEdit, onDelete }) => {
                     </td>
                     <td className={styles.actionsCell}>
                         <div className={styles.actionGroup}>
+                            <button onClick={() => handleView(training.id)} title="Voir" className={`${styles['actionBtn']} ${styles.view}`}>
+                                <FontAwesomeIcon icon={faEye} />
+                            </button>
                             <button onClick={() => onEdit(training.id)} title="Modifier" className={`${styles['actionBtn']} ${styles.edit}`}>
                                 <FontAwesomeIcon icon={faPencilAlt} />
                             </button>

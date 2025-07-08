@@ -95,6 +95,113 @@ class FormationViewSet(viewsets.ModelViewSet):
         # Supprimer la formation elle-même (supprime aussi quiz/questions/options via CASCADE)
         instance.delete()
 
+
+    @action(detail=True, methods=['get'], url_path='progress', permission_classes=[IsAuthenticated])
+    def progress(self, request, pk=None):
+        """
+        Retourne les données de progression pour une formation.
+        Filtres possibles via query params:
+        - ?collaborateur_id=<matricule> : Pour un collaborateur spécifique.
+        - ?equipe_id=<id> : Pour tous les collaborateurs d'une équipe.
+        Si aucun filtre n'est fourni, les données de l'utilisateur authentifié sont retournées.
+        """
+        formation = self.get_object()
+        
+        collaborateur_id = request.query_params.get('collaborateur_id')
+        equipe_id = request.query_params.get('equipe_id')
+
+        users_to_process = []
+
+        if equipe_id:
+            try:
+                equipe = Equipe.objects.get(id=equipe_id)
+                users_to_process = equipe.assigned_users.all()
+            except Equipe.DoesNotExist:
+                return Response({"error": "Équipe non trouvée."}, status=status.HTTP_404_NOT_FOUND)
+        
+        elif collaborateur_id:
+            try:
+                # Supposant que votre modèle User/Personne a un champ 'matricule'
+                user = Personne.objects.get(matricule=collaborateur_id)
+                users_to_process.append(user)
+            except Personne.DoesNotExist:
+                return Response({"error": "Collaborateur non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+        
+        else:
+            # Par défaut, l'utilisateur qui fait la requête
+            users_to_process.append(request.user)
+
+        if not users_to_process:
+             return Response([], status=status.HTTP_200_OK)
+
+        # Mettre à jour la date de dernier accès pour l'utilisateur qui consulte
+        user_formation, _ = UserFormation.objects.get_or_create(user=request.user, formation=formation)
+        user_formation.last_accessed = timezone.now()
+        user_formation.save(update_fields=['last_accessed'])
+
+        # Générer les données de progression
+        response_data = []
+        for user in users_to_process:
+            serializer_context = {'request': request, 'user': user}
+            serializer = FormationProgressSerializer(formation, context=serializer_context)
+            data = serializer.data
+            # Ajouter des informations sur l'utilisateur au rapport
+            data['collaborateur'] = {
+                'id': user.matricule,
+                'matricule': getattr(user, 'matricule', None),
+                'full_name': user.first_name + ' ' + user.last_name if hasattr(user, 'first_name') and hasattr(user, 'last_name') else str(user),
+            }
+            response_data.append(data)
+            
+        # Si la requête ne visait qu'un seul utilisateur, ne pas retourner une liste
+        if len(response_data) == 1 and not equipe_id:
+            return Response(response_data[0])
+            
+        return Response(response_data)
+
+    @action(detail=True, methods=['get'], url_path='filter-options')
+    def filter_options(self, request, pk=None):
+        """
+        Retourne les listes d'équipes et de collaborateurs spécifiquement 
+        liés à cette formation via son domaine pour peupler les filtres.
+        """
+        formation = self.get_object()
+        
+        # Si la formation n'a pas de domaine, il n'y a pas de filtres à proposer.
+        if not formation.domain:
+            return Response({
+                "equipes": [],
+                "collaborateurs": []
+            })
+
+        domain = formation.domain
+        
+        # 1. Récupérer les équipes liées au domaine de la formation
+        # .values() est très efficace pour ne retourner que les champs nécessaires
+        teams = domain.equipes.all().order_by('name').values('id', 'name')
+        
+        # 2. Récupérer les collaborateurs qui sont dans ces équipes
+        team_ids = [team['id'] for team in teams]
+        collaborateurs = Personne.objects.filter(
+            equipes__id__in=team_ids
+        ).distinct().order_by('first_name', 'last_name')
+        
+        # Formater les données des collaborateurs pour le frontend
+        collaborateurs_data = [
+            {
+                "matricule": p.matricule,
+                "full_name": f"{p.first_name} {p.last_name}",
+                # AJOUT : Inclure l'ID de la première équipe trouvée pour ce collaborateur
+                "equipe_id": p.equipes.first().id if p.equipes.exists() else None
+            }
+            for p in collaborateurs
+        ]
+        
+        return Response({
+            "equipes": list(teams),
+            "collaborateurs": collaborateurs_data
+        })
+
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
@@ -135,9 +242,15 @@ class QuizViewSet(viewsets.ModelViewSet):
             )
             total_score += score_for_question
 
+        time_spent_str = request.data.get('time_spent')
+        
         # 3) on marque le quiz terminé
         uq.score     = total_score
         uq.completed = True
+        uq.completed_at = timezone.now() # Date de complétion
+        if time_spent_str:
+            uq.time_spent = parse_duration(time_spent_str) # Conversion en timedelta
+        
         uq.save()
 
         return Response(

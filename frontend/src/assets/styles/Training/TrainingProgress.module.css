@@ -1,0 +1,319 @@
+/* src/assets/styles/Training/TrainingProgress.module.css */
+
+/* Global styles for the body can be in a separate, global CSS file like index.css */
+/* For example: 
+body {
+    background-color: #f4f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #172b4d;
+}
+*/
+
+.progressContainer {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 24px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Header & Filters --- */
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #dfe1e6;
+    padding-bottom: 16px;
+}
+
+.pageHeader h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #091e42;
+}
+
+.filters select {
+    margin-left: 12px;
+    padding: 8px 12px;
+    border: 1px solid #dfe1e6;
+    border-radius: 4px;
+    background-color: #fafbfc;
+}
+
+/* --- Progress Cards --- */
+.progressCards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.card {
+    background-color: #ffffff;
+    border: 1px solid #dfe1e6;
+    border-radius: 5px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cardTitle {
+    font-size: 14px;
+    color: #6b778c;
+    margin-bottom: 8px;
+}
+
+.cardValueLarge {
+    font-size: 24px;
+    font-weight: 600;
+    color: #172b4d;
+}
+
+.cardSubtitle {
+    font-size: 14px;
+    color: #6b778c;
+    margin-top: 4px;
+}
+
+.progressBarContainer {
+    width: 100%;
+    background-color: #ebecf0;
+    border-radius: 4px;
+    height: 8px;
+    margin-top: 12px;
+}
+
+.progressBar {
+    height: 100%;
+    background-color: #0052cc;
+    border-radius: 4px;
+    transition: width 0.3s ease-in-out;
+}
+
+/* --- Chapter Progression --- */
+.chapterSection, .quizSection {
+    margin-bottom: 40px;
+}
+
+.chapterSection h2, .quizSection h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chapterList {
+    list-style: none;
+    padding: 0;
+}
+
+.chapterItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid #dfe1e6;
+    border-radius: 5px;
+    margin-bottom: 12px;
+}
+
+.chapterItem:last-child {
+    margin-bottom: 0;
+}
+
+.chapterInfo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.chapterNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #ebecf0;
+    border: 2px solid #dfe1e6;
+    color: #42526e;
+    font-weight: 600;
+}
+
+.chapterNumber.completed {
+    background-color: #e3fcef;
+    border-color: #36b37e;
+    color: #006644;
+}
+
+.chapterTitle {
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.chapterDescription {
+    font-size: 14px;
+    color: #6b778c;
+    margin: 0;
+}
+
+.chapterStatus {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: #6b778c;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.statusCompleted {
+    background-color: #e3fcef;
+    color: #006644;
+}
+
+.statusTodo {
+    background-color: #deebff;
+    color: #0747a6;
+}
+
+/* --- Quiz Results --- */
+.quizSubtitle {
+    color: #6b778c;
+    margin-top: -16px;
+    margin-bottom: 24px;
+}
+
+.quizSummaryCard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fafbfc;
+    border: 1px solid #dfe1e6;
+    border-radius: 5px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.finalScoreTitle {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.quizTime {
+    color: #6b778c;
+    margin: 0;
+}
+
+.scoreDisplay {
+    text-align: right;
+}
+
+.scoreValue {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+}
+
+.resultBadge {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.resultSuccess {
+    background-color: #e3fcef;
+    color: #006644;
+    border: 1px solid #006644;
+}
+
+.resultFail {
+    background-color: #ffebe6;
+    color: #bf2600;
+    border: 1px solid #bf2600;
+}
+
+.answersList .answerItem {
+    padding: 16px;
+    border-bottom: 1px solid #dfe1e6;
+}
+
+.answersList .answerItem:first-of-type {
+    border-top: 1px solid #dfe1e6;
+}
+
+.answerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.answerHeader p {
+    font-weight: 600;
+    margin: 0;
+}
+
+.points {
+    color: #6b778c;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.iconCheck { color: #36b37e; }
+.iconWrong { color: #de350b; }
+.iconClock { color: #6b778c; }
+
+.yourResponse {
+    margin: 4px 0;
+    color: #42526e;
+    font-style: italic;
+}
+
+.correctResponse {
+    margin: 4px 0;
+    color: #006644;
+    font-weight: 500;
+}
+
+/* --- Footer --- */
+.pageFooter {
+    margin-top: 40px;
+    text-align: left;
+}
+
+.continueButton {
+    background-color: #0052cc;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.continueButton:hover {
+    background-color: #0065ff;
+}
+
+.loading, .error {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+}

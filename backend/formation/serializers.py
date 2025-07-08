@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from .models import *
-import os
 from personne.models import Personne
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-import json
+from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from datetime import timedelta
+import json
+import os
 
 def _parse_duration_or_none(value):
     """
@@ -776,4 +777,157 @@ class QuizSubmitSerializer(serializers.Serializer):
                     f"Question {ans['question_id']} n'appartient pas à ce quiz."
                 )
         return answers
+
+
+class QuizAnswerDetailSerializer(serializers.ModelSerializer):
+    user_response = serializers.SerializerMethodField()
+    correct_response = serializers.SerializerMethodField()
+    points_awarded = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Question
+        fields = ('id', 'texte', 'user_response', 'correct_response', 'points_awarded')
+
+    def get_user_response(self, obj):
+        user = self.context.get('user')
+        user_answer = obj.user_answers.filter(user=user).first()
+        if not user_answer:
+            return None
         
+        if obj.type in ['single_choice', 'multiple_choice']:
+            return list(user_answer.selected_options.values_list('texte', flat=True))
+        return user_answer.text_response
+
+    def get_correct_response(self, obj):
+        if obj.type in ['single_choice', 'multiple_choice']:
+            return list(obj.options.filter(is_correct=True).values_list('texte', flat=True))
+        return obj.correct_keywords
+
+    def get_points_awarded(self, obj):
+        user = self.context.get('user')
+        user_answer = obj.user_answers.filter(user=user).first()
+        if not user_answer:
+            return 0
+            
+        selected_ids = list(user_answer.selected_options.values_list('id', flat=True))
+        return obj.get_score_for_answer(selected_option_ids=selected_ids, text_response=user_answer.text_response)
+
+
+# NOUVEAU: Sérialiseur pour la section "Résultats du Quiz"
+class QuizResultSerializer(serializers.ModelSerializer):
+    score_final = serializers.SerializerMethodField()
+    temps_passe_minutes = serializers.SerializerMethodField()
+    quiz_termine_le = serializers.DateTimeField(source='completed_at', format="%d/%m/%Y")
+    detail_des_reponses = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserQuiz
+        fields = ('score_final', 'temps_passe_minutes', 'quiz_termine_le', 'detail_des_reponses')
+        
+    def get_score_final(self, obj):
+        total_points = obj.quiz.questions.aggregate(total=Sum('point'))['total'] or 100
+        return {
+            "score": obj.score,
+            "total": total_points,
+            "percentage": int((obj.score / total_points) * 100) if total_points > 0 else 0
+        }
+
+    def get_temps_passe_minutes(self, obj):
+        return int(obj.time_spent.total_seconds() / 60) if obj.time_spent else 0
+
+    def get_detail_des_reponses(self, obj):
+        questions = obj.quiz.questions.all()
+        return QuizAnswerDetailSerializer(questions, many=True, context=self.context).data
+
+# NOUVEAU: Sérialiseur pour la section "Progression par chapitre"
+class ChapterProgressSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    estimated_time_min = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Module
+        fields = ('id', 'titre', 'description', 'status', 'estimated_time_min')
+
+    def get_status(self, obj):
+        user = self.context.get('user')
+        completed = UserModule.objects.filter(user=user, module=obj, completed=True).exists()
+        return "Terminé" if completed else "À faire"
+        
+    def get_estimated_time_min(self, obj):
+        return int(obj.estimated_time.total_seconds() / 60) if obj.estimated_time else 0
+
+
+# NOUVEAU: Le sérialiseur principal pour la page de progression
+class FormationProgressSerializer(serializers.ModelSerializer):
+    progression_generale = serializers.SerializerMethodField()
+    chapitres_termines = serializers.SerializerMethodField()
+    temps_passe_minutes = serializers.SerializerMethodField()
+    dernier_acces = serializers.SerializerMethodField()
+    progression_par_chapitre = serializers.SerializerMethodField()
+    resultats_du_quiz = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Formation
+        fields = (
+            'id',
+            'titre',
+            'progression_generale',
+            'chapitres_termines',
+            'temps_passe_minutes',
+            'dernier_acces',
+            'progression_par_chapitre',
+            'resultats_du_quiz',
+        )
+        
+    def _get_user_formation(self, obj):
+        user = self.context.get('user')
+        if not user:
+            return None
+        # get_or_create pour s'assurer qu'un suivi existe toujours
+        uf, _ = UserFormation.objects.get_or_create(user=user, formation=obj)
+        return uf
+
+    def get_progression_generale(self, obj):
+        user_formation = self._get_user_formation(obj)
+        return user_formation.progress if user_formation else 0
+
+    def get_chapitres_termines(self, obj):
+        user = self.context.get('user')
+        if not user:
+            return {"completed": 0, "total": 0}
+            
+        completed_count = UserModule.objects.filter(
+            user=user, module__in=obj.modules.all(), completed=True
+        ).count()
+        total_count = obj.modules.count()
+        return {"completed": completed_count, "total": total_count}
+
+    def get_temps_passe_minutes(self, obj):
+        user_formation = self._get_user_formation(obj)
+        if not user_formation:
+            return 0
+        return int(user_formation.time_spent.total_seconds() / 60)
+
+    def get_dernier_acces(self, obj):
+        user_formation = self._get_user_formation(obj)
+        if user_formation and user_formation.last_accessed:
+            return user_formation.last_accessed.strftime("%d/%m/%Y")
+        return None
+
+    def get_progression_par_chapitre(self, obj):
+        modules = obj.modules.all().order_by('id') # ou un autre champ d'ordre
+        return ChapterProgressSerializer(modules, many=True, context=self.context).data
+
+    def get_resultats_du_quiz(self, obj):
+        user = self.context.get('user')
+        if not user or not hasattr(obj, 'quiz'):
+            return None
+            
+        user_quiz = UserQuiz.objects.filter(user=user, quiz=obj.quiz, completed=True).first()
+        if not user_quiz:
+            return None
+            
+        return QuizResultSerializer(user_quiz, context=self.context).data
+    
+
+    
