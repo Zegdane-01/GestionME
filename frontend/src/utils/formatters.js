@@ -16,19 +16,45 @@ export const formatDuration = (durationString) => {
 
   const hours = parseInt(parts[0], 10);
   const minutes = parseInt(parts[1], 10);
+  const seconds = parseInt(parts[2], 10);
   
   const result = [];
   if (hours > 0) {
-    result.push(`${hours} heure${hours > 1 ? 's' : ''}`);
+    result.push(`${hours} h`);
   }
   if (minutes > 0) {
-    result.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+    result.push(`${minutes} min`);
+  }
+  if (seconds > 0) {
+    result.push(`${seconds} s`);
   }
 
-  // Si la durée est de moins d'une minute
-  if (result.length === 0) {
-    return "Moins d'une minute";
+  return result.join(' ');
+};
+
+export const formatSecondsToReadableTime = (totalSeconds) => {
+  if (totalSeconds === null || isNaN(totalSeconds) || totalSeconds < 0) {
+    return "0s";
   }
 
-  return result.join(' et ');
+  if (totalSeconds === 0) {
+    return "0s";
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+  if (seconds > 0) {
+    parts.push(`${seconds}s`);
+  }
+
+  return parts.join(' ');
 };

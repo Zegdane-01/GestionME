@@ -20,10 +20,10 @@ import {
   ListChecks,
   Award,    
 } from "lucide-react";
-import { formatDuration } from "../../../utils/formatters";
 import toast from "react-hot-toast";
 
 import styles from "../../../assets/styles/Training/TrainingProgress.module.css";
+import { formatSecondsToReadableTime, formatDuration } from "../../../utils/formatters";
 import api from "../../../api/api";
 
 /** ----------------------------------------------------------------
@@ -66,7 +66,6 @@ const ProgressHeader = ({ data }) => {
     const completedTabs = Object.values(data.tabsCompleted).filter(
         (isCompleted) => isCompleted === true
     ).length;
-    const f_time =formatDuration(data.temps_passe);
     return (
         <div className={styles.progressCards}>
             <StatCard
@@ -80,9 +79,9 @@ const ProgressHeader = ({ data }) => {
             subtitle="chapitres"
             />
             <StatCard
-            title="Temps passé"
-            value={data.temps_passe/60}
-            subtitle="minutes"
+              title="Temps passé"
+              value={formatSecondsToReadableTime(data.temps_passe)}
+              subtitle="" 
             />
             <StatCard title="Dernier accès" value={data.dernier_acces || "—"} />
         </div>
@@ -162,6 +161,7 @@ const QuizResults = ({ quiz, has_quiz }) => {
     );
   }
   if (quiz) {
+    const t_quiz = formatDuration(quiz.time_spent)
     return (
         <div className={styles.quizSection}>
         <h2>
@@ -169,10 +169,12 @@ const QuizResults = ({ quiz, has_quiz }) => {
             <Award size={22} className={styles.titleIcon} />
             Résultats du Quiz
         </h2>
+        <p className={styles.quizSubtitle}>Quiz terminé le: {quiz.quiz_termine_le}</p>
+            
         <div className={styles.quizSummaryCard}>
             <div>
             <p className={styles.finalScoreTitle}>Score final</p>
-            <p className={styles.quizTime}>Temps: {quiz.temps_passe_minutes} min</p>
+            <p className={styles.quizTime}>Temps: {t_quiz}</p>
             </div>
             <div className={styles.scoreDisplay}>
             <p className={styles.scoreValue}>
@@ -254,7 +256,7 @@ const CollaboratorInfoCard = ({ collaborator }) => {
 /** ----------------------------------------------------------------
  *  Composant principal
  * ----------------------------------------------------------------*/
-const FormationProgressPage = () => {
+const TrainingProgress = () => {
   const { formationId } = useParams();
 
   // core data
@@ -436,4 +438,4 @@ const FormationProgressPage = () => {
   );
 };
 
-export default FormationProgressPage;
+export default TrainingProgress;

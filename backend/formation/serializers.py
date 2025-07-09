@@ -497,7 +497,7 @@ class FormationWriteSerializer(serializers.ModelSerializer):
                 pass
 
         # -----------------------------------------------------------------
-        # --- NOUVEAU : GESTION DE LA MISE À JOUR DU QUIZ ---
+        # --- GESTION DE LA MISE À JOUR DU QUIZ ---
         # -----------------------------------------------------------------
         quiz_data = json.loads(request.data.get('quiz')) if 'quiz' in request.data else None
         existing_quiz = getattr(instance, 'quiz', None)
@@ -813,16 +813,14 @@ class QuizAnswerDetailSerializer(serializers.ModelSerializer):
         return obj.get_score_for_answer(selected_option_ids=selected_ids, text_response=user_answer.text_response)
 
 
-# NOUVEAU: Sérialiseur pour la section "Résultats du Quiz"
 class QuizResultSerializer(serializers.ModelSerializer):
     score_final = serializers.SerializerMethodField()
-    temps_passe_minutes = serializers.SerializerMethodField()
     quiz_termine_le = serializers.DateTimeField(source='completed_at', format="%d/%m/%Y")
     detail_des_reponses = serializers.SerializerMethodField()
     
     class Meta:
         model = UserQuiz
-        fields = ('score_final', 'temps_passe_minutes', 'quiz_termine_le', 'detail_des_reponses')
+        fields = ('score_final', 'time_spent', 'quiz_termine_le', 'detail_des_reponses')
         
     def get_score_final(self, obj):
         total_points = obj.quiz.questions.aggregate(total=Sum('point'))['total'] or 100
@@ -832,14 +830,10 @@ class QuizResultSerializer(serializers.ModelSerializer):
             "percentage": int((obj.score / total_points) * 100) if total_points > 0 else 0
         }
 
-    def get_temps_passe_minutes(self, obj):
-        return int(obj.time_spent.total_seconds() / 60) if obj.time_spent else 0
-
     def get_detail_des_reponses(self, obj):
         questions = obj.quiz.questions.all()
         return QuizAnswerDetailSerializer(questions, many=True, context=self.context).data
 
-# NOUVEAU: Sérialiseur pour la section "Progression par chapitre"
 class ChapterProgressSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     estimated_time_min = serializers.SerializerMethodField()
@@ -857,11 +851,9 @@ class ChapterProgressSerializer(serializers.ModelSerializer):
         return int(obj.estimated_time.total_seconds() / 60) if obj.estimated_time else 0
 
 
-# NOUVEAU: Le sérialiseur principal pour la page de progression
 class FormationProgressSerializer(serializers.ModelSerializer):
     progression_generale = serializers.SerializerMethodField()
     chapitres_termines = serializers.SerializerMethodField()
-    temps_passe_minutes = serializers.SerializerMethodField()
     dernier_acces = serializers.SerializerMethodField()
     temps_passe = serializers.SerializerMethodField()
     progression_par_chapitre = serializers.SerializerMethodField()
@@ -890,7 +882,6 @@ class FormationProgressSerializer(serializers.ModelSerializer):
             'tabsCompleted',
             'progression_generale',
             'chapitres_termines',
-            'temps_passe_minutes',
             'dernier_acces',
             'temps_passe',
             'has_quiz',
@@ -922,11 +913,6 @@ class FormationProgressSerializer(serializers.ModelSerializer):
         total_count = obj.modules.count()
         return {"completed": completed_count, "total": total_count}
 
-    def get_temps_passe_minutes(self, obj):
-        user_formation = self._get_user_formation(obj)
-        if not user_formation:
-            return 0
-        return int(user_formation.time_spent.total_seconds() / 60)
 
     def get_dernier_acces(self, obj):
         user_formation = self._get_user_formation(obj)

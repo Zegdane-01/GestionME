@@ -633,6 +633,8 @@ class UserFormationViewSet(viewsets.ModelViewSet):
         user_formation.progress = 0
         user_formation.status = 'nouvelle'
         user_formation.completed_steps = {}
+        user_formation.last_accessed = None
+        user_formation.time_spent = timedelta(0)
         user_formation.save()
 
         # 5. Renvoyer l'état mis à jour de la formation

@@ -74,7 +74,6 @@ const TrainingCard = ({ training, onUpdate }) => {
       // On notifie le composant parent de la mise à jour
       onUpdate(response.data); 
     } catch (err) {
-      console.error("Erreur lors de la réinitialisation", err);
       toast.error("Une erreur est survenue.");
     } finally {
       setIsRestarting(false);
