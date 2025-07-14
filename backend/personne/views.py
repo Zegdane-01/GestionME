@@ -2,13 +2,16 @@ import logging
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from django.contrib.auth import update_session_auth_hash
+from django.utils.dateparse import parse_date
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import pandas as pd
 from .models import Personne
+from projet.models import Projet 
 from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -28,7 +31,6 @@ class PersonneViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
 
         if not serializer.is_valid():
-            print("❌ Erreurs de validation :", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         self.perform_create(serializer)
@@ -40,7 +42,6 @@ class PersonneViewSet(viewsets.ModelViewSet):
         serializer = PersonneUpdateSerializer(personne, data=request.data)
 
         if serializer.is_valid():
-            print("✅ Mise à jour réussie :", serializer.validated_data)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -112,7 +113,7 @@ def change_password(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ImportExcelPersonneView(APIView):
+class ImportChargePlanView(APIView):
     parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
     
@@ -130,6 +131,94 @@ class ImportExcelPersonneView(APIView):
             df = pd.read_excel(xls, sheet_name=sheetName)
         except Exception as e:
             return Response({'error': f"Erreur de lecture Excel : {str(e)}"}, status=400)
+        
+        date_column_name = None
+        for col in df.columns:
+            # str(col).startswith(...) est la fonction clé ici
+            if str(col).strip().startswith('Début PdC'):
+                date_column_name = col
+                break # On s'arrête dès qu'on a trouvé la colonne
+
+        # 2. Si aucune colonne ne correspond, on retourne une erreur claire
+        if not date_column_name:
+            return Response({
+                'error': "Colonne introuvable.",
+                'message': "Aucune colonne commençant par 'Début Pdc' n'a été trouvée dans le fichier."
+            }, status=400)
+        
+        
+
+        projets_crees, projets_modifies, projets_ignores = 0, 0, 0
+        for _, row in df.iterrows():
+
+             # 1. Extraire les champs pour notre clé composite
+            nom_projet = str(row.get("Project name", "")).strip()
+            client_final = str(row.get("Client", "")).strip()
+
+            # 1. On récupère la valeur brute et on la met en minuscules
+            raw_sop = str(row.get("I/E", "")).strip().lower()
+
+            # 2. On définit une valeur par défaut
+            sop_value = "Interne" 
+
+            # 3. On vérifie si elle commence par "exter"
+            if raw_sop.startswith("exter"):
+                sop_value = "Externe"
+
+            # On a besoin au minimum d'un nom et d'un client pour identifier le projet
+            if not nom_projet or not client_final:
+                projets_ignores += 1
+                continue
+            
+            donnees_projet = {
+                'ordre_travail': str(row.get("WO", "")).strip(),
+                'sop': sop_value,
+                'cbu': 'ME',
+                'direct_client': str(row.get("Client",client_final)),
+                'statut': str(row.get("Statut", "In Progress")).strip()
+            }
+            # Gestion de la date
+            
+
+            raw_date_demarrage = row.get(date_column_name)
+            if pd.notna(raw_date_demarrage):
+                date_dt = pd.to_datetime(raw_date_demarrage, errors='coerce')
+                if pd.notna(date_dt):
+                    donnees_projet['date_demarrage'] = date_dt.date()
+
+            # 3. Chercher les projets existants avec notre clé composite
+            projets_existants = Projet.objects.filter(nom=nom_projet, final_client=client_final)
+
+            if projets_existants.count() == 1:
+                # CAS 1 : Un seul projet trouvé. On le met à jour.
+                projet = projets_existants.first()
+                has_changed = False
+                for key, value in donnees_projet.items():
+                     if getattr(projet, key) != value:
+                        # Si les valeurs sont différentes, on met à jour l'attribut et on note qu'il y a eu un changement
+                        setattr(projet, key, value)
+                        has_changed = True
+                if has_changed:
+                    projet.save()
+                    projets_modifies += 1
+                
+            elif projets_existants.count() == 0:
+                # CAS 2 : Aucun projet trouvé. On le crée.
+                Projet.objects.create(
+                    nom=nom_projet,
+                    final_client=client_final,
+                    **donnees_projet
+                )
+                projets_crees += 1
+
+            else: # projets_existants.count() > 1
+                # CAS 3 : Plusieurs projets ont le même nom pour le même client.
+                # C'est une ambiguïté. On ignore la ligne pour ne pas corrompre les données.
+                projets_ignores += 1
+                continue
+
+
+
 
         created, updated, skipped = 0, 0, 0
 
@@ -145,8 +234,20 @@ class ImportExcelPersonneView(APIView):
             manager_name = str(row.get("Hierarchical manager")).strip() if pd.notna(row.get("Hierarchical manager")) else None
             Status = str(row.get("Status")).strip() if pd.notna(row.get("Status")) else None
             profile_f = str(row.get("Profil")).strip() if pd.notna(row.get("Profil")) else None
+            projet_name = str(row.get("Project name")).strip() if pd.notna(row.get("Project name")) else None
+
+            if projet_name:                                # évite les '' ou None
+                try:
+                    projet_c = Projet.objects.filter(nom=projet_name).first()
+                except ObjectDoesNotExist:
+                    projet_c = None
+                except MultipleObjectsReturned:
+                    projet_c = Projet.objects.filter(nom=projet_name).first()
+            else:
+                projet_c = None
+
             # Validation
-            if not matricule or matricule == "nan" or not full_name:
+            if not matricule or matricule == "nan":
                 skipped += 1
                 continue
 
@@ -202,14 +303,36 @@ class ImportExcelPersonneView(APIView):
 
             try:
                 personne = Personne.objects.get(matricule=matricule)
+
                 # Mise à jour sans changer nom/prénom
-                personne.dt_Embauche = date_embauche or personne.dt_Embauche
-                personne.position = position_f or personne.position
-                personne.manager = manager_obj or personne.manager
-                personne.status=Status or personne.status
-                personne.profile=profile_f or personne.profile
-                personne.save()
-                updated += 1
+                has_changed = False
+                if personne.dt_Embauche != date_embauche and date_embauche is not None:
+                    personne.dt_Embauche = date_embauche or personne.dt_Embauche
+                    has_changed = True
+                
+                if personne.position != position_f and position_f:
+                    personne.position = position_f or personne.position
+                    has_changed = True
+
+                if personne.manager != manager_obj and manager_obj:
+                    personne.manager = manager_obj or personne.manager
+                    has_changed = True
+
+                if personne.status != Status and Status:
+                    personne.status = Status or personne.status
+                    has_changed = True
+
+                if personne.profile != profile_f and profile_f:
+                    personne.profile = profile_f or personne.profile
+                    has_changed = True
+
+                if personne.projet != projet_c and projet_c:
+                    personne.projet =  projet_c or personne.projet
+                    has_changed = True
+                
+                if has_changed:
+                    personne.save()
+                    updated += 1
             except Personne.DoesNotExist:
                 # Création
                 personne = Personne.objects.create_user(
@@ -223,6 +346,7 @@ class ImportExcelPersonneView(APIView):
                     position=position_f,
                     manager=manager_obj,
                     role='COLLABORATEUR',
+                    projet=projet_c,
                     status=Status,
                     profile=profile_f,
                     is_active=False
@@ -230,9 +354,21 @@ class ImportExcelPersonneView(APIView):
                 created += 1
 
         return Response({
-            "message": "Import terminé.",
-            "créés": created,
-            "modifiés": updated,
-            "ignorés": skipped
+            "message": "Importation terminée avec succès.",
+            # On ajoute la clé "résumé" qui contient les deux objets
+            "résumé": {
+                "personnes": {
+                    "créés": created,
+                    "modifiés": updated,
+                    "ignorés": skipped
+                },
+                "projets": {
+                    "créés": projets_crees,
+                    "modifiés": projets_modifies,
+                    "ignorés": projets_ignores,
+                },
+            }
         }, status=200)
+    
 
+    

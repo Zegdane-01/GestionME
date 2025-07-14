@@ -127,3 +127,76 @@
   border: 1px solid #ccc;
   font-size: 0.9rem;
 }
+
+.summaryCard {
+  margin-top: 24px;
+  background-color: #f8f9fa; /* Fond clair */
+  border: 1px solid #e9ecef;  /* Bordure subtile */
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.summaryTitle {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #343a40;
+}
+
+/* Grille pour mettre les sections côte à côte */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Deux colonnes de taille égale */
+  gap: 20px; /* Espace entre les colonnes */
+  margin-bottom: 16px;
+}
+
+.summarySection strong {
+  font-weight: 500;
+  color: #495057;
+  border-bottom: 2px solid #6846c6; /* Ligne de couleur sous les titres */
+  padding-bottom: 4px;
+}
+
+.summarySection ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 8px;
+}
+
+.summarySection li {
+  border-bottom: 1px solid #495057;
+  display: flex;
+  justify-content: space-between; /* Aligne le texte à gauche et le nombre à droite */
+  padding: 6px 0;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.summaryValue {
+  font-weight: 700;
+  color: #343a40;
+}
+
+/* Style pour la ligne des affectations */
+.summaryAffectations {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #e9ecef;
+  padding-top: 12px;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+.finButton{
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  border: none;
+  background-color: #6846c6;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 1%;
+}

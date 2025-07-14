@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PersonneViewSet, HierarchieView, PersonneLoginView, change_password, ImportExcelPersonneView
+from .views import PersonneViewSet, HierarchieView, PersonneLoginView, change_password, ImportChargePlanView
 
 router = DefaultRouter()
 router.register(r'personnes', PersonneViewSet)
@@ -10,6 +10,6 @@ urlpatterns = [
     path('hierarchie/', HierarchieView.as_view(), name='hierarchie'),
     path('login/', PersonneLoginView.as_view(), name='login'),
     path('change-password/', change_password, name='change_password'),
-    path('import-excel/', ImportExcelPersonneView.as_view(), name='import-excel'),
+    path('import-excel/', ImportChargePlanView.as_view(), name='import-excel'),
     
 ]

@@ -13,7 +13,6 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Play,
   ChevronLeft,
   Users,
   User,

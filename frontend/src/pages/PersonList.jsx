@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import SearchBar from '../components/Personne_Projet/SearchBar';
@@ -23,7 +23,9 @@ const PersonList = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [personToDelete, setPersonToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
   const navigate = useNavigate();
+  const modalWasOpenRef = useRef(false);
 
   const fetchPeople = async () => {
     setIsLoading(true);
@@ -37,6 +39,18 @@ const PersonList = () => {
       setIsLoading(false);
     }
   };
+  
+  useEffect(() => {
+    // Cet effet se déclenche chaque fois que `showModal` change
+    
+    // On vérifie si la modale était ouverte (true) et est maintenant fermée (false)
+    if (modalWasOpenRef.current && !showModal) {
+      window.location.reload();
+    }
+
+    // On met à jour la référence avec l'état actuel pour la prochaine fois
+    modalWasOpenRef.current = showModal;
+  }, [showModal]);
   
   useEffect(() => {
     fetchPeople();

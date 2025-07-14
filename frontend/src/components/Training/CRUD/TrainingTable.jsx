@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-    faEye, faTrash, faPencilAlt, faRocket, faCheckCircle, faTimesCircle, 
+    faInfo, faTrash, faPencilAlt, faRocket, faCheckCircle, faTimesCircle, 
     faChevronLeft, faChevronRight 
 } from '@fortawesome/free-solid-svg-icons';
 import styles from '../../../assets/styles/Table.module.css';
@@ -99,7 +99,7 @@ const TrainingTable = ({ trainings, onEdit, onDelete }) => {
                     <td className={styles.actionsCell}>
                         <div className={styles.actionGroup}>
                             <button onClick={() => handleView(training.id)} title="Voir" className={`${styles['actionBtn']} ${styles.view}`}>
-                                <FontAwesomeIcon icon={faEye} />
+                                <FontAwesomeIcon icon={faInfo} />
                             </button>
                             <button onClick={() => onEdit(training.id)} title="Modifier" className={`${styles['actionBtn']} ${styles.edit}`}>
                                 <FontAwesomeIcon icon={faPencilAlt} />

@@ -11,6 +11,8 @@ const ExcelImportModal = ({ show, onHide }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [sheetName, setSheetName] = useState('Plan de charge ME 2025');
 
+  const [importSummary, setImportSummary] = useState(null); 
+
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
@@ -34,6 +36,7 @@ const ExcelImportModal = ({ show, onHide }) => {
     xhr.open('POST', 'http://localhost:8000/api/personne/import-excel/', true);
     xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('accessToken')}`); // si JWT
     setIsUploading(true);
+    setImportSummary(null); 
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -46,9 +49,10 @@ const ExcelImportModal = ({ show, onHide }) => {
       setIsUploading(false);
       setUploadProgress(0);
       if (xhr.status === 200) {
+        
         toast.success('Importation réussie');
-        onHide();
-        window.location.reload();
+        const response = JSON.parse(xhr.responseText);
+        setImportSummary(response.résumé);
       } else {
         try {
           const err = JSON.parse(xhr.responseText);
@@ -77,70 +81,128 @@ const ExcelImportModal = ({ show, onHide }) => {
 
       <Modal.Body className={styles.modalBody}>
         <p className={styles.description}>Importez vos données depuis un fichier Excel (.xlsx, .xls)</p>
-        <div className="mt-3">
-          <label className={styles.sheetLabel}>Nom de la feuille Excel</label>
-          <input
-            type="text"
-            value={sheetName}
-            onChange={(e) => setSheetName(e.target.value)}
-            className={styles.sheetInput}
-            placeholder="Ex: Plan de charge ME 2025"
-          />
-        </div>
+        {!importSummary ? (
+          <>
+            <div className="mt-3">
+              <label className={styles.sheetLabel}>Nom de la feuille Excel</label>
+              <input
+                type="text"
+                value={sheetName}
+                onChange={(e) => setSheetName(e.target.value)}
+                className={styles.sheetInput}
+                placeholder="Ex: Plan de charge ME 2025"
+              />
+            </div>
 
-        <div className="mt-3">
-          <label className={styles.sheetLabel}>Sélectionner un fichier</label>
-          <div
-            className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ''}`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-          >
-            <UploadCloud className={styles.uploadIcon} />
-            <p><strong>Glissez-déposez votre fichier Excel ici</strong></p>
-            <p className={styles.description}>ou cliquez pour sélectionner un fichier</p>
+            <div className="mt-3">
+              <label className={styles.sheetLabel}>Sélectionner un fichier</label>
+              <div
+                className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ''}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+              >
+                <UploadCloud className={styles.uploadIcon} />
+                <p><strong>Glissez-déposez votre fichier Excel ici</strong></p>
+                <p className={styles.description}>ou cliquez pour sélectionner un fichier</p>
 
-            <input
-              type="file"
-              accept=".xlsx, .xls"
-              onChange={handleFileChange}
-              id="fileInput"
-              style={{ display: 'none' }}
-            />
-            <label htmlFor="fileInput" className={styles.selectLabel}>
-              Sélectionner un fichier
-            </label>
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={handleFileChange}
+                  id="fileInput"
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="fileInput" className={styles.selectLabel}>
+                  Sélectionner un fichier
+                </label>
 
-            {file && <p className={styles.selectedFile}>Fichier sélectionné : {file.name}</p>}
-          </div>
-        </div>
+                {file && <p className={styles.selectedFile}>Fichier sélectionné : {file.name}</p>}
+              </div>
+            </div>
+            {isUploading && (
+              <div className="mt-3">
+                <ProgressBar now={uploadProgress} label={`${uploadProgress}%`} animated />
+              </div>
+            )}
+          </>
+        ):(
+          <div className={styles.summaryCard}>
+            <h4 className={styles.summaryTitle}>Résumé de l'importation</h4>
+            
+            <div className={styles.summaryGrid}>
+              {/* Colonne pour les collaborateurs */}
+              <div className={styles.summarySection}>
+                <strong>Collaborateurs</strong>
+                <ul>
+                  <li>
+                    <span>Créés :</span>
+                    <span className={styles.summaryValue}>{importSummary.personnes.créés}</span>
+                  </li>
+                  <li>
+                    <span>Modifiés :</span>
+                    <span className={styles.summaryValue}>{importSummary.personnes.modifiés}</span>
+                  </li>
+                  <li>
+                    <span>Ignorés :</span>
+                    <span className={styles.summaryValue}>{importSummary.personnes.ignorés}</span>
+                  </li>
+                </ul>
+              </div>
 
-        {isUploading && (
-          <div className="mt-3">
-            <ProgressBar now={uploadProgress} label={`${uploadProgress}%`} animated />
+              {/* Colonne pour les projets */}
+              <div className={styles.summarySection}>
+                <strong>Projets</strong>
+                <ul>
+                  <li>
+                    <span>Créés :</span>
+                    <span className={styles.summaryValue}>{importSummary.projets.créés}</span>
+                  </li>
+                  <li>
+                    <span>Modifiés :</span>
+                    <span className={styles.summaryValue}>{importSummary.projets.modifiés}</span>
+                  </li>
+                  <li>
+                    <span>Ignorés :</span>
+                    <span className={styles.summaryValue}>{importSummary.projets.ignorés}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         )}
       </Modal.Body>
 
       <Modal.Footer className={styles.modalFooter}>
-        <Button
-          onClick={handleUpload}
-          disabled={!file || isUploading}
-          className={`${styles.uploadButton} ${file ? styles.uploadButtonEnabled : styles.uploadButtonDisabled}`}
-        >
-          {isUploading ? 'Importation...' : 'Importer les données'}
-        </Button>
-        <Button
-          variant="outline-secondary"
-          onClick={onHide}
-          className={styles.btnClose}
-          disabled={isUploading}
-        >
-          Fermer
-        </Button>
+        {!importSummary ? (
+          <>
+            <Button
+              onClick={handleUpload}
+              disabled={!file || isUploading}
+              className={`${styles.uploadButton} ${file ? styles.uploadButtonEnabled : styles.uploadButtonDisabled}`}
+            >
+              {isUploading ? 'Importation...' : 'Importer les données'}
+            </Button>
+            <Button
+              variant="outline-secondary"
+              onClick={onHide}
+              className={styles.btnClose}
+              disabled={isUploading}
+            >
+              Fermer
+            </Button>
+          </>
+        ):(
+          <button
+            className={styles.finButton}
+            onClick={onHide}
+          >
+            Terminer
+          </button>
+        )}
       </Modal.Footer>
     </Modal>
   );
