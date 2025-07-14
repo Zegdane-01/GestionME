@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import ProgressBar from "../Shared/ProgressBar";
 import api from "../../../api/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,7 +12,24 @@ import { formatDuration } from "../../../utils/formatters";
 import styles from "../../../assets/styles/Training/TrainingDetail/QuizTab.module.css";
 
 
+const formatSecondsToHMS = (totalSeconds) => {
+  // Sécurité : si l'entrée n'est pas un nombre, retourner "00:00:00"
+  if (isNaN(totalSeconds) || totalSeconds < 0) {
+    return "00:00:00";
+  }
 
+  // Math.floor s'assure qu'on travaille avec des entiers
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  // .padStart(2, '0') ajoute un zéro devant si le nombre est inférieur à 10 (ex: 5 -> "05")
+  return [
+    hours.toString().padStart(2, '0'),
+    minutes.toString().padStart(2, '0'),
+    seconds.toString().padStart(2, '0')
+  ].join(':');
+};
 
 const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
   const questions = quiz.questions ?? [];
@@ -25,7 +42,8 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
 
-  // --- MODIFIÉ : Récupération du score ---
+  const startTimeRef = useRef(null);
+
   // Cet effet se déclenche si le quiz est déjà marqué comme complété au chargement
   useEffect(() => {
     if (isCompleted && !finished && quiz.id) {
@@ -51,6 +69,12 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
   // --- MODIFIÉ : Gestionnaire de soumission ---
   const handleFinish = async () => {
     setFinished(true); // Afficher immédiatement l'écran de fin (même si le score n'est pas encore là)
+    
+    let timeSpentString = "00:00:00";
+    if (startTimeRef.current) {
+        const timeElapsedSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
+        timeSpentString = formatSecondsToHMS(timeElapsedSeconds);
+    }
 
     // Préparation du payload pour tous les types de questions
     const answersPayload = questions.map(q => {
@@ -79,7 +103,10 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
 
     try {
       // On soumet les réponses et on attend le score en retour
-      const response = await api.post(`/quizzes/${quiz.id}/submit/`, { answers: answersPayload });
+      const response = await api.post(`/quizzes/${quiz.id}/submit/`, { 
+        answers: answersPayload,
+        time_spent: timeSpentString, // On ajoute le temps passé ici
+      });
       setScore(response.data.score); // Mise à jour du score avec la réponse de l'API
       onComplete?.(); // Notifier le parent que le quiz est terminé
     } catch (err) {
@@ -89,7 +116,6 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
   };
 
 
-  // --- NOUVEAU : Gestionnaire de réponse unifié ---
   const handleAnswerChange = (questionId, value, type) => {
     setAnswers(prev => {
       const newAnswers = { ...prev };
@@ -231,7 +257,10 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
                           </div>
                         )}
                   </div>
-                  <button type="button" className="btn btn-primary btn-lg px-4" onClick={() => setStarted(true)}>
+                  <button type="button" className="btn btn-primary btn-lg px-4"   onClick={() => {
+                    setStarted(true);
+                    startTimeRef.current = Date.now(); // <-- AJOUTEZ CETTE LIGNE
+                  }}>
                       <FontAwesomeIcon icon={faCirclePlay} className="me-2" />
                       Commencer le quiz
                   </button>

@@ -2,22 +2,59 @@
 // /src/utils/formatters.js (exemple de fichier utilitaire)
 //
 export const formatDuration = (durationString) => {
-  if (!durationString || durationString === "00:00:00") return null;
+  // 1. On ajoute une "garde" pour vérifier l'entrée.
+  // Si ce n'est pas une chaîne de caractères, on ne fait rien.
+  if (!durationString || typeof durationString !== 'string') {
+    return null; // ou retourner une chaîne vide "" si vous préférez
+  }
 
-  // S'assure de gérer les formats avec ou sans secondes
-  const parts = durationString.split(':').map(Number);
-  const hours = parts[0] || 0;
-  const minutes = parts[1] || 0;
+  // Le reste du code ne s'exécutera que si durationString est valide.
+  const parts = durationString.split(':');
+  if (parts.length < 3) {
+    return null; // Gère les formats incorrects
+  }
+
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  const seconds = parseInt(parts[2], 10);
   
-  const timeParts = [];
+  const result = [];
   if (hours > 0) {
-    timeParts.push(`${hours} h`);
+    result.push(`${hours} h`);
   }
   if (minutes > 0) {
-    timeParts.push(`${minutes} min`);
+    result.push(`${minutes} min`);
+  }
+  if (seconds > 0) {
+    result.push(`${seconds} s`);
   }
 
-  if (timeParts.length === 0) return null;
+  return result.join(' ');
+};
 
-  return timeParts.join(' ');
+export const formatSecondsToReadableTime = (totalSeconds) => {
+  if (totalSeconds === null || isNaN(totalSeconds) || totalSeconds < 0) {
+    return "0s";
+  }
+
+  if (totalSeconds === 0) {
+    return "0s";
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+  if (seconds > 0) {
+    parts.push(`${seconds}s`);
+  }
+
+  return parts.join(' ');
 };

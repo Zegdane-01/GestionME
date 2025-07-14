@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from .models import *
-import os
 from personne.models import Personne
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-import json
+from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from datetime import timedelta
+import json
+import os
 
 def _parse_duration_or_none(value):
     """
@@ -496,7 +497,7 @@ class FormationWriteSerializer(serializers.ModelSerializer):
                 pass
 
         # -----------------------------------------------------------------
-        # --- NOUVEAU : GESTION DE LA MISE À JOUR DU QUIZ ---
+        # --- GESTION DE LA MISE À JOUR DU QUIZ ---
         # -----------------------------------------------------------------
         quiz_data = json.loads(request.data.get('quiz')) if 'quiz' in request.data else None
         existing_quiz = getattr(instance, 'quiz', None)
@@ -776,4 +777,234 @@ class QuizSubmitSerializer(serializers.Serializer):
                     f"Question {ans['question_id']} n'appartient pas à ce quiz."
                 )
         return answers
+
+
+class QuizAnswerDetailSerializer(serializers.ModelSerializer):
+    user_response = serializers.SerializerMethodField()
+    correct_response = serializers.SerializerMethodField()
+    points_awarded = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Question
+        fields = ('id', 'texte', 'user_response', 'correct_response', 'points_awarded')
+
+    def get_user_response(self, obj):
+        user = self.context.get('user')
+        user_answer = obj.user_answers.filter(user=user).first()
+        if not user_answer:
+            return None
         
+        if obj.type in ['single_choice', 'multiple_choice']:
+            return list(user_answer.selected_options.values_list('texte', flat=True))
+        return user_answer.text_response
+
+    def get_correct_response(self, obj):
+        if obj.type in ['single_choice', 'multiple_choice']:
+            return list(obj.options.filter(is_correct=True).values_list('texte', flat=True))
+        return obj.correct_keywords
+
+    def get_points_awarded(self, obj):
+        user = self.context.get('user')
+        user_answer = obj.user_answers.filter(user=user).first()
+        if not user_answer:
+            return 0
+            
+        selected_ids = list(user_answer.selected_options.values_list('id', flat=True))
+        return obj.get_score_for_answer(selected_option_ids=selected_ids, text_response=user_answer.text_response)
+
+
+class QuizResultSerializer(serializers.ModelSerializer):
+    score_final = serializers.SerializerMethodField()
+    quiz_termine_le = serializers.DateTimeField(source='completed_at', format="%d/%m/%Y")
+    detail_des_reponses = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserQuiz
+        fields = ('score_final', 'time_spent', 'quiz_termine_le', 'detail_des_reponses')
+        
+    def get_score_final(self, obj):
+        total_points = obj.quiz.questions.aggregate(total=Sum('point'))['total'] or 100
+        return {
+            "score": obj.score,
+            "total": total_points,
+            "percentage": int((obj.score / total_points) * 100) if total_points > 0 else 0
+        }
+
+    def get_detail_des_reponses(self, obj):
+        questions = obj.quiz.questions.all()
+        return QuizAnswerDetailSerializer(questions, many=True, context=self.context).data
+
+class ChapterProgressSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    estimated_time_min = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Module
+        fields = ('id', 'titre', 'description', 'status', 'estimated_time_min')
+
+    def get_status(self, obj):
+        user = self.context.get('user')
+        completed = UserModule.objects.filter(user=user, module=obj, completed=True).exists()
+        return "Terminé" if completed else "À faire"
+        
+    def get_estimated_time_min(self, obj):
+        return int(obj.estimated_time.total_seconds() / 60) if obj.estimated_time else 0
+
+
+class FormationProgressSerializer(serializers.ModelSerializer):
+    progression_generale = serializers.SerializerMethodField()
+    chapitres_termines = serializers.SerializerMethodField()
+    dernier_acces = serializers.SerializerMethodField()
+    temps_passe = serializers.SerializerMethodField()
+    progression_par_chapitre = serializers.SerializerMethodField()
+    resultats_du_quiz = serializers.SerializerMethodField()
+    statut_formation = serializers.SerializerMethodField()
+    tabsCompleted = serializers.SerializerMethodField()
+    has_quiz = serializers.SerializerMethodField()
+    has_chapters = serializers.SerializerMethodField()
+
+
+    domain = serializers.PrimaryKeyRelatedField(
+        queryset=Domain.objects.all(),
+        allow_null=True,
+        required=False
+    )
+    domain_info = DomainSerializer(source='domain', read_only=True)
+
+    class Meta:
+        model = Formation
+        fields = (
+            'id',
+            'titre',
+            'domain',
+            'domain_info',
+            'statut_formation',
+            'tabsCompleted',
+            'progression_generale',
+            'chapitres_termines',
+            'dernier_acces',
+            'temps_passe',
+            'has_quiz',
+            'has_chapters',
+            'progression_par_chapitre',
+            'resultats_du_quiz',
+        )
+        
+    def _get_user_formation(self, obj):
+        user = self.context.get('user')
+        if not user:
+            return None
+        # get_or_create pour s'assurer qu'un suivi existe toujours
+        uf, _ = UserFormation.objects.get_or_create(user=user, formation=obj)
+        return uf
+
+    def get_progression_generale(self, obj):
+        user_formation = self._get_user_formation(obj)
+        return user_formation.progress if user_formation else 0
+
+    def get_chapitres_termines(self, obj):
+        user = self.context.get('user')
+        if not user:
+            return {"completed": 0, "total": 0}
+            
+        completed_count = UserModule.objects.filter(
+            user=user, module__in=obj.modules.all(), completed=True
+        ).count()
+        total_count = obj.modules.count()
+        return {"completed": completed_count, "total": total_count}
+
+
+    def get_dernier_acces(self, obj):
+        user_formation = self._get_user_formation(obj)
+        if user_formation and user_formation.last_accessed:
+            return user_formation.last_accessed.strftime("%d/%m/%Y")
+        return None
+    
+    def get_temps_passe(self, obj):
+        user_formation = self._get_user_formation(obj)
+        if user_formation and user_formation.time_spent:
+            return user_formation.time_spent
+        return None
+
+    def get_progression_par_chapitre(self, obj):
+        modules = obj.modules.all().order_by('id') # ou un autre champ d'ordre
+        return ChapterProgressSerializer(modules, many=True, context=self.context).data
+
+    def get_resultats_du_quiz(self, obj):
+        user = self.context.get('user')
+        if not user or not hasattr(obj, 'quiz'):
+            return None
+            
+        user_quiz = UserQuiz.objects.filter(user=user, quiz=obj.quiz, completed=True).first()
+        if not user_quiz:
+            return None
+            
+        return QuizResultSerializer(user_quiz, context=self.context).data
+    
+    def get_statut_formation(self, obj):
+        user_formation = self._get_user_formation(obj)
+        return user_formation.status
+    
+    def get_has_quiz(self, obj):
+        """Renvoie True si un quiz existe pour cette formation."""
+        return Quiz.objects.filter(formation=obj).exists()
+    
+    def get_has_chapters(self, obj):
+        """Renvoie True si la formation a des modules."""
+        return obj.modules.exists()
+    
+    def get_has_resources(self, obj):
+        """Renvoie True si la formation a des ressources."""
+        return obj.ressources.exists()
+    
+    def get_quiz_done(self, obj):
+        # Utiliser le 'user' du contexte (le collaborateur) et non celui de la requête.
+        user = self.context.get("user")
+        if not user or not hasattr(obj, 'quiz'):
+            return False
+        
+        return UserQuiz.objects.filter(
+            user=user,
+            quiz=obj.quiz,
+            completed=True
+        ).exists()
+    
+
+    def get_tabsCompleted(self, obj):
+        user = self.context.get("user")
+        user_formation = self._get_user_formation(obj)
+
+        if not user_formation or not user:
+            return {} # Retourne un dictionnaire vide si pas de contexte
+
+        # On commence avec un dictionnaire vide
+        completed_tabs = {}
+
+        # L'onglet "overview" est toujours présent
+        completed_tabs['overview'] = user_formation.completed_steps.get('overview', False)
+
+        # On ajoute la clé 'modules' SEULEMENT si la formation a des chapitres
+        if self.get_has_chapters(obj):
+            completed_module_count = UserModule.objects.filter(
+                user=user,
+                module__in=obj.modules.all(),
+                completed=True
+            ).count()
+            completed_tabs['modules'] = (completed_module_count == obj.modules.count())
+
+        # On ajoute la clé 'resources' SEULEMENT si la formation a des ressources
+        if self.get_has_resources(obj):
+            read_resource_count = UserResource.objects.filter(
+                user=user,
+                resource__in=obj.ressources.all(),
+                read=True
+            ).count()
+            completed_tabs['resources'] = (read_resource_count == obj.ressources.count())
+
+        # On ajoute la clé 'quiz' SEULEMENT si la formation a un quiz
+        if self.get_has_quiz(obj):
+            completed_tabs['quiz'] = self.get_quiz_done(obj)
+
+        return completed_tabs
+
+    

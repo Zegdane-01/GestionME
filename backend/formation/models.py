@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import timedelta
 from decimal import Decimal
 import re
+from django.utils import timezone
 
 from personne.models import Personne
 
@@ -234,8 +235,16 @@ class UserFormation(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='nouvelle')
     completed_steps = models.JSONField(default=dict, blank=True)
 
+    time_spent = models.DurationField(default=timedelta(0))
+    last_accessed = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.user} - {self.formation.titre}"
+    
+    def update_last_accessed(self):
+        """Met à jour la date de dernier accès."""
+        self.last_accessed = timezone.now()
+        self.save(update_fields=['last_accessed'])
     
     def update_progress(self):
         print("✅ CHECK 5: DANS la méthode 'update_progress'.")
@@ -286,26 +295,19 @@ class UserFormation(models.Model):
         
         # Calculate progress percentage
         self.progress = int((completed_items / total_items) * 100)
-        # AJOUTEZ CES PRINTS POUR VOIR LES DÉTAILS DU CALCUL
-        print(f"    -> Détails (complétés/total):")
-        print(f"    -> Overview: {completed_overview}/{overview_item}")
-        print(f"    -> Modules: {completed_modules}/{total_modules}")
-        print(f"    -> Ressources: {completed_resources}/{total_resources}")
-        print(f"    -> Quiz: {quiz_completed}/{has_quiz}")
-        print(f"    -> TOTAL: {completed_items}/{total_items}")
+
 
         # Update status
         if self.progress == 100:
-            print(f"  -> NOUVEAU POURCENTAGE: {self.progress}%")
+
             self.status = 'terminee'
         elif self.progress > 0:
-            print(f"    -> NOUVEAU POURCENTAGE CALCULÉ : {self.progress}%")
             self.status = 'en_cours'
         else:
             self.status = 'nouvelle'
-            
+
+        
         self.save()
-        print(f"  -> NOUVELLE SAUVEGARDE EN DB : {self.progress}% | Statut : {self.status} | Étapes : {self.completed_steps}")
 
 class UserModule(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -329,12 +331,16 @@ class UserQuiz(models.Model):
     completed = models.BooleanField(default=False)
     score = models.PositiveIntegerField(default=0)
 
+    time_spent = models.DurationField(default=timedelta(0))
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+
     def __str__(self):
         return f"{self.user} - {self.quiz}"
 
 class UserAnswer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='user_answers')
     selected_options = models.ManyToManyField(Option, blank=True)
     text_response = models.TextField(blank=True, null=True)
     image_response = models.ImageField(upload_to='answers/', blank=True, null=True)

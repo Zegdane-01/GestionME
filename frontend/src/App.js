@@ -26,6 +26,7 @@ import EquipeForm from './pages/Equipe/EquipeForm.jsx';
 
 import TrainingListManager from './pages/Training/Manager/TrainingListManager.jsx';
 import TrainingForm from "./pages/Training/Manager/TrainingForm.jsx";
+import TrainingProgress from "./pages/Training/Manager/TrainingProgress.jsx";
 
 import FormationBrowser from "./pages/Training/FormationBrowser.jsx";
 
@@ -74,6 +75,9 @@ function App() {
             <Route path="/manager/trainings" element={<TrainingListManager />} />
             <Route path="/manager/trainings/add" element={<TrainingForm />} />
             <Route path="/manager/trainings/edit/:id" element={<TrainingForm />} />
+            <Route path="/manager/trainings/progress/:formationId" element={<TrainingProgress />} />
+
+            {/* Routes pour la navigation des formations */}
 
             <Route path="/formations" element={<FormationBrowser />} />
 

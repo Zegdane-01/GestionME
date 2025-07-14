@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 // Composants réutilisables du projet
 import SearchBar from '../../../components/Personne_Projet/SearchBar';
 import TrainingTable from '../../../components/Training/CRUD/TrainingTable';
-import ViewTrainingModal from '../../../components/Training/CRUD/ViewTrainingModal';
 import DeleteTrainingModal from '../../../components/Training/CRUD/DeleteTrainingModal';
 // Feuille de styles commune
 import styles from '../../../assets/styles/List.module.css';

@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Sum,Q,Avg,F, Case, When, FloatField
 from django.db.models.functions import Cast
 from django.http import FileResponse
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication  # si tu utilises SimpleJWT
 from rest_framework.authentication import SessionAuthentication
@@ -95,6 +96,97 @@ class FormationViewSet(viewsets.ModelViewSet):
         # Supprimer la formation elle-même (supprime aussi quiz/questions/options via CASCADE)
         instance.delete()
 
+
+    @action(detail=True, methods=['get'], url_path='progress',
+            permission_classes=[IsAuthenticated])
+    def progress(self, request, pk=None):
+        """
+        ?equipe_id=ID  ➜ filtre par équipe
+        ?collaborateur_id=MATR  ➜ filtre par collaborateur
+        Les deux ensembles = intersection.
+        Sans params ➜ utilisateur connecté.
+        """
+        formation = self.get_object()
+
+        equipe_id        = request.query_params.get('equipe_id')
+        collaborateur_id = request.query_params.get('collaborateur_id')
+
+        personnes = Personne.objects.all()
+
+        # — filtre par équipe (si fourni)
+        if equipe_id:
+            # get_object_or_404 lève 404 directement si non trouvée
+            equipe = get_object_or_404(Equipe, id=equipe_id)
+            personnes = personnes.filter(equipes=equipe)
+
+        # — filtre par collaborateur (si fourni)
+        if collaborateur_id:
+            personnes = personnes.filter(matricule=collaborateur_id)
+
+        # — par défaut, utilisateur courant
+        if not equipe_id and not collaborateur_id:
+            personnes = Personne.objects.filter(matricule=request.user.matricule)
+
+        # pas de résultat ➜ tableau vide
+        if not personnes.exists():
+            return Response([], status=status.HTTP_200_OK)
+
+
+        # — sérialisation
+        resp = []
+        for p in personnes.distinct():
+            ctx = {'request': request, 'user': p}
+            data = FormationProgressSerializer(formation, context=ctx).data
+            data['collaborateur'] = {
+                'id':         p.matricule,
+                'matricule':  p.matricule,
+                'full_name':  f"{p.first_name} {p.last_name}",
+            }
+            resp.append(data)
+
+        # si un seul objet et qu’on n’a PAS explicitement demandé toute l’équipe
+        if len(resp) == 1 and not (equipe_id and not collaborateur_id):
+            return Response(resp[0])
+
+        return Response(resp)
+
+    @action(detail=True, methods=['get'], url_path='filter-options', permission_classes=[IsAuthenticated])
+    def filter_options(self, request, pk=None):
+        """
+        Renvoie les listes complètes d’équipes et de collaborateurs.
+        Le front se charge ensuite de filtrer les collaborateurs
+        pour l’équipe choisie.
+        """
+        # 1. Toutes les équipes, triées
+        teams_qs = (
+            Equipe.objects
+            .all()
+            .order_by('name')
+            .values('id', 'name')
+        )
+
+        # 2. Tous les collaborateurs + première équipe
+        collaborateurs_qs = (
+            Personne.objects
+            .prefetch_related('equipes')
+            .order_by('first_name', 'last_name')
+        )
+
+        collaborateurs_data = []
+        for p in collaborateurs_qs:
+            first_team = p.equipes.first()
+            collaborateurs_data.append({
+                "matricule":  p.matricule,
+                "full_name":  f"{p.first_name} {p.last_name}",
+                "equipe_id":  first_team.id if first_team else None,
+                "mail":     p.email,
+            })
+
+        return Response({
+            "equipes":        list(teams_qs),
+            "collaborateurs": collaborateurs_data,
+        })
+
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
@@ -135,9 +227,15 @@ class QuizViewSet(viewsets.ModelViewSet):
             )
             total_score += score_for_question
 
+        time_spent_str = request.data.get('time_spent')
+        
         # 3) on marque le quiz terminé
         uq.score     = total_score
         uq.completed = True
+        uq.completed_at = timezone.now() # Date de complétion
+        if time_spent_str:
+            uq.time_spent = parse_duration(time_spent_str) # Conversion en timedelta
+        
         uq.save()
 
         return Response(
@@ -428,6 +526,9 @@ class UserFormationViewSet(viewsets.ModelViewSet):
 
         user_formation, _ = UserFormation.objects.get_or_create(user=user, formation=formation)
 
+        user_formation.last_accessed = timezone.now()
+        user_formation.save(update_fields=['last_accessed'])
+
         serializer = FormationDetailSerializer(formation, context={"request": request})
         return Response(serializer.data)
 
@@ -457,6 +558,14 @@ class UserFormationViewSet(viewsets.ModelViewSet):
                 formation=formation
             )
 
+            delta_time_seconds = data.get("updates", {}).get("delta_time")
+            if delta_time_seconds:
+                try:
+                    # On l'ajoute au temps total existant
+                    user_formation.time_spent += timedelta(seconds=int(delta_time_seconds))
+                except (TypeError, ValueError):
+                    # Ignorer si la valeur n'est pas un nombre valide
+                    pass
 
             if module_id:
                 try:
@@ -473,17 +582,16 @@ class UserFormationViewSet(viewsets.ModelViewSet):
 
                 if tab_name == 'overview':
                     user_formation.completed_steps['overview'] = True
-                    user_formation.update_progress()
                 elif tab_name == 'resources':
                     for resource in formation.ressources.all():
                         user_resource, _ = UserResource.objects.get_or_create(user=user, resource=resource)
                         user_resource.read = True
                         user_resource.save()
                     user_formation.completed_steps['resources'] = True
-                    user_formation.update_progress()
                 elif tab_name == 'quiz' and hasattr(formation, 'quiz'):
                     user_formation.completed_steps['quiz'] = True
-                    user_formation.update_progress()
+                    
+                user_formation.update_progress()
                 
                 user_formation.save()
 
@@ -525,6 +633,8 @@ class UserFormationViewSet(viewsets.ModelViewSet):
         user_formation.progress = 0
         user_formation.status = 'nouvelle'
         user_formation.completed_steps = {}
+        user_formation.last_accessed = None
+        user_formation.time_spent = timedelta(0)
         user_formation.save()
 
         # 5. Renvoyer l'état mis à jour de la formation
