@@ -198,7 +198,7 @@ class FormationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Formation
-        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time','assigned_team_count', 'assigned_person_count']
+        fields = ['id','titre', 'description', 'image_cover', 'created_by','formateur','deadline', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time','assigned_team_count', 'assigned_person_count']
     
     # petits résumés pour modules / ressources
     def get_modules(self, obj):
@@ -278,7 +278,7 @@ class FormationWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Formation
-        fields = ['id','titre', 'description', 'image_cover', 'created_by', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count']
+        fields = ['id','titre', 'description', 'image_cover', 'created_by','formateur','deadline', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count']
     
     def get_quiz(self, obj):
         try:
@@ -666,7 +666,7 @@ class FormationDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Formation
         fields = ("id", "titre", "description", "image_cover",
-                  "statut", "progress", "userFormationId",
+                  "statut","formateur","deadline", "progress", "userFormationId",
                   "modules", "ressources", "quiz", "quiz_done", "tabsCompleted","total_estimated_time")
 
     # helpers ----------------------------------------------------
@@ -878,6 +878,8 @@ class FormationProgressSerializer(serializers.ModelSerializer):
             'titre',
             'domain',
             'domain_info',
+            'formateur',
+            'deadline',
             'statut_formation',
             'tabsCompleted',
             'progression_generale',

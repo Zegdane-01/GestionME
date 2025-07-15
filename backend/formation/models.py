@@ -109,6 +109,9 @@ class Formation(models.Model):
     ressources = models.ManyToManyField(Resource, related_name='formations', blank=True, null=True)
     statut = models.CharField(max_length=10, choices=STATUS_CHOICES, default='actif')
 
+    formateur = models.CharField(max_length=100, blank=True, null=True)
+    deadline = models.DateField(blank=True, null=True)
+
     @property
     def total_estimated_time(self):
         """

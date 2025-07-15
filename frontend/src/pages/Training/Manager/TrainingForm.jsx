@@ -35,6 +35,8 @@ const TrainingForm = () => {
     domain: '',
     statut: 'inactif',
     image_cover: null,
+    formateur: '',
+    deadline: '',
     modules:    [],          // ← vide
     ressources: [],          // ← vide
     quiz:       null,        // ← null (pas encore créé)
@@ -399,7 +401,7 @@ const TrainingForm = () => {
       /* transformer en FormData */
       const fd = new FormData();
       // simples
-      ['titre','description','domain','statut'].forEach(k => fd.append(k, formData[k]));
+      ['titre','description','domain','statut','formateur','deadline'].forEach(k => fd.append(k, formData[k]));
       if(userId) fd.append('created_by', userId); // si utilisateur connecté
       if (existingCover) {
         // aucun changement : ne rien mettre dans FormData → on garde la même image
@@ -530,6 +532,7 @@ const TrainingForm = () => {
             value={formData.titre}
             onChange={handleSimpleChange}
             className={`${styles.formControl} ${getError('titre') ? styles.inputError : ''}`}
+            autoComplete="off"
           />
           {getError('titre') && <p className={styles.errorText}>{getError('titre')}</p>}
         </div>
@@ -541,10 +544,37 @@ const TrainingForm = () => {
             value={formData.description}
             onChange={handleSimpleChange}
             className={`${styles.formControl} ${getError('description') ? styles.inputError : ''}`}
+            autoComplete="off"
             rows={3}
           />
           {getError('description') && <p className={styles.errorText}>{getError('description')}</p>}
         </div>
+
+        <div className="row g-4 mb-4">
+          <div className="col-md-6">
+            <label className={styles.formLabel}>Formateur</label>
+            <input
+              name="formateur"
+              value={formData.formateur}
+              onChange={handleSimpleChange}
+              className={styles.formControl}
+              placeholder="Nom du formateur"
+              autoComplete="off"
+            />
+          </div>
+          <div className="col-md-6">
+            <label className={styles.formLabel}>Date limite</label>
+            <input
+              type="date"
+              name="deadline"
+              value={formData.deadline}
+              onChange={handleSimpleChange}
+              className={styles.formControl}
+            />
+          </div>
+        </div>
+
+        
 
         <div className="row g-4 mb-4">
           <div className="col-md-6">
@@ -569,8 +599,8 @@ const TrainingForm = () => {
               onChange={handleSimpleChange}
               className={styles.formControl}
             >
-              <option value="actif">Actif</option>
-              <option value="inactif">Inactif</option>
+              <option value="actif">Disponible</option>
+              <option value="inactif">Archivée</option>
             </select>
           </div>
         </div>
@@ -622,6 +652,7 @@ const TrainingForm = () => {
                     value={m.titre}
                     onChange={e => handleModuleChange(idx, 'titre', e.target.value)}
                     className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                    autoComplete="off"
                   />
                   </div>
                 </div>
@@ -637,6 +668,7 @@ const TrainingForm = () => {
                     accept="video/*"
                     onChange={e => handleModuleChange(idx, 'video', e.target.files[0])}
                     className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                    autoComplete="off"
                   />
                   </div>
                 </div>
@@ -646,12 +678,13 @@ const TrainingForm = () => {
                   <div className="col-12 mt-2">
                     <label htmlFor={`module-${idx}-description`} className={styles.formLabel}>Description<span className="text-danger">*</span></label>
                     <textarea
-                    id={`mod-${idx}-desc`}
-                    value={m.description}
-                    onChange={e => handleModuleChange(idx, 'description', e.target.value)}
-                    className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
-                    rows={2}
-                  />
+                      id={`mod-${idx}-desc`}
+                      value={m.description}
+                      onChange={e => handleModuleChange(idx, 'description', e.target.value)}
+                      className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                      rows={2}
+                      autoComplete="off"
+                    />
                   </div>
                 </div>
 
@@ -659,12 +692,13 @@ const TrainingForm = () => {
 
                   <div className="col-md-4">
                     <label htmlFor={`module-${idx}-time`} className={styles.formLabel}>Temps estimé (HH:MM:SS)<span className="text-danger">*</span></label>
-                    <input
-                    id={`mod-${idx}-time`}
-                    value={m.estimated_time}
-                    onChange={e => handleModuleChange(idx, 'estimated_time', e.target.value)}
-                    className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
-                  />
+                      <input
+                      id={`mod-${idx}-time`}
+                      value={m.estimated_time}
+                      onChange={e => handleModuleChange(idx, 'estimated_time', e.target.value)}
+                      className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                      autoComplete="off"
+                    />
                   </div>
                 </div>
                 {modErr && <p className={styles.errorText}>{modErr}</p>}
@@ -680,7 +714,7 @@ const TrainingForm = () => {
 
         {/* ----------------- Ressources --------------- */}
         <h4 className="mt-5 d-flex align-items-center">
-          Ressources
+          Supports
           {!showResources && (
             <button type="button" className="btn btn-sm btn-primary ms-3"
                     onClick={() => { setShowResources(true); addResource(); }}>
@@ -697,13 +731,14 @@ const TrainingForm = () => {
                 <div key={idx} className="border p-3 mb-3 rounded">
                   <div className="row g-2">
                     <div className="col-md-12">
-                      <label htmlFor={`res-${idx}-name`} className={styles.formLabel}>Nom ressource<span className="text-danger">*</span></label>
+                      <label htmlFor={`res-${idx}-name`} className={styles.formLabel}>Nom support<span className="text-danger">*</span></label>
                       <input
                         id={`res-${idx}-name`}
-                        placeholder="Nom ressource"
+                        placeholder="Nom support"
                         value={r.name}
                         onChange={e => handleResourceChange(idx, 'name', e.target.value)}
                         className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                        autoComplete="off"
                       />
                     </div>
                   </div>
@@ -775,6 +810,7 @@ const TrainingForm = () => {
                         className={styles.formControl + ' mb-2'}
                         value={searchEquipe}
                         onChange={e => setSearchEquipe(e.target.value.toLowerCase())}
+                        autoComplete="off"
                       />
 
                       {/* Grille de cases à cocher */}
@@ -806,12 +842,12 @@ const TrainingForm = () => {
                   )}
                   {ressErr && <p className={styles.errorText}>{ressErr}</p>}
                   <button type="button" className="btn btn-sm btn-danger mt-2" onClick={() => removeResource(idx)}>
-                    Supprimer ressource
+                    Supprimer support
                   </button>
                 </div>
                 );
               })}
-              <button type="button" className="btn btn-primary mb-4" onClick={addResource}>+ Ressource</button>
+              <button type="button" className="btn btn-primary mb-4" onClick={addResource}>+ Support</button>
             </>
           )}
 
@@ -853,6 +889,7 @@ const TrainingForm = () => {
                   value={q.texte}
                   onChange={e => handleQuestionChange(qIdx,'texte',e.target.value)}
                   className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                  autoComplete="off"
                 />
               </div>
               <div className="row g-2 mt-2 mb-4">
@@ -878,6 +915,7 @@ const TrainingForm = () => {
                     onChange={e => handleQuestionChange(qIdx,'point',e.target.value)}
                     className={styles.formControl}
                     min={1}
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -894,6 +932,7 @@ const TrainingForm = () => {
                         onChange={e => handleOptionChange(qIdx, oIdx, 'texte', e.target.value)}
                         className={`${styles.formControl} ${hasErr ? styles.inputError : ''} me-2`}
                         style={{ flex: 1 }}
+                        autoComplete="off"
                       />
                       <input
                         type={(q.type === 'single_choice') ? 'radio' : 'checkbox'}
@@ -958,6 +997,7 @@ const TrainingForm = () => {
                             )
                           }
                           className={`${styles.formControl} ${hasErr ? styles.inputError : ''}`}
+                          autoComplete="off"
                         />
                       </div>
                     

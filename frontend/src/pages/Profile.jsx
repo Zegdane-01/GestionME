@@ -332,7 +332,7 @@ const handleSave = () => {
               {renderInputDisabled('role','Rôle','text')}
               {renderInputDisabled('position', 'Position', 'text')}
               <div className="col-md-6 mb-3">
-                <label htmlFor="equipe" className="form-label">Équipe</label>
+                <label htmlFor="equipe" className="form-label">Activité</label>
                 <div className="input-group">
                   <input
                     type="text"

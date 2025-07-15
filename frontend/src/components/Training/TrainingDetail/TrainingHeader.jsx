@@ -5,6 +5,8 @@ import {
   FileText,
   Trophy,
   ChevronLeft,
+  User,
+  Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProgressBar from "../Shared/ProgressBar";
@@ -41,6 +43,8 @@ const TrainingHeader = ({ training = {} }) => {
     quiz = null,
     progress = 0,
     total_estimated_time = "00:00:00",
+    formateur = "",
+    deadline = null,
   } = training;
 
   const s = statusMap[statut] ?? statusMap.nouvelle;
@@ -76,26 +80,43 @@ const TrainingHeader = ({ training = {} }) => {
         {/* On affiche la durée seulement si elle est supérieure à 0 */}
         {totalMinutes > 0 && (
           <span>
-            <Clock3 size={14} className="me-1" /> {hours > 0 && `${hours} h `}{minutes > 0 && `${minutes} min`}
+            <Clock3 size={20} className="me-1" /> {hours > 0 && `${hours} h `}{minutes > 0 && `${minutes} min`}
           </span>
         )}
         <span>
           {/* On utilise 'modules.length' */}
-          <Play size={14} className="me-1" /> {modules.length} module
+          <Play size={20} className="me-1" /> {modules.length} module
           {modules.length > 1 && "s"}
         </span>
         {ressources.length > 0 && (
           <span>
             {/* On utilise 'ressources.length' */}
-            <FileText size={14} className="me-1" /> {ressources.length} Support
+            <FileText size={20} className="me-1" /> {ressources.length} Support
             {ressources.length > 1 && "s"}
           </span>
         )}
         {quiz && (
           <span>
-            <Trophy size={14} className="me-1 text-warning" /> Quiz final
+            <Trophy size={20} className="me-1 text-warning" /> Quiz final
           </span>
         )}
+        {formateur && (
+          <span>
+            <User size={20} className="me-1" />{formateur}
+          </span>
+        )}
+        {deadline && (
+          <span
+            style={{
+              backgroundColor: new Date(deadline) < new Date() ? '#ffdddd' : 'transparent',
+              padding: '2px 6px',
+              borderRadius: '4px'
+            }}
+          >
+            <Calendar size={20} className="me-1" /> Date limite : {new Date(deadline).toLocaleDateString('fr-FR')}
+          </span>
+        )}
+        
         <span className="ms-auto fw-bold">{progress}%</span>
       </div>
 

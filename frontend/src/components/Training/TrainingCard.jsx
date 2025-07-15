@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Clock3,
   User,
+  Calendar,
   BookOpen,
   FileText,
   Trophy,
@@ -118,37 +119,53 @@ const TrainingCard = ({ training, onUpdate }) => {
           {training.description || "Aucune description disponible"}
         </p>
 
-        {/* Méta 1 : durée & auteur */}
-        <div className="d-flex gap-3 small mb-1">
+        {/* Méta 1 : durée, formateur et deadline */}
+        <div className="d-flex flex-wrap gap-3 small mb-2">
           {formattedDuration && (
             <span>
               <Clock3 size={14} className="me-1" />
               {formattedDuration}
             </span>
           )}
-          {training.created_by && (
+          {training.formateur && (
             <span>
-              <User size={14} className="me-1" />
-              {training.created_by_info?.first_name || "__"}{" "}
-              {training.created_by_info?.last_name || "__"}
+              <User size={14} className="me-1 text-info" />
+              Formateur : <strong>{training.formateur}</strong>
+            </span>
+          )}
+          {training.deadline && (
+            <span
+              style={{
+                backgroundColor: new Date(training.deadline) < new Date() ? '#ffdddd' : '#eef6ff',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <Calendar size={14} className="me-1 text-danger" />
+              Limite : {new Date(training.deadline).toLocaleDateString('fr-FR')}
             </span>
           )}
         </div>
 
         {/* Méta 2 : modules, ressources, quiz */}
-        <div className="d-flex gap-3 small align-items-center mb-3">
-          <span>
-            <BookOpen size={14} className="me-1 text-primary" />
-            {chaptersCount} module{chaptersCount > 1 && "s"}
+        <div className="d-flex flex-wrap gap-2 small align-items-center mb-3">
+          <span className="badge bg-primary d-flex align-items-center">
+            <BookOpen size={14} className="me-1" />
+            <strong>{training.module_count}</strong> &nbsp;module{training.module_count > 1 ? 's' : ''}
           </span>
-          {ressourcesCount > 0 && (
-            <span>
-              <FileText size={14} className="me-1 text-success" />
-              {ressourcesCount} ressource{ressourcesCount > 1 && "s"}
-            </span>
-          )}
-          {training.quiz && <Trophy size={14} className="text-warning" title="Quiz" />}
+
+          <span className="badge bg-primary d-flex align-items-center">
+            <FileText size={14} className="me-1" />
+            <strong>{training.resource_count}</strong> &nbsp;ressource{training.resource_count > 1 ? 's' : ''}
+          </span>
+
+          <span className={`badge ${training.has_quiz ? "bg-success" : "bg-secondary"}`}>
+            {training.has_quiz ? "✔ Quiz présent" : "✖ Aucun quiz"}
+          </span>
         </div>
+
 
         {/* Progression */}
         {statut !== "nouvelle" && (
