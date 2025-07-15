@@ -14,7 +14,7 @@ const ViewEquipeModal = ({ show, onHide, equipe }) => {
     >
       <Modal.Header closeButton className={styles.modalHeader}>
         <Modal.Title>
-          Équipe
+          Activité
         </Modal.Title>
       </Modal.Header>
       <Modal.Body className={styles.modalBody}>

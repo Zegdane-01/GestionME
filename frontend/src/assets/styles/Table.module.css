@@ -248,3 +248,14 @@
   border-color: var(--expleo-blue);
   font-weight: bold;
 }
+
+.deadlinePassed span{
+  padding: 4px 4px;
+  border-radius: 8px;
+  background-color: #ffe0e0;
+  color: #a80000;
+  font-weight: bold;
+}
+
+
+

@@ -1,0 +1,88 @@
+/* Table.module.css */
+
+/* Pour l'en-tête de colonne avec filtre */
+.thWithFilter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px; /* Ajoute un peu d'espace */
+}
+
+/* Conteneur pour le bouton de filtre */
+.filterWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* Bouton du filtre avec transition */
+.filterButton {
+  background: none;
+  border: 1px solid transparent; /* Bordure transparente pour garder la taille stable */
+  color: #6b778c; /* Couleur grise par défaut */
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  line-height: 1; /* Assure que l'icône est bien centrée */
+}
+
+.filterButton:hover {
+  background-color: #e9ecef;
+  color: #172b4d;
+}
+
+/* NOUVEAU : Style pour le bouton quand un filtre est actif */
+.filterButtonActive {
+  background-color: #eef6ff; /* Fond bleu clair */
+  color: #0052cc; /* Couleur bleue vive */
+}
+
+/* La liste déroulante avec une animation subtile */
+.filterDropdown {
+  position: absolute;
+  top: calc(100% + 4px); /* Léger espace par rapport au bouton */
+  right: 0;
+  background-color: #3a2862;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  padding: 8px;
+  z-index: 10;
+  min-width: 250px;
+  max-height: 250px;
+  overflow-y: auto;
+  /* Animation d'apparition */
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* Ligne de la checklist avec une meilleure ergonomie */
+.checkItem {
+  display: flex; /* Utilise flexbox pour un meilleur alignement */
+  align-items: start;
+  gap: 8px; /* Espace entre la case et le texte */
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.1s ease;
+  user-select: none; /* Empêche la sélection du texte au clic */
+}
+
+.checkItem:hover {
+  background-color: #343d72;
+}
+
+.checkItem input {
+  cursor: pointer;
+}
+
+/* Animation simple */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
