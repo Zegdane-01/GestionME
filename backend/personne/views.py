@@ -186,9 +186,7 @@ class ImportChargePlanView(APIView):
             donnees_projet = {
                 'ordre_travail': str(row.get("WO", "")).strip(),
                 'sop': sop_value,
-                'cbu': 'ME',
                 'final_client': str(row.get("Client",client_final)),
-                'statut': "In Progress",
             }
             # Gestion de la date
             
