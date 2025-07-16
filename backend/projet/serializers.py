@@ -19,7 +19,6 @@ class ProjetSerializer(serializers.ModelSerializer):
             'nom',
             'code',
             'ordre_travail',
-            'direct_client',
             'final_client',
             'sop',
             'ibu',
