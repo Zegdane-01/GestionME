@@ -350,3 +350,25 @@ class UserAnswer(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.question.texte[:30]}"
+
+class UserQuizHistory(models.Model):
+    """
+    Archive les tentatives de quiz d'un utilisateur pour une formation avant une réinitialisation.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='quiz_history')
+    formation = models.ForeignKey(Formation, on_delete=models.CASCADE, related_name='quiz_history')
+    score = models.PositiveIntegerField()
+    completed_at = models.DateTimeField()
+    time_spent = models.DurationField()
+    archived_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-archived_at', '-completed_at']
+        verbose_name = "Historique de Quiz Utilisateur"
+        verbose_name_plural = "Historiques de Quiz Utilisateur"
+
+    def __str__(self):
+        # Utiliser strftime pour un formatage propre de la date
+        formatted_date = self.completed_at.strftime('%d/%m/%Y %H:%M') if self.completed_at else 'N/A'
+        return f"Archive : {self.user} - {self.formation.titre} (Passé le {formatted_date})"
+

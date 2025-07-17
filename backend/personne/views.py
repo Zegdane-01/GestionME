@@ -9,8 +9,10 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.http import FileResponse
 import pandas as pd
-from .models import Personne
+import os
+from .models import Personne, ImportedExcel
 from projet.models import Projet 
 from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
@@ -120,6 +122,17 @@ class ImportChargePlanView(APIView):
     def post(self, request, format=None):
         POSITIONS_VALIDES = {'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'}
         file = request.FILES.get('file')
+
+        last_import = ImportedExcel.objects.first()
+        if last_import:
+            if last_import.fichier and os.path.isfile(last_import.fichier.path):
+                os.remove(last_import.fichier.path)
+            last_import.delete()
+
+        # Enregistrer le nouveau fichier
+        imported_file = ImportedExcel.objects.create(fichier=file)
+
+
         sheetName = request.POST.get('sheet_name') or 'Plan de charge ME 2025'
         if not file:
             return Response({'error': 'Aucun fichier reçu'}, status=400)
@@ -173,9 +186,7 @@ class ImportChargePlanView(APIView):
             donnees_projet = {
                 'ordre_travail': str(row.get("WO", "")).strip(),
                 'sop': sop_value,
-                'cbu': 'ME',
-                'direct_client': str(row.get("Client",client_final)),
-                'statut': str(row.get("Statut", "In Progress")).strip()
+                'final_client': str(row.get("Client",client_final)),
             }
             # Gestion de la date
             
@@ -187,7 +198,7 @@ class ImportChargePlanView(APIView):
                     donnees_projet['date_demarrage'] = date_dt.date()
 
             # 3. Chercher les projets existants avec notre clé composite
-            projets_existants = Projet.objects.filter(nom=nom_projet, final_client=client_final)
+            projets_existants = Projet.objects.filter(nom=nom_projet)
 
             if projets_existants.count() == 1:
                 # CAS 1 : Un seul projet trouvé. On le met à jour.
@@ -370,5 +381,11 @@ class ImportChargePlanView(APIView):
             }
         }, status=200)
     
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_last_imported_file(request):
+    latest = ImportedExcel.objects.order_by('-importé_le').first()
+    if not latest or not latest.fichier:
+        return Response({'error': 'Aucun fichier disponible'}, status=404)
+    return FileResponse(open(latest.fichier.path, 'rb'), as_attachment=True, filename=latest.fichier.name)
     

@@ -11,7 +11,7 @@ import api from '../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { FileSpreadsheet } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
 
 const PersonList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,14 +107,42 @@ const PersonList = () => {
     navigate('/collaborateurs/add');
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      const response = await api.get('/personne/download-latest-excel/', {
+        responseType: 'blob', // pour gérer le fichier binaire
+      });
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+
+      // Nom de fichier depuis le backend ou fallback
+      const filename = response.headers['content-disposition']
+        ?.split('filename=')[1]?.replace(/"/g, '') || 'dernier_plan_de_charge.xlsx';
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      toast.error("Aucun fichier disponible à télécharger.");
+    }
+  };
+
   return (
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
         <h1 className={styles.dashboardTitle}>Collaborateurs</h1>
         <div className="d-flex flex-column flex-sm-row gap-2 mt-3 mt-md-0">
           <button className={styles.addButton} onClick={() => setShowModal(true)}>
-            <FileSpreadsheet className={styles.addIcon}/>
-            <span>Importer un fichier Excel</span>
+            <Upload className={styles.addIcon}/>
+            <span>Importer le Plan de Charge</span>
+          </button>
+          <button className={styles.addButton} onClick={handleDownloadExcel}>
+            <Download className={styles.addIcon} />
+            <span>Télécharger le Plan de Charge</span>
           </button>
           <button className={styles.addButton} onClick={handleAdd}>
             <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />

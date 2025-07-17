@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { Info } from 'lucide-react';
 import api from "../../api/api";
 import styles from '../../assets/styles/Form.module.css';
 
@@ -15,7 +16,6 @@ const ProjetForm = () => {
     nom: '',
     code: '',
     ordre_travail: '',
-    direct_client: '',
     final_client: '',
     sop: '',
     ibu: '',
@@ -36,7 +36,6 @@ const ProjetForm = () => {
     const newErrors = {};
     if (!formData.nom) newErrors.nom = "Le nom du projet est requis.";
 
-    if (!formData.direct_client) newErrors.direct_client = "Le client direct est requis.";
     if (!formData.final_client) newErrors.final_client = "Le client final est requis.";
     if (!formData.cbu) newErrors.cbu = "Le cbu est requis.";
     if (!formData.sop) newErrors.sop = "Le SOP est requis.";
@@ -144,6 +143,14 @@ const ProjetForm = () => {
       </h1>
 
       <form onSubmit={handleSubmit} className={styles.projetFormCard}>
+        {isEditMode && (
+          <div className={styles.infoMessage}>
+            <Info size={18} className={styles.infoIcon} />
+            <span>
+              Les champs grisés ne peuvent être modifiés qu'en réimportant le plan de charge Excel.
+            </span>
+          </div>
+        )}
 
         <div className="row g-4 mb-4"> 
           
@@ -156,7 +163,8 @@ const ProjetForm = () => {
                 name="nom"
                 value={formData.nom}
                 onChange={handleChange}
-                className={`${styles.formControl} ${errors.nom ? styles.inputError : ''}`}
+                className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.nom ? styles.inputError : ''}`}
+                disabled={isEditMode}
               />
               {errors.nom && <p className={styles.errorText}>{errors.nom}</p>}
             </div>
@@ -184,25 +192,13 @@ const ProjetForm = () => {
                 name="ordre_travail"
                 value={formData.ordre_travail}
                 onChange={handleChange}
-                className={styles.formControl}
+                className={isEditMode? styles.disableFormControl : styles.formControl} 
+                disabled={isEditMode}
               />
             </div>
           </div>
 
-          <div className="col-md-6">
-            <div className={styles.formGroup}>
-              <label htmlFor="direct_client" className={styles.formLabel}>Client direct<span className="text-danger"> *</span></label>
-              <input
-                type="text"
-                id="direct_client"
-                name="direct_client"
-                value={formData.direct_client}
-                onChange={handleChange}
-                className={`${styles.formControl} ${errors.direct_client ? styles.inputError : ''}`}
-              />
-              {errors.direct_client && <p className={styles.errorText}>{errors.direct_client}</p>}
-            </div>
-          </div>
+
           <div className="col-md-6">
             <div className={styles.formGroup}>
               <label htmlFor="final_client" className={styles.formLabel}>Client final<span className="text-danger"> *</span></label>
@@ -212,11 +208,30 @@ const ProjetForm = () => {
                 name="final_client"
                 value={formData.final_client}
                 onChange={handleChange}
-                className={`${styles.formControl} ${errors.final_client ? styles.inputError : ''}`}
+                className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.final_client ? styles.inputError : ''}`}
+                disabled={isEditMode}
               />
               {errors.final_client && <p className={styles.errorText}>{errors.final_client}</p>}
             </div>
           </div>
+          
+
+          <div className="col-md-6">
+            <div className={styles.formGroup}>
+              <label htmlFor="date_demarrage" className={styles.formLabel}>Date de démarrage<span className="text-danger"> *</span></label>
+              <input
+                type="date"
+                id="date_demarrage"
+                name="date_demarrage"
+                value={formData.date_demarrage}
+                onChange={handleChange}
+                className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.date_demarrage ? styles.inputError : ''}`}
+                disabled={isEditMode}
+              />
+              {errors.date_demarrage && <p className={styles.errorText}>{errors.date_demarrage}</p>}
+            </div>
+          </div>
+          
         </div>
 
         
@@ -293,24 +308,6 @@ const ProjetForm = () => {
         </div>
 
         <div className="row g-4 mb-4">
-          <div className="col">
-            <div className={styles.formGroup}>
-              <label htmlFor="date_demarrage" className={styles.formLabel}>Date de démarrage<span className="text-danger"> *</span></label>
-              <input
-                type="date"
-                id="date_demarrage"
-                name="date_demarrage"
-                value={formData.date_demarrage}
-                onChange={handleChange}
-                className={`${styles.formControl} ${errors.date_demarrage ? styles.inputError : ''}`}
-              />
-              {errors.date_demarrage && <p className={styles.errorText}>{errors.date_demarrage}</p>}
-            </div>
-          </div>
-          
-        </div>
-
-        <div className="row g-4 mb-4">
           
           <div className="col-md-6">
             <div className={styles.formGroup}>
@@ -320,7 +317,8 @@ const ProjetForm = () => {
                 name="sop"
                 value={formData.sop}
                 onChange={handleChange}
-                className={`${styles.formControl} ${errors.sop ? styles.inputError : ''}`}
+                className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.sop ? styles.inputError : ''}`}
+                disabled={isEditMode}
               >
                 <option value="">-- Sélectionner --</option>
                 <option value="Interne">Interne</option>

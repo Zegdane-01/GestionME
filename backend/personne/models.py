@@ -157,4 +157,12 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         
         super(Personne, self).save(*args, **kwargs)
 
-        
+
+
+class ImportedExcel(models.Model):
+    fichier = models.FileField(upload_to='excels/')
+    importé_le = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Fichier importé le {self.importé_le.strftime('%Y-%m-%d %H:%M:%S')}"
+

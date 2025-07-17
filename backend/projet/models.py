@@ -8,7 +8,6 @@ class Projet(models.Model):
     nom               = models.CharField(max_length=255) # *Nom de projet
     code              = models.CharField(max_length=50, unique=True, blank=True, null=True) # *Code projet
     ordre_travail     = models.CharField(max_length=50, blank=True, null=True) # Ordre de travail (facultatif)
-    direct_client     = models.CharField(max_length=255) # *Direct Client
     final_client      = models.CharField(max_length=255)  # *Final Client
 
     SOP_CHOICES = [

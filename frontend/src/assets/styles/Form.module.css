@@ -49,6 +49,21 @@
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   appearance: none; /* Remove default styling for select/textarea */
 }
+.disableFormControl{
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem; /* More padding for a taller input */
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #d8d8d8; /* Lighter background for inputs */
+  background-clip: padding-box;
+  border: 1px solid #ced4da; /* Standard border */
+  border-radius: 8px; /* More rounded input fields */
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  appearance: none; /* Remove default styling for select/textarea */
+}
 
 .formControl:focus {
   color: #495057;
@@ -255,6 +270,23 @@
 }
 .assignedItemRow:last-child {
   margin-bottom: 0;
+}
+
+.infoMessage {
+  display: flex;
+  align-items: center;
+  background-color: #eef6ff; /* Fond bleu clair */
+  color: #1e40af; /* Texte bleu foncé */
+  border: 1px solid #90cdf4; /* Bordure bleue */
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+}
+
+.infoIcon {
+  margin-right: 12px;
+  flex-shrink: 0; /* Empêche l'icône de se rétrécir */
 }
 
 

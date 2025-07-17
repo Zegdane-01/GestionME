@@ -30,9 +30,8 @@ const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
         <thead>
           <tr>
             <th>Nom</th>
-            <th>Code</th>
+            <th>Ordre de travail</th>
             <th>Chef de projet</th>
-            <th>Client direct</th>
             <th>Client final</th>
             <th>SOP</th>
             <th>Date de démarrage</th>
@@ -47,9 +46,8 @@ const ProjetTable = ({ projets, onView, onEdit, onDelete }) => {
             currentProjets.map(projet => (
               <tr key={projet.projet_id} className={styles.dataRow}>
                 <td className={styles.nomCell}>{projet.nom}</td>
-                <td>{projet.code}</td>
+                <td>{projet.ordre_travail}</td>
                 <td>{projet.chef_de_projet}</td>
-                <td>{projet.direct_client}</td>
                 <td>{projet.final_client}</td>
                 <td>
                   <span className={`${styles.sopBadge} ${styles[`sop${projet.sop.replace(/\s+/g, '')}`]}`}>

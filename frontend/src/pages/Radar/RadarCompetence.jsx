@@ -442,34 +442,40 @@ const RadarCompetence = () => {
       </div>
       {/* FILTERS */}
       { role === "TeamLead" && (
-        <div className="card shadow-sm mb-4 p-4">
-          <div className="card-body">
-            <h5 className="card-title mb-3">Filtres</h5>
-            <div className="row g-3">
-              <div className="col-md-4">
-                <label className="form-label">Projet</label>
-                <select className="form-select" value={selectedProjet} onChange={e => setSelectedProjet(e.target.value)}>
-                  <option value="">Tous</option>
-                  {filteredProjets.map(p=>(<option key={p.projet_id} value={p.projet_id}>{p.nom}</option>))}
-                </select>
-              </div>
-              <div className="col-md-4">
-                <label className="form-label">Équipe</label>
-                <select className="form-select" value={selectedEquipe} onChange={e => setSelectedEquipe(e.target.value)}>
-                  <option value="">Toutes</option>
-                  {filteredEquipes.map(eq=>(<option key={eq.id} value={eq.id}>{eq.name}</option>))}
-                </select>
-              </div>
-              <div className="col-md-4">
-                <label className="form-label">Collaborateur</label>
-                <select className="form-select" value={selectedUser} onChange={e => setSelectedUser(e.target.value)}>
-                  <option value="">Tous</option>
-                  {filteredUsers.map(u=>(<option key={u.matricule} value={u.matricule}>{u.first_name} {u.last_name}</option>))}
-                </select>
+        <>
+          <div className="card shadow-sm mb-4 p-4">
+            <div className="card-body">
+              <h5 className="card-title mb-3">Filtres</h5>
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <label className="form-label">Projet</label>
+                  <select className="form-select" value={selectedProjet} onChange={e => setSelectedProjet(e.target.value)}>
+                    <option value="">Tous</option>
+                    {filteredProjets.map(p=>(<option key={p.projet_id} value={p.projet_id}>{p.nom}</option>))}
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Équipe</label>
+                  <select className="form-select" value={selectedEquipe} onChange={e => setSelectedEquipe(e.target.value)}>
+                    <option value="">Toutes</option>
+                    {filteredEquipes.map(eq=>(<option key={eq.id} value={eq.id}>{eq.name}</option>))}
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">Collaborateur</label>
+                  <select className="form-select" value={selectedUser} onChange={e => setSelectedUser(e.target.value)}>
+                    <option value="">Tous</option>
+                    {filteredUsers.map(u=>(<option key={u.matricule} value={u.matricule}>{u.first_name} {u.last_name}</option>))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+          <div className="btn-group mb-4">
+            <button className={`btn ${viewMode==='radar'?'btn-primary':'btn-outline-secondary'}`} onClick={()=>setViewMode('radar')}><BarChart3 size={16}/> Vue Radar</button>
+            <button className={`btn ${viewMode==='table'?'btn-primary':'btn-outline-secondary'}`} onClick={()=>setViewMode('table')}><Table2 size={16}/> Vue Tableau</button>
+          </div>
+        </>
       )}
       {role === "COLLABORATEUR" && (
         <div className="mb-4 d-flex flex-wrap gap-3">
@@ -492,6 +498,7 @@ const RadarCompetence = () => {
           </div>
         </div>
       )}
+
         {viewMode === 'radar' ? (
           <>
             <div className="row g-4 mb-4">

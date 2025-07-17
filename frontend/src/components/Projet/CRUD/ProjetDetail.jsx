@@ -28,7 +28,6 @@ const ProjetDetail = ({ projet }) => {
         <span className={styles.projetCode}>{projet.code}</span>
       </div>
       <FieldRow label="Ordre de travail" value={projet.ordre_travail} icon="clipboard-check" />
-      <FieldRow label="Client direct" value={projet.direct_client} icon="building" />
       <FieldRow label="Client final" value={projet.final_client} icon="building-fill" />
       <FieldRow
         label="SOP"

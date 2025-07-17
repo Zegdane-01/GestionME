@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from "../api/api";
+import { Info } from 'lucide-react';
 import styles from '../../src/assets/styles/Form.module.css'
 const PersonForm = () => {
   const params = useParams();
@@ -263,7 +264,30 @@ const PersonForm = () => {
       </h1>
 
       <form onSubmit={handleSubmit} className={styles.projetFormCard}>
+        {isEditMode && (
+          <div className={styles.infoMessage}>
+            <Info size={18} className={styles.infoIcon} />
+            <span>
+              Les champs grisés ne peuvent être modifiés qu'en réimportant le plan de charge Excel.
+            </span>
+          </div>
+        )}
+        <div className="row g-4 mb-4"> 
 
+          <div className="col-md-6 flex items-center">
+            <div className={`${styles.formGroup}} form-check form-switch`}>
+              <input
+                type="checkbox"
+                name="is_active"
+                checked={formData.is_active}
+                onChange={handleChange}
+                class="form-check-input"
+                id="is_active"
+              />
+              <label htmlFor="is_active" class="text-gray-700 form-check-label">Compte actif</label>
+             </div>
+          </div>
+        </div>
         <div className="row g-4 mb-4"> 
             
           <div className="col-md-6">
@@ -274,7 +298,7 @@ const PersonForm = () => {
                 name="matricule"
                 value={formData.matricule}
                 onChange={handleChange}
-                className={`${styles.formControl} ${errors.matricule ? styles.inputError : ''}`}
+                className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.matricule ? styles.inputError : ''}`}
                 autoComplete="off" 
                 disabled={isEditMode}
               />
@@ -376,8 +400,9 @@ const PersonForm = () => {
                   name="dt_Embauche"
                   value={formData.dt_Embauche}
                   onChange={handleChange}
-                  className={`${styles.formControl} ${errors.dt_Embauche ? styles.inputError : ''}`}
+                  className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.dt_Embauche ? styles.inputError : ''}`}
                   autoComplete="off" 
+                  disabled={isEditMode}
                 />
                 {errors.dt_Embauche && <p className={styles.errorText}>{errors.dt_Embauche}</p>}
               </div>
@@ -443,7 +468,8 @@ const PersonForm = () => {
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className={`${styles.formControl} ${errors.status ? styles.inputError : ''}`}
+                  className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.status ? styles.inputError : ''}`}
+                  disabled={isEditMode}
                 >
                   <option value="">-- Choisir le statut --</option>
                   <option value="En cours">En cours</option>
@@ -464,7 +490,8 @@ const PersonForm = () => {
                   name="position"
                   value={formData.position}
                   onChange={handleChange}
-                  className={`${styles.formControl} ${errors.position ? styles.inputError : ''}`}
+                  className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.position ? styles.inputError : ''}`}
+                  disabled={isEditMode}
                 >
                   <option value="">-- Choisir une position --</option>
                   {['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6'].map(pos => (
@@ -495,9 +522,10 @@ const PersonForm = () => {
                 onBlur={handleProfileBlur}
                 placeholder="Commencez à taper pour rechercher..."
                 autoComplete="off" 
-                className={styles.formControl}
-                value={profileSearch}
+                className={isEditMode? styles.disableFormControl : styles.formControl} 
+                value={formData?.profile || profileSearch}
                 onChange={handleChange}
+                disabled={isEditMode}
               />
               {profileResults.length > 0 && (
                 <div className={styles.searchResults}
@@ -534,7 +562,8 @@ const PersonForm = () => {
                   name="manager"
                   value={formData.manager || ''}
                   onChange={handleSelectChange}
-                  className={styles.formControl}
+                  className={isEditMode? styles.disableFormControl : styles.formControl} 
+                  disabled={isEditMode}
                 >
                   <option value="">Aucun manager</option>
                   {managers.map(manager => (
@@ -576,7 +605,8 @@ const PersonForm = () => {
                 name="projet"
                 value={formData.projet || ''}
                 onChange={handleSelectChange}
-                className={styles.formControl}
+                className={isEditMode? styles.disableFormControl : styles.formControl} 
+                disabled={isEditMode}
               >
                 <option value="">Aucun projet</option>
                 {projets.map(projet => (
@@ -689,22 +719,7 @@ const PersonForm = () => {
 
         </div>
 
-        <div className="row g-4 mb-4"> 
-
-          <div className="col-md-6 flex items-center">
-            <div className={`${styles.formGroup}} form-check form-switch`}>
-              <input
-                type="checkbox"
-                name="is_active"
-                checked={formData.is_active}
-                onChange={handleChange}
-                class="form-check-input"
-                id="is_active"
-              />
-              <label htmlFor="is_active" class="text-gray-700 form-check-label">Compte actif</label>
-             </div>
-          </div>
-        </div>
+        
 
         <div className={`${styles.buttonGroup} d-flex justify-content-end`}> 
           <button

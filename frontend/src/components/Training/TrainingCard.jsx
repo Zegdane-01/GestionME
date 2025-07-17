@@ -13,6 +13,7 @@ import {
 import { toast } from "react-hot-toast";
 import api from "../../api/api";
 import styles from "../../assets/styles/Training/TrainingCard.module.css";
+import ConfirmationModal from './ConfirmationModal';
 
 /* ------------------------------------------------------------- */
 /*  Mapping statut  → libellé + couleur                          */
@@ -47,6 +48,7 @@ const formatDuration = (durationString) => {
 /* ------------------------------------------------------------- */
 const TrainingCard = ({ training, onUpdate }) => {
   const navigate = useNavigate();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
 
   const { statut, progress = 0, userFormationId } = training; // progress = 0 par défaut
@@ -56,12 +58,13 @@ const TrainingCard = ({ training, onUpdate }) => {
   const cta =
     statut === "terminee" ? "Revoir" : statut === "nouvelle" ? "Commencer" : "Continuer";
 
-  const handleRestart = async (e) => {
-    e.stopPropagation(); // Empêche la navigation en cliquant sur la carte
-
-    if (!window.confirm("Êtes-vous sûr de vouloir recommencer cette formation ? Toute votre progression sera perdue.")) {
-      return;
-    }
+  const handleRestart = (e) => {
+    e.stopPropagation();
+    setShowConfirmModal(true);
+  };
+  const executeRestart = async () => {
+    // On ferme la modale d'abord
+    setShowConfirmModal(false);
 
     if (!userFormationId) {
       toast.error("Impossible de réinitialiser : ID de suivi manquant.");
@@ -72,7 +75,6 @@ const TrainingCard = ({ training, onUpdate }) => {
     try {
       const response = await api.post(`/user-formations/${userFormationId}/restart/`);
       toast.success("La formation a été réinitialisée !");
-      // On notifie le composant parent de la mise à jour
       onUpdate(response.data); 
     } catch (err) {
       toast.error("Une erreur est survenue.");
@@ -81,10 +83,6 @@ const TrainingCard = ({ training, onUpdate }) => {
     }
   };
 
-
-
-  const chaptersCount = training.modules?.length ?? 0;
-  const ressourcesCount = training.ressources?.length ?? 0;
 
   const formattedDuration = formatDuration(training.total_estimated_time);
 
@@ -200,7 +198,9 @@ const TrainingCard = ({ training, onUpdate }) => {
                 {isRestarting ? (
                   <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 ) : (
-                  <RefreshCw size={16} />
+                  <>
+                  <RefreshCw size={16} /> &nbsp;Recommencer
+                  </>
                 )}
               </button>
             </div>
@@ -214,6 +214,11 @@ const TrainingCard = ({ training, onUpdate }) => {
           )}
           </div>
       </div>
+      <ConfirmationModal
+        show={showConfirmModal}
+        onHide={() => setShowConfirmModal(false)}
+        onConfirm={executeRestart}
+      />
     </div>
   );
 };
