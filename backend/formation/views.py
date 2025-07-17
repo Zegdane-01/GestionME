@@ -196,13 +196,25 @@ class QuizViewSet(viewsets.ModelViewSet):
     def submit(self, request, pk=None):
         quiz   = self.get_object()
         user   = request.user
+
+        uq, created = UserQuiz.objects.get_or_create(user=user, quiz=quiz)
+
+        if not created: # Si ce n'est pas la première tentative
+            if quiz.max_attempts is not None and uq.attempts_made >= quiz.max_attempts:
+                return Response(
+                    {"detail": f"Vous avez atteint le nombre maximal de {quiz.max_attempts} tentatives autorisées."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # On incrémente le compteur de tentatives pour la nouvelle soumission
+            uq.attempts_made += 1
+
+
         data   = QuizSubmitSerializer(
                     data=request.data, context={"quiz": quiz}
                  )
         data.is_valid(raise_exception=True)
 
-        # crée ou récupère le UserQuiz
-        uq, _ = UserQuiz.objects.get_or_create(user=user, quiz=quiz)
 
         total_score = 0
         for item in data.validated_data["answers"]:
@@ -435,6 +447,49 @@ class QuizViewSet(viewsets.ModelViewSet):
             })
 
         return Response(rows)
+
+    @action(detail=True, methods=['post'], url_path='retake')
+    @transaction.atomic
+    def retake(self, request, pk=None):
+        """
+        Archive la dernière tentative de quiz si elle existe, puis permet à l'utilisateur de recommencer.
+        """
+        quiz = self.get_object()
+        user = request.user
+
+        # On récupère l'enregistrement de suivi
+        uq = get_object_or_404(UserQuiz, user=user, quiz=quiz)   
+        # Vérification de la limite
+        if quiz.max_attempts is not None and uq.attempts_made >= quiz.max_attempts:
+            return Response(
+                {"detail": f"Vous avez atteint le nombre maximal de {quiz.max_attempts} tentatives autorisées."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # On supprime les anciennes réponses pour repartir de zéro
+        UserAnswer.objects.filter(user=user, question__quiz=quiz).delete()
+        
+        # On marque le quiz comme non complété pour le "rouvrir"
+        uq.completed = False
+        uq.save()
+        
+        return Response({"status": "success"}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='my-attempts')
+    def my_attempts(self, request, pk=None):
+        """
+        Retourne le nombre de tentatives effectuées et la limite.
+        """
+        quiz = self.get_object()
+        user = request.user
+
+        # On récupère l'enregistrement (ou on le crée avec la valeur par défaut de 1)
+        uq, _ = UserQuiz.objects.get_or_create(user=user, quiz=quiz)
+
+        return Response({
+            "attempts_made": uq.attempts_made,
+            "max_attempts": quiz.max_attempts
+        })
 
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()

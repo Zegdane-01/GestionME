@@ -160,7 +160,7 @@ const TrainingForm = () => {
             domain: training.domain ? String(training.domain) : '',
             image_cover: null, // pour ne pas ré-afficher le fichier
             statut: ['actif', 'inactif'].includes(training.statut) ? training.statut : 'inactif',
-
+            deadline: normalizeDate(training.deadline),
           });
           setShowModules(training.modules.length > 0);
           setShowResources(training.ressources.length > 0);
@@ -386,6 +386,15 @@ const TrainingForm = () => {
     return newErrors;
   };
 
+  function normalizeDate(dateString) {
+    if (!dateString) return '';
+    // Si déjà format "YYYY-MM-DD", rien à faire
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
+    // Sinon, extrait la date (avant le 'T')
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(dateString);
+    return match ? match[1] : '';
+  }
+
 
   /* ------------------------------------------------------------ */
   /*                 4. Submit                                    */
@@ -401,7 +410,8 @@ const TrainingForm = () => {
       /* transformer en FormData */
       const fd = new FormData();
       // simples
-      ['titre','description','domain','statut','formateur','deadline'].forEach(k => fd.append(k, formData[k]));
+      ['titre','description','domain','statut','formateur'].forEach(k => fd.append(k, formData[k]));
+      fd.append('deadline', normalizeDate(formData.deadline));
       if(userId) fd.append('created_by', userId); // si utilisateur connecté
       if (existingCover) {
         // aucun changement : ne rien mettre dans FormData → on garde la même image
@@ -446,9 +456,9 @@ const TrainingForm = () => {
       if (formData.quiz && showQuiz) {
         const quizCopy = {
           estimated_time: formData.quiz.estimated_time,
+          max_attempts: formData.quiz.max_attempts || null,
           questions: []
         };
-
 
         formData.quiz.questions.forEach((origQ, idx) => {
           const q = { ...origQ };
@@ -864,7 +874,7 @@ const TrainingForm = () => {
         {showQuiz && (
         <>
           <div className="row g-2 mb-3">
-            <div className="col-md-4">
+            <div className="col-md-6">
               <label htmlFor="estimated_time" className={styles.formLabel}>Temps estimé (HH:MM:SS)<span className="text-danger">*</span></label>
               <input
                 id="estimated_time"
@@ -872,6 +882,24 @@ const TrainingForm = () => {
                 onChange={e => handleQuizField('estimated_time', e.target.value)}
                 className={`${styles.formControl} ${errors.quizTime ? styles.inputError : ''}`}
               />
+            </div>
+            <div className="col-md-6">
+              <label htmlFor="max_attempts" className={styles.formLabel}>
+                Nombre de tentatives autorisées
+              </label>
+              <input
+                type="number"
+                id="max_attempts"
+                name="max_attempts"
+                className={styles.formControl}
+                value={formData.quiz.max_attempts || ''} // Gérer la valeur nulle
+                onChange={e => handleQuizField('max_attempts', e.target.value)}
+                placeholder="Vide pour illimité"
+                min="1"
+              />
+              <div className="form-text">
+                Laissez ce champ vide si vous souhaitez autoriser un nombre illimité de tentatives.
+              </div>
             </div>
           </div>
 

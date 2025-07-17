@@ -157,6 +157,14 @@ class Formation(models.Model):
 class Quiz(TimedContent):
     formation = models.OneToOneField(Formation, on_delete=models.CASCADE, related_name='quiz')
 
+    max_attempts = models.PositiveIntegerField(
+        null=True, 
+        blank=True, 
+        default=None,
+        help_text="Nombre maximal de tentatives autorisées. Laissez vide pour illimité."
+    )
+
+
     def __str__(self):
         return f"Quiz: {self.formation.titre}"
 
@@ -336,6 +344,8 @@ class UserQuiz(models.Model):
 
     time_spent = models.DurationField(default=timedelta(0))
     completed_at = models.DateTimeField(null=True, blank=True)
+
+    attempts_made = models.PositiveIntegerField(default=1)
 
 
     def __str__(self):

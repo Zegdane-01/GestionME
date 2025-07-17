@@ -132,6 +132,19 @@ const TrainingDetail = () => {
     // sera gérée par la mise à jour de l'état `training` qui vient du serveur.
   };
 
+  const handleQuizRetake = () => {
+      // Met à jour l'état local pour que le changement soit instantané sur l'UI
+      setTraining(prev => ({
+          ...prev,
+          tabsCompleted: {
+              ...prev.tabsCompleted,
+              quiz: false,
+          },
+      }));
+      // Optionnel : Vous pouvez aussi appeler persist() pour synchroniser
+      // cet état avec le backend si nécessaire.
+  };
+
   /* ----------------------------------------------------------- */
   /* 4. Préparation des onglets                                   */
   /* ----------------------------------------------------------- */
@@ -169,6 +182,7 @@ const TrainingDetail = () => {
               quiz: training.quiz,
               onComplete: () => handleTabCompletion("quiz"),
               isCompleted: training.tabsCompleted.quiz,
+              onRetake: handleQuizRetake,
             },
           },
         }

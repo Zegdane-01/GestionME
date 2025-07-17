@@ -16,7 +16,7 @@ import styles from "../../assets/styles/Training/TrainingCard.module.css";
 import ConfirmationModal from './ConfirmationModal';
 
 /* ------------------------------------------------------------- */
-/*  Mapping statut  → libellé + couleur                          */
+/*  Mapping status  → libellé + couleur                          */
 /* ------------------------------------------------------------- */
 const statusMap = {
   nouvelle: { label: "Nouvelle", className: "bg-secondary" },
@@ -51,12 +51,12 @@ const TrainingCard = ({ training, onUpdate }) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
 
-  const { statut, progress = 0, userFormationId } = training; // progress = 0 par défaut
-  const s = statusMap[statut] ?? statusMap.default;
+  const { status, progress = 0, userFormationId } = training; // progress = 0 par défaut
+  const s = statusMap[status] ?? statusMap.default;
 
   // Libellé CTA
   const cta =
-    statut === "terminee" ? "Revoir" : statut === "nouvelle" ? "Commencer" : "Continuer";
+    status === "terminee" ? "Revoir" : status === "nouvelle" ? "Commencer" : "Continuer";
 
   const handleRestart = (e) => {
     e.stopPropagation();
@@ -75,7 +75,7 @@ const TrainingCard = ({ training, onUpdate }) => {
     try {
       const response = await api.post(`/user-formations/${userFormationId}/restart/`);
       toast.success("La formation a été réinitialisée !");
-      onUpdate(response.data); 
+      onUpdate(); 
     } catch (err) {
       toast.error("Une erreur est survenue.");
     } finally {
@@ -88,7 +88,7 @@ const TrainingCard = ({ training, onUpdate }) => {
 
   return (
     <div className="card h-100 shadow-sm">
-      {/* Visuel de couverture + badge statut */}
+      {/* Visuel de couverture + badge status */}
       <div className={styles.coverWrapper}>
         {training.image_cover ? (
           <img
@@ -166,14 +166,14 @@ const TrainingCard = ({ training, onUpdate }) => {
 
 
         {/* Progression */}
-        {statut !== "nouvelle" && (
+        {status !== "nouvelle" && (
           <>
             <p className="small mb-1">
               Progression <span className="float-end">{progress}%</span>
             </p>
             <div className="progress mb-3" style={{ height: 4 }}>
               <div
-                className={`progress-bar ${statut === "terminee" ? "bg-success" : "bg-dark"}`}
+                className={`progress-bar ${status === "terminee" ? "bg-success" : "bg-dark"}`}
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -181,7 +181,7 @@ const TrainingCard = ({ training, onUpdate }) => {
         )}
 
         <div className="mt-auto">
-          {statut === 'terminee' ? (
+          {status === 'terminee' ? (
             <div className="d-grid gap-2 d-sm-flex justify-content-sm-center">
               <button
                 className="btn btn-dark flex-grow-1"

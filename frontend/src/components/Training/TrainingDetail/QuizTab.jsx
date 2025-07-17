@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback  } from "react";
 import ProgressBar from "../Shared/ProgressBar";
 import api from "../../../api/api";
+import { toast } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCirclePlay,
   faListOl,
   faClock,
   faCircleCheck,
+  faSync,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDuration } from "../../../utils/formatters";
 import styles from "../../../assets/styles/Training/TrainingDetail/QuizTab.module.css";
@@ -31,7 +33,7 @@ const formatSecondsToHMS = (totalSeconds) => {
   ].join(':');
 };
 
-const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
+const QuizTab = ({ quiz = {}, onComplete, isCompleted, onRetake  }) => {
   const questions = quiz.questions ?? [];
   const totalScore = questions.reduce((s, q) => s + (q.point ?? 1), 0);
   
@@ -43,6 +45,35 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
   const [score, setScore] = useState(0);
 
   const startTimeRef = useRef(null);
+
+    // 1. AJOUTEZ DES ÉTATS POUR GÉRER LES TENTATIVES
+  const [attemptsInfo, setAttemptsInfo] = useState({ made: 0, max: null });
+  const [canRetake, setCanRetake] = useState(true);
+
+  // 2. CRÉEZ UNE FONCTION POUR RÉCUPÉRER L'ÉTAT DES TENTATIVES
+  const fetchAttemptStatus = useCallback(async () => {
+    if (!quiz.id) return;
+    try {
+      const { data } = await api.get(`/quizzes/${quiz.id}/my-attempts/`);
+      setAttemptsInfo({ made: data.attempts_made, max: data.max_attempts });
+      console.log("max attempts:", data.max_attempts," attempts made:", data.attempts_made)
+      if (data.max_attempts !== null && data.attempts_made >= data.max_attempts) {
+        setCanRetake(false);
+      } else {
+        setCanRetake(true);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des tentatives", error);
+    }
+  }, [quiz.id]);
+
+  // 3. APPELEZ CETTE FONCTION QUAND LE QUIZ EST TERMINÉ
+  useEffect(() => {
+    if (isCompleted) {
+      console.log("fetchattemptStatus");
+      fetchAttemptStatus();
+    }
+  }, [isCompleted, fetchAttemptStatus]);
 
   // Cet effet se déclenche si le quiz est déjà marqué comme complété au chargement
   useEffect(() => {
@@ -56,15 +87,34 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
     }
   }, [isCompleted, finished, quiz.id]);
 
-  // --- Reset (inchangé) ---
-  useEffect(() => {
+  const resetQuizState = useCallback(() => {
     setStarted(false);
     setIdx(0);
     setAnswers({});
     setFinished(false);
     setScore(0);
-  }, [quiz]);
+    startTimeRef.current = null;
+  }, []);
 
+  // --- Reset (inchangé) ---
+  useEffect(() => {
+    resetQuizState();
+  }, [quiz, resetQuizState]);
+
+  const handleRetakeQuiz = async () => {
+    const retakeToastId = toast.loading("Préparation d'une nouvelle tentative...");
+    try {
+      await api.post(`/quizzes/${quiz.id}/retake/`);
+      toast.success("Vous pouvez recommencer le quiz.", { id: retakeToastId });
+      onRetake?.();
+      resetQuizState(); // Réinitialise l'état pour recommencer
+      fetchAttemptStatus(); 
+    } catch (err) {
+      // Affiche l'erreur du backend (ex: limite de tentatives atteinte)
+      const errorMessage = err.response?.data?.detail || "Impossible de recommencer le quiz.";
+      toast.error(errorMessage, { id: retakeToastId });
+    }
+  };
 
   // --- MODIFIÉ : Gestionnaire de soumission ---
   const handleFinish = async () => {
@@ -206,6 +256,10 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
 
   // 1. RESULTAT FINAL
   if (finished || isCompleted) {
+    const attemptsMessage = attemptsInfo.max
+      ? `Tentative ${attemptsInfo.made} / ${attemptsInfo.max}`
+      : `Tentative n°${attemptsInfo.made}`;
+
     return (
         <div className="d-flex flex-column align-items-center mt-5 min-vh-100 px-3">
             <div className={`card p-5 text-center border-0 rounded-4 w-100 ${styles.box}`} >
@@ -226,7 +280,19 @@ const QuizTab = ({ quiz = {}, onComplete, isCompleted }) => {
                         <span className="fs-4" style={{ color: '#718096' }}>/ {totalScore}</span>
                     </div>
                 </div>
-                {/* Logique de message en fonction du score... */}
+                <div className="mt-4 text-center">
+                  <p className="text-muted mb-2">{attemptsMessage}</p>
+                  {canRetake ? (
+                    <button className="btn btn-outline-primary" onClick={handleRetakeQuiz}>
+                      <FontAwesomeIcon icon={faSync} className="me-2" />
+                      Reprendre le quiz
+                    </button>
+                  ) : (
+                    <div className="alert alert-warning" role="alert">
+                      Vous avez atteint le nombre maximum de tentatives.
+                    </div>
+                  )}
+                </div>
             </div>
         </div>
     );
