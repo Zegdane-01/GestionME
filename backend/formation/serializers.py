@@ -131,7 +131,7 @@ class QuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Quiz
-        fields = ['id', 'estimated_time', 'questions']
+        fields = ['id', 'estimated_time', 'questions', 'max_attempts']
 
 class ModuleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -349,7 +349,8 @@ class FormationWriteSerializer(serializers.ModelSerializer):
         if quiz_data:
             questions = quiz_data.pop('questions', [])
             quiz = Quiz.objects.create(formation=formation,
-                                       estimated_time=_parse_duration_or_none(quiz_data.get('estimated_time')))
+                                       estimated_time=_parse_duration_or_none(quiz_data.get('estimated_time')),
+                                       max_attempts=quiz_data.get('max_attempts') or None)
             for q in questions:
                 q.pop('correct_raw', None) 
                 opts = q.pop('options', [])
@@ -512,6 +513,8 @@ class FormationWriteSerializer(serializers.ModelSerializer):
 
             # Mettre à jour les champs du quiz (ex: temps estimé)
             existing_quiz.estimated_time = _parse_duration_or_none(quiz_data.get('estimated_time'))
+
+            existing_quiz.max_attempts = quiz_data.get('max_attempts') or None
             existing_quiz.save()
             
             # Synchroniser les questions

@@ -76,7 +76,7 @@ const TrainingList = () => {
     setAllFormations(currentFormations =>
       currentFormations.map(f =>
         f.id === updatedFormation.id
-          ? { ...f, ...updatedFormation, statut: 'nouvelle', progress: 0, userFormationId: updatedFormation.userFormationId } // Assurer une mise à jour complète
+          ? { ...f, ...updatedFormation, status: 'nouvelle', progress: 0, userFormationId: updatedFormation.userFormationId } // Assurer une mise à jour complète
           : f
       )
     );
@@ -84,58 +84,50 @@ const TrainingList = () => {
   /* ----------------------------------------------------------- */
   /* 1. Récupération des données (formations + état utilisateur) */
   /* ----------------------------------------------------------- */
+  const fetchFormations = async () => {
+    setLoading(true);
+    try {
+      const [{ data: formations }, { data: userStates }] = await Promise.all([
+        api.get("/formations/"),
+        api.get("/user-formations/"),
+      ]);
+      const userFormationMap = {};
+      userStates.forEach((uf) => {
+        const fid = getFormationId(uf);
+        if (fid !== null) userFormationMap[fid] = uf;
+      });
+      const enriched = formations.map((f) => {
+        const uf = userFormationMap[f.id] || {};
+        const progress = uf.progress ?? 0;
+        return {
+          ...f,
+          progress,
+          userFormationId: uf.id ?? null,
+          status: statusFromProgress(progress, uf.status),
+        };
+      });
+      setAllFormations(enriched);
+      const stats = enriched.reduce(
+        (acc, f) => {
+          if (domainId && String(f.domain) !== String(domainId)) return acc;
+          acc.total += 1;
+          if (f.status === "terminee")       acc.completed += 1;
+          else if (f.status === "en_cours")  acc.inProgress += 1;
+          else                               acc.new += 1;
+          return acc;
+        },
+        { total: 0, completed: 0, inProgress: 0, new: 0 }
+      );
+      setSummaryStats(stats);
+    } catch (err) {
+      toast.error("Impossible de charger les formations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const [{ data: formations }, { data: userStates }] = await Promise.all([
-          api.get("/formations/"),
-          api.get("/user-formations/"),
-        ]);
-
-        const userFormationMap = {};
-        userStates.forEach((uf) => {
-          const fid = getFormationId(uf);
-          if (fid !== null) userFormationMap[fid] = uf;
-        });
-
-        // Fusionner les infos formation + état utilisateur
-        const enriched = formations.map((f) => {
-          const uf = userFormationMap[f.id] || {};
-          const progress = uf.progress ?? 0;
-
-          return {
-            ...f,
-            progress,
-            userFormationId: uf.id ?? null,
-            statut: statusFromProgress(progress, uf.status),
-          };
-        });
-
-        setAllFormations(enriched);
-        const stats = enriched.reduce(
-          (acc, f) => {
-            // 1) 9bel ma n-modifi acc, nt2aked mn domaine
-            if (domainId && String(f.domain) !== String(domainId)) return acc;
-
-            // 2) daba acc dayman mewjud
-            acc.total += 1;
-
-            if (f.statut === "terminee")       acc.completed += 1;
-            else if (f.statut === "en_cours")  acc.inProgress += 1;
-            else                               acc.new += 1;
-
-            return acc;   // ✅ khrej acc daiman
-          },
-          { total: 0, completed: 0, inProgress: 0, new: 0 }
-        );
-        setSummaryStats(stats);
-
-      } catch (err) {
-        toast.error("Impossible de charger les formations");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    fetchFormations();
   }, [domainId]);
 
   /* ----------------------------------------------------------- */
@@ -150,9 +142,10 @@ const TrainingList = () => {
     // Recherche + statut
     const filtered = byDomain.filter(
       (f) =>
+        f.statut === 'actif' &&
         (f.titre?.toLowerCase().includes(search.toLowerCase()) ||
           f.description?.toLowerCase().includes(search.toLowerCase())) &&
-        (category === "all" || category === f.statut)
+        (category === "all" || category === f.status)
     );
 
     // Tri
@@ -234,7 +227,7 @@ const TrainingList = () => {
       <div className="row g-4 d-flex justify-content-center">
         {visibleFormations.map((f) => (
           <div className="col-md-3" key={f.id}>
-            <TrainingCard training={f} onUpdate={handleFormationUpdate} />
+            <TrainingCard training={f} onUpdate={fetchFormations} />
           </div>
         ))}
       </div>
