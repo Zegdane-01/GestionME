@@ -6,6 +6,8 @@ import { toast } from 'react-hot-toast';
 import SearchBar from '../../../components/Personne_Projet/SearchBar';
 import TrainingTable from '../../../components/Training/CRUD/TrainingTable';
 import DeleteTrainingModal from '../../../components/Training/CRUD/DeleteTrainingModal';
+import ResetConfirmationModal from '../../../components/Training/CRUD/ResetConfirmationModal';
+
 // Feuille de styles commune
 import styles from '../../../assets/styles/List.module.css';
 
@@ -22,6 +24,9 @@ const TrainingListManager = () => {
   const [filteredTrainings, setFilteredTrainings] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [trainingToReset, setTrainingToReset] = useState(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -87,6 +92,34 @@ const TrainingListManager = () => {
     navigate('/manager/trainings/add/');
   };
 
+  const handleOpenResetModal = (trainingId, trainingTitle) => {
+    setTrainingToReset({ id: trainingId, title: trainingTitle });
+    setShowResetModal(true);
+  };
+  
+  // 4. Créez la fonction pour CONFIRMER l'action du modal
+  const handleConfirmReset = async () => {
+    if (!trainingToReset) return;
+
+    const resetToastId = toast.loading("Réinitialisation de la formation en cours...");
+    try {
+      await api.post(`/user-formations/${trainingToReset.id}/reset-for-all/`);
+      toast.success(`La formation "${trainingToReset.title}" a été réinitialisée.`, {
+        id: resetToastId,
+      });
+      fetchTrainings(); // Rafraîchir les données
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la réinitialisation.", {
+        id: resetToastId,
+      });
+      console.error("Erreur lors de la réinitialisation :", error);
+    } finally {
+      // Fermer le modal et réinitialiser l'état
+      setShowResetModal(false);
+      setTrainingToReset(null);
+    }
+  };
+
   return (
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
@@ -115,6 +148,7 @@ const TrainingListManager = () => {
             trainings={filteredTrainings}
             onEdit={handleEdit}
             onDelete={handleDeleteConfirm}
+            onResetAll={handleOpenResetModal}
           />
         )}
       </div>
@@ -123,6 +157,13 @@ const TrainingListManager = () => {
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
         onConfirm={deleteTraining}
+      />
+
+      <ResetConfirmationModal
+        show={showResetModal}
+        onHide={() => setShowResetModal(false)}
+        onConfirm={handleConfirmReset}
+        trainingTitle={trainingToReset?.title}
       />
     </div>
   );

@@ -205,6 +205,16 @@
   color: var(--expleo-text-light);
 }
 
+.actionBtn.reset {
+  background-color: #ffffff; /* Bleu-vert pour la distinction */
+  color: rgb(143, 103, 250);
+}
+
+.actionBtn.reset:hover {
+  background-color: rgb(143, 103, 250);
+  color: #ffffff;
+}
+
 .paginationContainer {
   display: flex;
   justify-content: center;

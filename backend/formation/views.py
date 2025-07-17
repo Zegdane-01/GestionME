@@ -599,37 +599,64 @@ class UserFormationViewSet(viewsets.ModelViewSet):
             serializer = FormationDetailSerializer(formation, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='restart') # url_path est optionnel mais recommandé
     @transaction.atomic
     def restart(self, request, pk=None):
         """
-        Réinitialise la progression d'un utilisateur pour une formation spécifique.
+        Archive les 3 derniers résultats de quiz de l'utilisateur, puis
+        réinitialise sa progression pour une formation spécifique.
         """
         user_formation = self.get_object()
         user = request.user
         formation = user_formation.formation
 
-        # Vérifier que l'utilisateur qui fait la demande est bien le propriétaire du suivi
+        # 🔐 Sécurité : Vérifier que l'utilisateur qui fait la demande
+        # est bien le propriétaire du suivi.
         if user_formation.user != user:
             return Response(
                 {"error": "Vous n'êtes pas autorisé à effectuer cette action."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # 1. Supprimer les suivis des modules liés
+        # --- ÉTAPE 1 : ARCHIVAGE (si un quiz existe) ---
+        if hasattr(formation, 'quiz'):
+            quiz = formation.quiz
+            
+            # Récupérer les 3 dernières tentatives de cet utilisateur pour ce quiz
+            latest_attempts = UserQuiz.objects.filter(
+                user=user, quiz=quiz
+            ).order_by('-completed_at')[:3]
+            
+            # Préparer les objets pour la création en masse
+            history_to_create = [
+                UserQuizHistory(
+                    user=user,
+                    formation=formation,
+                    score=attempt.score,
+                    completed_at=attempt.completed_at,
+                    time_spent=attempt.time_spent
+                ) for attempt in latest_attempts
+            ]
+            
+            # Créer tous les enregistrements d'historique en une seule requête
+            if history_to_create:
+                UserQuizHistory.objects.bulk_create(history_to_create)
+
+        # --- ÉTAPE 2 : RÉINITIALISATION (logique originale) ---
+
+        # a. Supprimer les suivis des modules liés
         UserModule.objects.filter(user=user, module__in=formation.modules.all()).delete()
 
-        # 2. Supprimer les suivis des ressources liées
+        # b. Supprimer les suivis des ressources liées
         UserResource.objects.filter(user=user, resource__in=formation.ressources.all()).delete()
 
-        # 3. Supprimer les suivis du quiz (UserQuiz et toutes les UserAnswer)
+        # c. Supprimer les suivis du quiz (UserQuiz et toutes les UserAnswer)
         if hasattr(formation, 'quiz'):
             quiz = formation.quiz
             UserQuiz.objects.filter(user=user, quiz=quiz).delete()
-            # Supprimer les réponses aux questions de ce quiz
             UserAnswer.objects.filter(user=user, question__quiz=quiz).delete()
 
-        # 4. Réinitialiser l'objet UserFormation principal
+        # d. Réinitialiser l'objet UserFormation principal
         user_formation.progress = 0
         user_formation.status = 'nouvelle'
         user_formation.completed_steps = {}
@@ -637,10 +664,89 @@ class UserFormationViewSet(viewsets.ModelViewSet):
         user_formation.time_spent = timedelta(0)
         user_formation.save()
 
-        # 5. Renvoyer l'état mis à jour de la formation
-        # Le serializer a besoin du contexte de la requête
+        # e. Renvoyer l'état mis à jour de la formation
         serializer = FormationDetailSerializer(formation, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    # Dans votre ViewSet des formations (FormationViewSet)
+    @action(detail=True, methods=['post'], url_path='reset-for-all') 
+    @transaction.atomic
+    def reset_for_all(self, request, pk=None):
+        
+        """
+        Archive les 3 derniers résultats de quiz pour chaque utilisateur,
+        puis réinitialise la formation et le quiz pour tous les utilisateurs inscrits.
+        """
+        # Récupérer la formation directement (pas UserFormation)
+        formation = get_object_or_404(Formation, pk=pk)  # self fait référence au FormationViewSet
+
+        # Identifier tous les utilisateurs inscrits à la formation
+        enrolled_users = Personne.objects.filter(userformation__formation=formation)
+
+        if not enrolled_users.exists():
+            return Response(
+                {"status": "success", "message": f"Aucun utilisateur inscrit à la formation '{formation.titre}'."},
+                status=status.HTTP_200_OK
+            )
+
+        # Pour chaque utilisateur inscrit, appliquer la même logique que restart
+        for user in enrolled_users:
+            # Récupérer l'objet UserFormation pour cet utilisateur
+            try:
+                user_formation = UserFormation.objects.get(user=user, formation=formation)
+            except UserFormation.DoesNotExist:
+                continue  # Passer à l'utilisateur suivant si pas de UserFormation
+
+            # --- ÉTAPE 1 : ARCHIVAGE (si un quiz existe) ---
+            if hasattr(formation, 'quiz'):
+                quiz = formation.quiz
+                
+                # Récupérer les 3 dernières tentatives de cet utilisateur pour ce quiz
+                latest_attempts = UserQuiz.objects.filter(
+                    user=user, quiz=quiz
+                ).order_by('-completed_at')[:3]
+                
+                # Préparer les objets pour la création en masse
+                history_to_create = [
+                    UserQuizHistory(
+                        user=user,
+                        formation=formation,
+                        score=attempt.score,
+                        completed_at=attempt.completed_at,
+                        time_spent=attempt.time_spent
+                    ) for attempt in latest_attempts
+                ]
+                
+                # Créer tous les enregistrements d'historique en une seule requête
+                if history_to_create:
+                    UserQuizHistory.objects.bulk_create(history_to_create)
+
+            # --- ÉTAPE 2 : RÉINITIALISATION (logique identique à restart) ---
+
+            # a. Supprimer les suivis des modules liés
+            UserModule.objects.filter(user=user, module__in=formation.modules.all()).delete()
+
+            # b. Supprimer les suivis des ressources liées
+            UserResource.objects.filter(user=user, resource__in=formation.ressources.all()).delete()
+
+            # c. Supprimer les suivis du quiz (UserQuiz et toutes les UserAnswer)
+            if hasattr(formation, 'quiz'):
+                quiz = formation.quiz
+                UserQuiz.objects.filter(user=user, quiz=quiz).delete()
+                UserAnswer.objects.filter(user=user, question__quiz=quiz).delete()
+
+            # d. Réinitialiser l'objet UserFormation principal
+            user_formation.progress = 0
+            user_formation.status = 'nouvelle'
+            user_formation.completed_steps = {}
+            user_formation.last_accessed = None
+            user_formation.time_spent = timedelta(0)
+            user_formation.save()
+
+        return Response(
+            {"status": "success", "message": f"La formation '{formation.titre}' a été réinitialisée pour tous les collaborateurs."},
+            status=status.HTTP_200_OK
+        )
 
 class UserModuleViewSet(viewsets.ModelViewSet):
     queryset = UserModule.objects.all()

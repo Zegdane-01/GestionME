@@ -3,15 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faInfo, faTrash, faPencilAlt, faRocket,
-    faChevronLeft, faChevronRight 
+    faChevronLeft, faChevronRight, faSync 
 } from '@fortawesome/free-solid-svg-icons';
 import FilterDropdown from '../../FilterDropdown';
 import styles from '../../../assets/styles/Table.module.css';
 
-const TrainingTable = ({ trainings, onEdit, onDelete }) => {
+const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
     const deadlineOptions = ["Dépassée", "Non dépassée","Non attribué"];
     const quizOptions = ["Avec quiz", "Sans quiz"];
     const statutOptions = ["Disponible", "Archivée"];
+
+    const handleReset = (trainingId, trainingTitle) => {
+            onResetAll(trainingId, trainingTitle);
+    };
 
     const [filters, setFilters] = useState({
         domain_info: [],
@@ -276,6 +280,13 @@ const TrainingTable = ({ trainings, onEdit, onDelete }) => {
                             </button>
                             <button onClick={() => onDelete(training.id)} title="Supprimer" className={`${styles['actionBtn']} ${styles.delete}`}>
                                 <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                            <button 
+                                onClick={() => handleReset(training.id, training.titre)} 
+                                title="Réinitialiser pour tous" 
+                                className={`${styles['actionBtn']} ${styles.reset}`}
+                            >
+                                <FontAwesomeIcon icon={faSync} />
                             </button>
                         </div>
                     </td>
