@@ -1,0 +1,42 @@
+/* Conteneur global du widget */
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;          /* p-3 bootstrap ~ 16 px */
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* shadow-sm */
+  border-radius: 0.75rem; /* rounded-3 */
+}
+
+/* Bloc “répartition par sexe” (icône + texte) */
+.genderBlock {
+  margin-right: 1rem; /* me-4 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;       /* gap-3 */
+  color: #4a5568;     /* text-secondary ~ gray-700 */
+}
+
+.genderCard {
+  text-align: center;
+}
+
+.genderCount {
+  font-size: 1.25rem; /* fs-5 */
+  font-weight: 700;   /* fw-bold */
+  line-height: 1;
+}
+
+.genderLabel {
+  font-size: 0.75rem; /* small */
+  line-height: 1;
+}
+
+/* Wrapper du doughnut */
+.chartWrapper {
+  position: relative;
+  width: 280px;
+  height: 280px;
+}

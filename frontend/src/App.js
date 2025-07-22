@@ -32,6 +32,8 @@ import FormationBrowser from "./pages/Training/FormationBrowser.jsx";
 
 import RadarCompetence from "./pages/Radar/RadarCompetence.jsx";
 
+import DashboardPage from "./pages/Dashboard/DashboardPage.jsx";
+
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -77,14 +79,11 @@ function App() {
             <Route path="/manager/trainings/edit/:id" element={<TrainingForm />} />
             <Route path="/manager/trainings/progress/:formationId" element={<TrainingProgress />} />
 
-            {/* Routes pour la navigation des formations */}
-
             <Route path="/formations" element={<FormationBrowser />} />
 
             <Route path="/radar" element={<RadarCompetence />} />
 
-            {/* Routes protégées */}
-            
+            <Route path="/dashboard" element={<DashboardPage />} />
           </Routes>
         </main>
         <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 2000 }} />

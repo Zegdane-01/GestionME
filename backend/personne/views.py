@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.http import FileResponse
 import pandas as pd
@@ -388,4 +388,39 @@ def download_last_imported_file(request):
     if not latest or not latest.fichier:
         return Response({'error': 'Aucun fichier disponible'}, status=404)
     return FileResponse(open(latest.fichier.path, 'rb'), as_attachment=True, filename=latest.fichier.name)
-    
+
+
+class DashboardStatsAPIView(APIView):
+    permission_classes = [IsAuthenticated] # Protéger l'accès
+
+    def get(self, request, *args, **kwargs):
+        # --- Widget 1: Statut des collaborateurs (Donut Chart) ---
+        collaborators_qs = Personne.objects.all()
+        total_headcount = collaborators_qs.count()
+        
+        status_counts = collaborators_qs.values('status').annotate(count=Count('status'))
+        # Exemple de formatage: {'En cours': 39, 'Bench': 6, ...}
+        by_status = {item['status']: item['count'] for item in status_counts}
+
+        sexe_counts = collaborators_qs.values('sexe').annotate(count=Count('sexe'))
+        # Exemple de formatage: {'Homme': 35, 'Femme': 13}
+        by_sexe = {item['sexe']: item['count'] for item in sexe_counts}
+
+        # --- Widget 2: Répartition par profil (Radar Chart) ---
+        profile_counts = collaborators_qs.exclude(profile=None).exclude(profile='').values('profile').annotate(count=Count('profile'))
+        # Exemple de formatage: [{'profil': 'RFOE', 'count': 5}, ...]
+        by_profile = list(profile_counts)
+        
+
+        # --- Assemblage de la réponse ---
+        data = {
+            'collaborator_stats': {
+                'total_headcount': total_headcount,
+                'by_status': by_status,
+                'by_sexe': by_sexe
+            },
+            'profile_distribution': by_profile,
+            # Ajoutez ici les données pour les autres widgets...
+        }
+        
+        return Response(data)

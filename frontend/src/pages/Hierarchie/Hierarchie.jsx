@@ -12,12 +12,27 @@ const HierarchieTree = () => {
   const chartRef = useRef(null);
   const [chart, setChart] = useState(null);
 
+  const pruneIsolatedNodes = (nodes) => {
+    // 1. Tous les ids jouant le rôle de parent
+    const referencedAsParent = new Set(
+      nodes.filter(n => n.pid !== null).map(n => n.pid)
+    );
+
+    // 2. On conserve :
+    //    • les nœuds qui ont un parent (pid ≠ null)
+    //    • OU les nœuds qui sont vraiment parents de quelqu’un
+    return nodes.filter(
+      n => n.pid !== null || referencedAsParent.has(n.id)
+    );
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
         const { data } = await api.get("/personne/hierarchie/");
-        const nodes = await  flattenHierarchy(data);
-        initChart(nodes);
+        const allNodes     = await flattenHierarchy(data);
+        const visibleNodes = pruneIsolatedNodes(allNodes);
+        initChart(visibleNodes);
       } catch {
         toast.error("Erreur de chargement de la hiérarchie");
       }
