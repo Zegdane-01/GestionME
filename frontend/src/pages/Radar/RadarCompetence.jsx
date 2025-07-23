@@ -231,7 +231,7 @@ const RadarCompetence = () => {
       {
         label: 'Score Réalisé',
         order: 4,
-        data: radarData.map(d => d.score !== null ? d.score * 4 / 100 : 0),
+        data: radarData.map(d => d.score !== null ? (d.score * 4 / 100).toFixed(2) : 0),
         backgroundColor: 'rgba(4, 105, 12, 0.2)', // Bleu (couleur "primary")
         borderColor: 'rgba(128, 171, 0, 1)', 
         borderWidth: 2,
