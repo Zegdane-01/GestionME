@@ -15,7 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.http import FileResponse
 from django.db import models
 from .models import Personne, ImportedExcel
-from formation.models import Formation
+from formation.models import Formation, Equipe
 from projet.models import Projet 
 from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
 from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
@@ -399,6 +399,29 @@ class DashboardStatsAPIView(APIView):
     def get(self, request, *args, **kwargs):
         # --- Widget 1: Statut des collaborateurs (Donut Chart) ---
         collaborators_qs = Personne.objects.all()
+
+        profile_f = request.query_params.get('profile')
+        status_f = request.query_params.get('status')
+        client_f = request.query_params.get('client')
+        activite_f = request.query_params.get('equipe')
+        i_e_f = request.query_params.get('sop')
+
+        if profile_f:
+            collaborators_qs = collaborators_qs.filter(profile=profile_f)
+
+        if status_f:
+            collaborators_qs = collaborators_qs.filter(status=status_f)
+        
+        if client_f:
+            collaborators_qs = collaborators_qs.filter(projet__final_client=client_f)
+        
+        if activite_f:
+            collaborators_qs = collaborators_qs.filter(equipes__name=activite_f)
+        
+        if i_e_f:
+            collaborators_qs = collaborators_qs.filter(projet__sop=i_e_f)
+        
+
         total_headcount = collaborators_qs.count()
         
         status_counts = collaborators_qs.values('status').annotate(count=Count('status'))
@@ -540,12 +563,23 @@ class DashboardStatsAPIView(APIView):
                 'teams_progress': teams_progress_list,
             })
 
-
+        available_profiles = list(Personne.objects.exclude(profile__in=[None, '']).values_list('profile', flat=True).distinct())
+        available_statuses = [choice[0] for choice in Personne.STATUS_CHOICES]
+        available_clients = list(Projet.objects.exclude(final_client__in=[None, '']).values_list('final_client', flat=True).distinct())
+        available_equipes = list(Equipe.objects.values_list('name', flat=True).distinct())
+        available_sops = [choice[0] for choice in Projet.SOP_CHOICES]
         
         
 
         # --- Assemblage de la réponse ---
         data = {
+            'filters': {
+                'profiles': available_profiles,
+                'statuses': available_statuses,
+                'clients': available_clients,
+                'equipes': available_equipes,
+                'sops': available_sops,
+            },
             'collaborator_stats': {
                 'total_headcount': total_headcount,
                 'by_status': by_status,

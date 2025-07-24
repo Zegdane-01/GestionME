@@ -1,9 +1,9 @@
-/* ---------- conteneur global ---------- */
 .container {
   display: flex;
+  flex-direction: row; /* Aligne les éléments verticalement */
   align-items: center;
-  gap: 1rem;                   /* espace entre genre et donut */
-  background: #fff;
+  justify-content: center;
+  height: 100%;
 }
 
 /* ---------- bloc genre ---------- */
@@ -19,16 +19,18 @@
 .genderCard { text-align: center; }
 
 .genderCount {
-  font: 700 1.25rem/1 'Inter', sans-serif;
+  padding: 10% 0%;
+  font: 700 2rem/1 'Inter', sans-serif;
 }
 
 .genderLabel {
-  font-size: 0.75rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
 /* ---------- donut ---------- */
 .chartWrapper {
+  margin-top: 10%;
   position: relative;
   flex: 1 1 auto;              /* prend tout l’espace restant */
   aspect-ratio: 1 / 1;         /* carré, donc cercle parfait */
@@ -38,4 +40,13 @@
 .chartWrapper canvas {
   width: 100% !important;      /* fait coller le canvas */
   height: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .container {
+    flex-direction: column; 
+  }
+  .genderBlock {
+    flex-direction: row;
+  }
 }

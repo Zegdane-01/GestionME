@@ -54,14 +54,6 @@
   min-height: 260px;
 }
 
-/* Cartes spéciales */
-.cardWide {
-  grid-column: 2 / -1;     
-}
-
-/* Ex. carte haute */
-.cardTall { min-height: 340px; }
-
 /* Titres dans les cards */
 .cardTitle {
   font: 600 15px/1 'Inter', sans-serif;
@@ -80,17 +72,30 @@
   display: flex;
   align-items: center;         /* centre verticalement */
   justify-content: center;     /* centre horizontalement */
-  padding: 8px;                /* petit air autour */
+  padding: 2px;                /* petit air autour */
+}
+
+
+
+/* Une carte qui prend 2 rangées de haut */
+.cardSpan2Rows {
+  grid-row: span 2;
 }
 @media (min-width: 768px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .cardSpan2 {
+    grid-column: span 2;
   }
 }
 
 /* ≥1200 px : 3 cartes par ligne (demande utilisateur) */
 @media (min-width: 1200px) {
   .grid {
-    grid-template-columns: repeat(3, 1fr);   /* ⭐️ 3 colonnes fixes */
+    grid-template-columns: repeat(4, 1fr);   /* ⭐️ 3 colonnes fixes */
+  }
+  .cardSpan2 {
+    grid-column: span 4;
   }
 }

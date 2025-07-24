@@ -71,7 +71,7 @@ const PositionBarChart = ({ data }) => {
       datalabels: {
         anchor: 'end',
         align: 'end',
-        offset: -25, // Placer le label à l'intérieur de la barre
+        offset: -25,
         color: 'white',
         font: {
           weight: 'bold',

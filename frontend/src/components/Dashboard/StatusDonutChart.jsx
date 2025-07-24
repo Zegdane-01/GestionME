@@ -86,13 +86,13 @@ const StatusDonutChart = ({ data }) => {
     {/* Bloc “genre” */}
     <div className={styles.genderBlock}>
       <div className={styles.genderCard}>
-        <FontAwesomeIcon icon={faPersonDress} size="lg" />
+        <FontAwesomeIcon icon={faPersonDress} size="4x" />
         <div className={styles.genderCount}>{data.by_sexe?.Femme || 0}</div>
         <div className={styles.genderLabel}>Femmes</div>
       </div>
 
       <div className={styles.genderCard}>
-        <FontAwesomeIcon icon={faPerson} size="lg" />
+        <FontAwesomeIcon icon={faPerson} size="4x" />
         <div className={styles.genderCount}>{data.by_sexe?.Homme || 0}</div>
         <div className={styles.genderLabel}>Hommes</div>
       </div>
