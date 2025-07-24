@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import styles from '../../assets/styles/Dashboard/Chart.module.css';
 
 // 1. Enregistrer les éléments et le plugin
 ChartJS.register(
@@ -78,14 +79,13 @@ const ProfileHorizontalBarChart = ({ data }) => {
     },
     plugins: {
       legend: {
-        display: false, // On cache la légende
+        display: false, 
       },
-      // Configuration pour afficher les valeurs à côté des barres
       datalabels: {
-        anchor: 'end', // Ancrer le label à la fin de la barre
-        align: 'end',  // Aligner le texte à la fin
-        offset: 5,     // Distance par rapport à la fin de la barre
-        color: '#555',
+        anchor: 'end',
+        align: 'end',
+        offset: -25,
+        color: 'white',
         font: {
           weight: 'bold',
         },
@@ -95,8 +95,11 @@ const ProfileHorizontalBarChart = ({ data }) => {
       },
     },
   };
-
-  return <Bar data={chartData} options={options} />;
+  return (
+    <div className={styles.chartWrapper}> 
+      <Bar data={chartData} options={options} />
+    </div>
+  );
 };
 
 export default ProfileHorizontalBarChart;

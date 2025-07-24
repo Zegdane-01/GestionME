@@ -40,127 +40,77 @@ const DashboardPage = () => {
     return <div>Aucune donnée à afficher.</div>;
   }
 
-  return (
-    
-    <div className="container-fluid p-4">
-        
-      <h1 className="h3 mb-4">Tableau de Bord - HR Global</h1>
-      <div className="row">
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow h-100">
-            <div className="card-header">Statut des collaborateurs</div>
-                <div className="card-body">
-                    {/* {dashboardData.collaborator_stats && (
-                        <div className={styles.chartCardBody}>
-                        <StatusDonutChart data={dashboardData.collaborator_stats}/>
-                        </div>
-                    )} */}
-                </div>
+return (
+  <div className={styles.dashboard}>
+    <h1 className={styles.title}>ME GLOBAL</h1>
+
+    {/* ======== GRID PRINCIPALE ======== */}
+    <div className={styles.grid}>
+      {/* Statut collaborateurs */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Statut des collaborateurs</h3>
+          <div className={styles.centerBody}>
+            <StatusDonutChart data={dashboardData.collaborator_stats} />
           </div>
+      </section>
+
+
+      {/* Radar profils */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Répartition par type de profils</h3>
+        <div className={styles.centerBody}>
+          <ProfileHorizontalBarChart data={dashboardData.profile_distribution} />
         </div>
-        <div className="col-xl-4 col-lg-7 mb-4">
-           <div className="card shadow h-100">
-            <div className="card-header">Répartition par type de profils</div>
-            <div className="card-body">
-                {dashboardData.profile_distribution && (
-                    <div className={styles.chartCardBody}>
-                    <ProfileHorizontalBarChart data={dashboardData.profile_distribution}/>
-                    </div>
-                )}
-            </div>
-          </div>
+      </section>
+
+      {/* Niveaux */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Répartition par Position</h3>
+        <div className={styles.centerBody}>
+          <PositionBarChart data={dashboardData.headcount_by_position} />
         </div>
-        <div className="col-xl-4 col-lg-7 mb-4">
-           <div className="card shadow h-100">
-            <div className="card-header">Headcount par Client</div>
-            <div className="card-body">
-                {/* {dashboardData.headcount_by_client && (
-                  <div className={styles.chartCardBody}>
-                    <HeadcountByClientPieChart data={dashboardData.headcount_by_client} />
-                  </div>
-                )} */}
-            </div>
-          </div>
+      </section>
+
+      {/* Headcount par client */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Headcount par Client</h3>
+        <div className={styles.centerBody}>
+          <HeadcountByClientPieChart data={dashboardData.headcount_by_client} />
         </div>
-      </div>
-      <div className="row">
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow h-100">
-            <div className="card-header">Répartition par Position</div>
-                <div className="card-body">
-                  {/* {dashboardData.headcount_by_position && (
-                    <div className={styles.chartCardBody}>
-                      <PositionBarChart data={dashboardData.headcount_by_position} />
-                    </div>
-                  )} */}
-                </div>
-          </div>
+      </section>
+
+      {/* Répartition par Niveau d'Expérience */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Répartition par Niveau d'Expérience</h3>
+        <div className={styles.centerBody}>
+          <ExperienceBarChart data={dashboardData.experience_distribution} />
         </div>
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow h-100">
-            <div className="card-header">Répartition par Niveau d'Expérience</div>
-                <div className="card-body">
-                  {/* {dashboardData.experience_distribution && (
-                    <div className={styles.chartCardBody}>
-                      <ExperienceBarChart data={dashboardData.experience_distribution} />
-                    </div>
-                  )} */}
-                </div>
-          </div>
+      </section>
+
+      {/* Statut des Projets */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Statut des Projets</h3>
+        <div className={styles.centerBody}>
+          <ProjectStatusDonutChart data={dashboardData.project_status_distribution} />
         </div>
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow h-100">
-            <div className="card-header">Répartition par Niveau de Diplôme</div>
-                <div className="card-body">
-                  {/* {dashboardData.diploma_distribution && (
-                    <div className={styles.chartCardBody}>
-                      <DiplomaDonutChart data={dashboardData.diploma_distribution} />
-                    </div>
-                  )} */}
-                </div>
-          </div>
+      </section>
+
+      {/* Répartition par Niveau de Diplôme */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Répartition par Niveau de Diplôme</h3>
+        <div className={styles.centerBody}>
+          <DiplomaDonutChart data={dashboardData.diploma_distribution} />
         </div>
-      </div>
-            <div className="row">
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow h-100">
-            <div className="card-header">Statut des Projets</div>
-                <div className="card-body">
-                  {/* {dashboardData.project_status_distribution  && (
-                    <div className={styles.chartCardBody}>
-                      <ProjectStatusDonutChart data={dashboardData.project_status_distribution} />
-                    </div>
-                  )}  */}
-                </div>
-          </div>
-        </div>
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow h-100">
-            <div className="card-header">Formations avec Échéance Proche</div>
-                <div className="card-body">
-                  {dashboardData.upcoming_deadlines  && (
-                    <div className={styles.chartCardBody}>
-                      <UpcomingDeadlinesList data={dashboardData.upcoming_deadlines} />
-                    </div>
-                  )}
-                </div>
-          </div>
-        </div>
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow h-100">
-            <div className="card-header">Répartition par Niveau de Diplôme</div>
-                <div className="card-body">
-                  {dashboardData.diploma_distribution && (
-                    <div className={styles.chartCardBody}>
-                      
-                    </div>
-                  )}
-                </div>
-          </div>
-        </div>
-      </div>
+      </section>
+
+      {/* Formations avec Échéance Proche*/}
+      <section className={`${styles.card} ${styles.cardWide}`}>
+        <h3 className={styles.cardTitle}>Formations avec Échéance Proche</h3>
+        <UpcomingDeadlinesList data={dashboardData.upcoming_deadlines} />
+      </section>
     </div>
-  );
+  </div>
+);
 };
 
 export default DashboardPage;

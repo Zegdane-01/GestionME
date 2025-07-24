@@ -4,7 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPerson, faPersonDress } from '@fortawesome/free-solid-svg-icons';
-import styles from '../../assets/styles/Dashboard/StatusDonutChart.module.css';
+import styles from '../../assets/styles/Dashboard/Chart.module.css';
 
 // Register Chart.js elements & plugins
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
@@ -82,26 +82,31 @@ const StatusDonutChart = ({ data }) => {
 
   /* ----------------------------- Component JSX ----------------------------- */
   return (
-    <div className={styles.container}> {/* NEW */}
-      {/* Gender block */}
-      <div className={styles.genderBlock}> {/* NEW */}
-        <div className={styles.genderCard}> {/* NEW */}
-          <FontAwesomeIcon icon={faPersonDress} size="lg" />
-          <div className={styles.genderCount}>{data.by_sexe?.Femme || 0}</div>
-          <div className={styles.genderLabel}>Femmes</div>
-        </div>
-        <div className={styles.genderCard}> {/* NEW */}
-          <FontAwesomeIcon icon={faPerson} size="lg" />
-          <div className={styles.genderCount}>{data.by_sexe?.Homme || 0}</div>
-          <div className={styles.genderLabel}>Hommes</div>
-        </div>
+  <div className={styles.container}>
+    {/* Bloc “genre” */}
+    <div className={styles.genderBlock}>
+      <div className={styles.genderCard}>
+        <FontAwesomeIcon icon={faPersonDress} size="lg" />
+        <div className={styles.genderCount}>{data.by_sexe?.Femme || 0}</div>
+        <div className={styles.genderLabel}>Femmes</div>
       </div>
 
-      {/* Donut */}
-      <div className={styles.chartWrapper}> 
-        <Doughnut data={chartData} options={options} plugins={[centerTextPlugin]} />
+      <div className={styles.genderCard}>
+        <FontAwesomeIcon icon={faPerson} size="lg" />
+        <div className={styles.genderCount}>{data.by_sexe?.Homme || 0}</div>
+        <div className={styles.genderLabel}>Hommes</div>
       </div>
     </div>
+
+    {/* Donut */}
+    <div className={styles.chartWrapper}>
+      <Doughnut
+        data={chartData}
+        options={options}
+        plugins={[centerTextPlugin]}
+      />
+    </div>
+  </div>
   );
 };
 

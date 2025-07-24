@@ -2,6 +2,7 @@ import React from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import styles from '../../assets/styles/Dashboard/Chart.module.css';
 
 // 1. Enregistrer les éléments nécessaires pour un Pie Chart
 ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
@@ -55,7 +56,11 @@ const HeadcountByClientPieChart = ({ data }) => {
     },
   };
 
-  return <Pie data={chartData} options={options} />;
+  return (
+    <div className={styles.chartWrapper}> 
+      <Pie data={chartData} options={options} />
+    </div>
+  );
 };
 
 export default HeadcountByClientPieChart;

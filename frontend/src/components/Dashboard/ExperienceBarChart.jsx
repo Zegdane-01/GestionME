@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import styles from '../../assets/styles/Dashboard/Chart.module.css';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels
@@ -54,15 +55,19 @@ const ExperienceBarChart = ({ data }) => {
       datalabels: {
         anchor: 'end',
         align: 'end',
-        offset: 5,
-        color: '#4A5568',
+        offset: -25,
+        color: 'white',
         font: { weight: 'bold' },
         formatter: (value) => (value > 0 ? value : ''),
       },
     },
   };
 
-  return <Bar data={chartData} options={options} />;
+  return (
+    <div className={styles.chartWrapper}> 
+      <Bar data={chartData} options={options} />
+    </div>
+  );
 };
 
 export default ExperienceBarChart;

@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import styles from '../../assets/styles/Dashboard/Chart.module.css';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, ChartDataLabels
@@ -79,8 +80,11 @@ const PositionBarChart = ({ data }) => {
       },
     },
   };
-
-  return <Bar data={chartData} options={options} />;
+  return (
+    <div className={styles.chartWrapper}> 
+      <Bar data={chartData} options={options} />
+    </div>
+  );
 };
 
 export default PositionBarChart;

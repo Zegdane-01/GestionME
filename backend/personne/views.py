@@ -504,15 +504,42 @@ class DashboardStatsAPIView(APIView):
             deadline__gte=today,
             deadline__lte=thirty_days_from_now
         ).annotate(
-            # Compter le nombre total de personnes inscrites
             total_enrolled=Count('domain__equipes__assigned_users', distinct=True),
-            # Compter le nombre de personnes ayant terminé
-            total_completed=Count('userformation', filter=Q(userformation__status='terminee'), distinct=True)
-        ).order_by('deadline') # Trier par la date la plus proche
+            total_completed=Count('userformation', filter=Q(userformation__progress__gte=100), distinct=True)
+        ).order_by('deadline')
 
-        upcoming_deadlines = list(upcoming_deadlines_qs.values(
-            'titre', 'deadline', 'total_enrolled', 'total_completed'
-        ))
+        upcoming_deadlines = []
+        for formation in upcoming_deadlines_qs:
+            assigned_teams = formation.assigned_teams.all()
+            
+            # On va construire une liste de la progression de chaque équipe
+            teams_progress_list = []
+            for team in assigned_teams:
+                total_members = team.assigned_users.count()
+                if total_members == 0:
+                    continue
+
+                completed_members = Personne.objects.filter(
+                    equipes=team,
+                    userformation__formation=formation,
+                    userformation__progress__gte=100
+                ).count()
+                
+                teams_progress_list.append({
+                    'name': team.name,
+                    'completed': completed_members,
+                    'total': total_members,
+                })
+            
+            upcoming_deadlines.append({
+                'titre': formation.titre,
+                'deadline': formation.deadline,
+                'total_enrolled': formation.total_enrolled,
+                'total_completed': formation.total_completed,
+                # ✅ On remplace les anciens décomptes par la liste détaillée
+                'teams_progress': teams_progress_list,
+            })
+
 
         
         
