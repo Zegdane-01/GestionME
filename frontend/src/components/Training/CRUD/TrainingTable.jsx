@@ -24,6 +24,7 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
         has_quiz: [],
         deadline: [],
         statut: [],
+        activity: [],
     });
   
   const [filteredTrainings, setFilteredTrainings] = useState(trainings);
@@ -90,6 +91,12 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
             });
         });
     }
+    if (filters.activity.length > 0) {
+        data = data.filter(t => {
+            const teamNames = t.teams_progress?.map(team => team.name) || [];
+            return filters.activity.some(activity => teamNames.includes(activity));
+        });
+    }
     
     setFilteredTrainings(data);
   }, [filters, trainings]);
@@ -104,8 +111,21 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
   // La génération des options reste la même
   const domainOptions = useMemo(() => [...new Set(trainings.map(t => t.domain_info?.name).filter(Boolean))], [trainings]);
   const creatorOptions = useMemo(() => [...new Set(trainings.map(t => `${t.created_by_info?.last_name || ''} ${t.created_by_info?.first_name || ''}`.trim()).filter(Boolean))], [trainings]);
-  const formatorOptions = [...new Set(trainings.map(t => t.formateur ?? "__vide__"))]
-                            .map(val => val === "__vide__" ? "Non attribué" : val);
+  const formatorOptions = [
+    ...new Set(
+        trainings.map(t => {
+        const raw = t.formateur;
+        if (!raw || raw === "null" || raw.trim() === "") return "Non attribué";
+        return raw;
+        })
+    )
+  ];
+  const activityOptions = useMemo(() => {
+    const allActivities = trainings.flatMap(t =>
+        (t.teams_progress || []).map(team => team.name)
+    );
+    return [...new Set(allActivities)].filter(Boolean);
+  }, [trainings]);
 
 
   // Fonction pour gérer le changement de page
@@ -163,7 +183,6 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
             </th>
             <th>Nombre de Modules</th>
             <th>Nombre de Supports</th>
-            <th>Activités assignées</th>
             <th>
                 Présence du quiz
                 <FilterDropdown
@@ -178,6 +197,14 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
                     options={deadlineOptions}
                     selectedOptions={filters.deadline}
                     onFilterChange={(selection) => handleFilterChange("deadline", selection)}
+                />
+            </th>
+            <th>
+                Activité
+                <FilterDropdown
+                    options={activityOptions}
+                    selectedOptions={filters.activity}
+                    onFilterChange={(selection) => handleFilterChange('activity', selection)}
                 />
             </th>
             <th>Formés</th>
@@ -222,24 +249,7 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
                             <strong>{training.resource_count}</strong> ressource{training.resource_count > 1 ? 's' : ''}
                         </span>
                     </td>
-                    <td>
-                        <div className="d-flex flex-wrap gap-2">
-                            {training.teams_progress?.length > 0 ? (
-                            training.teams_progress.map((team, teamIndex) => {
-                                const isTeamComplete = team.completed === team.total;
-                                const teamBadgeClass = isTeamComplete ? 'bg-success text-black' : 'bg-warning text-black';
-
-                                return (
-                                <span key={teamIndex} className={`badge ${teamBadgeClass}`}>
-                                    {team.name}: {team.completed} / {team.total}
-                                </span>
-                                );
-                            })
-                            ) : (
-                            <span className="text-muted fst-italic">Aucune activité</span>
-                            )}
-                        </div>
-                    </td>
+                    
                     <td>
                         <span className={`badge ${training.has_quiz ? "bg-success" : "bg-secondary"}`}>
                             {training.has_quiz ? "✔ Quiz présent" : "✖ Aucun quiz"}
@@ -262,6 +272,24 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
                         ) : (
                             <span className="text-muted fst-italic">Non attribué</span>
                         )}
+                    </td>
+                    <td>
+                        <div className="d-flex flex-wrap gap-2">
+                            {training.teams_progress?.length > 0 ? (
+                            training.teams_progress.map((team, teamIndex) => {
+                                const isTeamComplete = team.completed === team.total;
+                                const teamBadgeClass = isTeamComplete ? 'bg-success text-black' : 'bg-warning text-black';
+
+                                return (
+                                <span key={teamIndex} className={`badge ${teamBadgeClass}`}>
+                                    {team.name}: {team.completed} / {team.total}
+                                </span>
+                                );
+                            })
+                            ) : (
+                            <span className="text-muted fst-italic">Aucune activité</span>
+                            )}
+                        </div>
                     </td>
                     <td>
                         <strong>{training.passed_count}</strong> / {training.assigned_person_count}

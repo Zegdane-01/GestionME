@@ -196,9 +196,11 @@ class FormationReadSerializer(serializers.ModelSerializer):
     ressources = ResourceSerializer(many=True, read_only=True)
     quiz = serializers.SerializerMethodField( allow_null=True, required=False)
 
+    teams_progress = serializers.SerializerMethodField()
+
     class Meta:
         model  = Formation
-        fields = ['id','titre', 'description', 'image_cover', 'created_by','formateur','deadline', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time','assigned_team_count', 'assigned_person_count']
+        fields = ['id','titre', 'description', 'image_cover', 'created_by','formateur','deadline', 'domain', 'statut', 'modules', 'ressources', 'quiz', 'created_by_info', 'domain_info', 'module_count', 'resource_count', 'has_quiz', 'passed_count','total_estimated_time','assigned_team_count', 'assigned_person_count', 'teams_progress']
     
     # petits résumés pour modules / ressources
     def get_modules(self, obj):
@@ -253,6 +255,29 @@ class FormationReadSerializer(serializers.ModelSerializer):
     def get_assigned_person_count(self, obj):
         """Retourne le nombre de personnes uniques dans les équipes assignées."""
         return obj.assigned_persons.count()
+    
+    def get_teams_progress(self, obj):
+        assigned_teams = obj.assigned_teams.all()
+        result = []
+
+        for team in assigned_teams:
+            total_members = team.assigned_users.count()
+            if total_members == 0:
+                continue
+
+            completed_members = Personne.objects.filter(
+                equipes=team,
+                userformation__formation=obj,
+                userformation__progress__gte=100
+            ).distinct().count()
+
+            result.append({
+                'name': team.name,
+                'completed': completed_members,
+                'total': total_members,
+            })
+
+        return result
 
 class FormationWriteSerializer(serializers.ModelSerializer):
     module_count = serializers.SerializerMethodField()
