@@ -187,6 +187,36 @@ class FormationViewSet(viewsets.ModelViewSet):
             "collaborateurs": collaborateurs_data,
         })
 
+    @action(detail=True, methods=['get'], url_path='quiz-history')
+    def quiz_history(self, request, pk=None):
+        """
+        Returns the quiz history for a specific user and formation.
+        Requires a 'collaborateur_id' query parameter.
+        """
+        formation = self.get_object()
+        collaborateur_id = request.query_params.get('collaborateur_id')
+
+        if not collaborateur_id:
+            return Response({"error": "collaborateur_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        history = UserQuizHistory.objects.filter(
+            formation=formation,
+            user__matricule=collaborateur_id
+        ).order_by('-completed_at')
+
+        # Calculate total possible score for percentage calculation
+        total_score = 0
+        if hasattr(formation, 'quiz') and formation.quiz:
+            total_score = formation.quiz.questions.aggregate(total=Sum('point'))['total'] or 1
+
+        serializer = UserQuizHistorySerializer(history, many=True)
+        
+        return Response({
+            'history': serializer.data,
+            'total_possible_score': total_score,
+        })
+
+
 class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
@@ -818,3 +848,4 @@ class UserQuizViewSet(viewsets.ModelViewSet):
 class UserAnswerViewSet(viewsets.ModelViewSet):
     queryset = UserAnswer.objects.all()
     serializer_class = UserAnswerSerializer
+

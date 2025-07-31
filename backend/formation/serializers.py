@@ -1037,4 +1037,14 @@ class FormationProgressSerializer(serializers.ModelSerializer):
 
         return completed_tabs
 
-    
+class UserQuizHistorySerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur pour le modèle d'historique des quiz.
+    """
+    # Formater la date pour une meilleure lisibilité côté frontend
+    completed_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M", read_only=True)
+
+    class Meta:
+        model = UserQuizHistory
+        fields = ['score', 'completed_at', 'time_spent']
+
