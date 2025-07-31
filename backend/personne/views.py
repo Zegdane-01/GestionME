@@ -18,7 +18,7 @@ from .models import Personne, ImportedExcel
 from formation.models import Formation, Equipe
 from projet.models import Projet 
 from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
-from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
+from .permissions import IsTeamLeader, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class PersonneViewSet(viewsets.ModelViewSet):
@@ -71,6 +71,24 @@ class PersonneViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='reset-password', permission_classes=[IsTeamLeader]) 
+    def reset_password(self, request, matricule=None):
+        """
+        Réinitialise le mot de passe d'un utilisateur.
+        Le nouveau mot de passe devient son matricule.
+        """
+        try:
+            personne = self.get_object()
+            # La méthode set_password s'occupe du hachage sécurisé
+            personne.set_password(personne.matricule)
+            personne.save()
+            return Response({'status': 'success', 'message': f"Le mot de passe pour {personne.first_name} {personne.last_name} a été réinitialisé."}, status=status.HTTP_200_OK)
+        except Personne.DoesNotExist:
+            return Response({'error': 'Utilisateur non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class HierarchieView(APIView):
     def get(self, request):
@@ -220,7 +238,6 @@ class ImportChargePlanView(APIView):
                 # CAS 2 : Aucun projet trouvé. On le crée.
                 Projet.objects.create(
                     nom=nom_projet,
-                    final_client=client_final,
                     **donnees_projet
                 )
                 projets_crees += 1

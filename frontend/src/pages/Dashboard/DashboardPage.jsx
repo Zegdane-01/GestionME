@@ -96,7 +96,7 @@ return (
             onChange={(value) => handleFilterChange('client', value)}
           />
           <DashboardFilter 
-            label="Par équipe"
+            label="Par activité"
             options={dashboardData.filters?.equipes || []}
             value={filters.equipe}
             onChange={(value) => handleFilterChange('equipe', value)}

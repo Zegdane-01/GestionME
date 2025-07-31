@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import api from "../../api/api";
 import { getUserRole, getUserId } from "../../services/auth.js";
 import { Table } from "react-bootstrap";
-import { User, BarChart3, Table2, BrainCircuit } from "lucide-react";
+import { User, BookOpenCheck, GaugeCircle, BarChart3, Table2, BrainCircuit } from "lucide-react";
 import styles from "../../assets/styles/Radar/Radar.module.css"; // ← ton fichier CSS local
 
 /* ------------------------------ Chart.js ------------------------------ */
@@ -57,11 +57,9 @@ const RadarCompetence = () => {
 
   /* ---------------------- HELPERS ------------------------- */
   const params = () => {
-    if (role === "COLLABORATEUR") {
+    if (role === "Collaborateur") {
       if (radarViewScope === "me") {
         return { user_id: myUserId };
-      } else if (radarViewScope === "team" && me.equipe_info) {
-        return { equipe_id: me.equipe_info.id }; // si un seul
       }
       return {};
     }
@@ -118,7 +116,7 @@ const RadarCompetence = () => {
   }, [selectedUser, selectedEquipe, selectedProjet,radarViewScope]);
 
   useEffect(() => {
-  if (role === "COLLABORATEUR" && users.length) {
+  if (role === "Collaborateur" && users.length) {
     if (me && me.equipe_info) {
       /* on garde la 1re équipe comme contexte */
       setSelectedEquipe(me.equipe_info.id);          // id numérique
@@ -221,6 +219,12 @@ const RadarCompetence = () => {
   const scoreMoyenGlobal    = tableData.length
     ? Math.round(tableData.reduce((sum, user) => sum + user.average, 0) / tableData.length)
     : 0;
+  const myAverageScore = useMemo(() => {
+    const valid = radarData.filter(d => d.score !== null);
+    if (!valid.length) return 0;
+    const avg = valid.reduce((sum, d) => sum + d.score, 0) / valid.length;
+    return Math.round(avg);            // Arrondi entier
+  }, [radarData]);
   const top3                = [...tableData].sort((a,b)=>b.average-a.average).slice(0,3);
 
   /* ---------------------- CHART CONFIG -------------------- */
@@ -276,11 +280,11 @@ const RadarCompetence = () => {
 
   const radarOpts = {
     plugins: {
-      // MODIFIÉ : On active la légende, qui est maintenant indispensable
       legend: {
         display: true,
         position: 'top', // Positionne la légende en haut du graphique
-      }
+      },
+      datalabels: { display: false }
     },
     // L'échelle de 0 à 4 est conservée
     scales: {
@@ -412,31 +416,57 @@ const RadarCompetence = () => {
 
       {/* KPI CARDS */}
       <div className="row g-3 mb-4">
+        {/* ─────────────────── 1. Collaborateurs ─────────────────── */}
         <div className="col-md-4">
-          <div className="card shadow-sm h-100 p-4 d-flex flex-column justify-content-between">
+          <div className="card shadow-sm h-100 p-4 d-flex flex-column justify-content-between position-relative">
             <p className="text-muted small mb-1">Collaborateurs évalués</p>
-            
-              <h3 className="text-primary">
-                {totalCollab} / {
-                  role === 'TeamLead'
-                    ? (selectedUser ? 1 : filteredUsers.length)
-                    : (radarViewScope === 'me' ? 1 : filteredUsers.length)
-                }
-              </h3>
-            
-            <User className="position-absolute end-0 bottom-0 me-3 mb-3 text-primary opacity-25" />
+
+            <h3 className="text-primary">
+              {totalCollab} / {
+                role === "TeamLead"
+                  ? (selectedUser ? 1 : filteredUsers.length)
+                  : (radarViewScope === "me" ? 1 : filteredUsers.length)
+              }
+            </h3>
+
+            {/* Icône */}
+            <User size={48} className="position-absolute end-0 bottom-0 me-3 mb-3 text-primary opacity-25" />
           </div>
         </div>
+
+        {/* ─────────────────── 2. Compétences ────────────────────── */}
         <div className="col-md-4">
-          <div className="card shadow-sm h-100 p-4">
+          <div className="card shadow-sm h-100 p-4 d-flex flex-column justify-content-between position-relative">
             <p className="text-muted small mb-1">Compétences analysées</p>
+
             <h3 className="text-success">{competencesCount}</h3>
+
+            {/* Icône livre + check */}
+            <BookOpenCheck
+              size={48}
+              className="position-absolute end-0 bottom-0 me-3 mb-3 text-success opacity-25"
+            />
           </div>
         </div>
+
+        {/* ─────────────────── 3. Score moyen ────────────────────── */}
         <div className="col-md-4">
-          <div className="card shadow-sm h-100 p-4">
-            <p className="text-muted small mb-1">Score moyen global</p>
-            <h3 className="text-info">{scoreMoyenGlobal}%</h3>
+          <div className="card shadow-sm h-100 p-4 d-flex flex-column justify-content-between position-relative">
+            <p className="text-muted small mb-1">
+              {role === "Collaborateur" ? "Mon score moyen" : "Score moyen global"}
+            </p>
+
+            <h3 className={role === "Collaborateur" ? "text-success" : "text-info"}>
+              {role === "Collaborateur" ? myAverageScore : scoreMoyenGlobal}%
+            </h3>
+
+            {/* Icône jauge */}
+            <GaugeCircle
+              size={48}
+              className={`position-absolute end-0 bottom-0 me-3 mb-3 ${
+                role === "Collaborateur" ? "text-success" : "text-info"
+              } opacity-25`}
+            />
           </div>
         </div>
       </div>
@@ -455,7 +485,7 @@ const RadarCompetence = () => {
                   </select>
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label">Équipe</label>
+                  <label className="form-label">Activité</label>
                   <select className="form-select" value={selectedEquipe} onChange={e => setSelectedEquipe(e.target.value)}>
                     <option value="">Toutes</option>
                     {filteredEquipes.map(eq=>(<option key={eq.id} value={eq.id}>{eq.name}</option>))}
@@ -477,28 +507,6 @@ const RadarCompetence = () => {
           </div>
         </>
       )}
-      {role === "COLLABORATEUR" && (
-        <div className="mb-4 d-flex flex-wrap gap-3">
-          <div className="btn-group">
-            <button
-              className={`btn ${radarViewScope === 'me' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => setRadarViewScope("me")}
-            >
-              Mon radar
-            </button>
-            <button
-              className={`btn ${radarViewScope === 'team' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => setRadarViewScope("team")}
-            >
-              {(() => {
-                const me = users.find(u => u.matricule === myUserId);
-                return `Mon équipe${me?.equipe_info?.name ? ` : ${me.equipe_info.name}` : ''}`;
-              })()}
-            </button>
-          </div>
-        </div>
-      )}
-
         {viewMode === 'radar' ? (
           <>
             <div className="row g-4 mb-4">

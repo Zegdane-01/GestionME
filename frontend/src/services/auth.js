@@ -35,7 +35,7 @@ export const getUserRole = () => {
     
     if (['TL1', 'TL2'].includes(rawRole)) {
       return 'TeamLead';
-    } else if (rawRole === 'collaborateur') {
+    } else if (rawRole === 'COLLABORATEUR') {
       return 'Collaborateur';
     }
     

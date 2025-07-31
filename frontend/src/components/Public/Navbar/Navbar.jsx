@@ -47,7 +47,6 @@ const Navbar = ({ onHeightChange }) => {
       }
     ],
     COLLABORATEUR: [
-      { path: '/profile', label: 'Profil' },
       { path: '/trainings', label: 'Formations' },
       { path: '/radar', label: 'Rapports' },
       { path: '/hierarchie', label: 'Organisation chart' }
@@ -173,7 +172,23 @@ const Navbar = ({ onHeightChange }) => {
     );
   };
   
-  const linksToRender = isLoggedIn ? navLinksConfig[role] || [] : navLinksConfig.public;
+  const getLinksForRole = (currentRole) => {
+    if (!isLoggedIn) {
+      return navLinksConfig.public;
+    }
+    // Si le rôle est TL1 ou TL2, on retourne les liens TeamLead
+    if (currentRole === 'TeamLead') {
+      return navLinksConfig.TeamLead;
+    }
+    // Si le rôle est COLLABORATEUR, on retourne les liens correspondants
+    if (currentRole === 'Collaborateur') {
+      return navLinksConfig.COLLABORATEUR;
+    }
+    // Par défaut, on ne retourne rien pour éviter d'afficher des liens incorrects
+    return [];
+  };
+
+  const linksToRender = getLinksForRole(role);
 
   return (
     <nav className={styles.cyberNav} ref={navRef}>
