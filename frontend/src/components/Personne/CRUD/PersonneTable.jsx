@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faTrash, faPencilAlt, faRocket,faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faTrash, faPencilAlt, faRocket,faChevronLeft, faChevronRight, faKey } from '@fortawesome/free-solid-svg-icons';
 import styles from '../../../assets/styles/Table.module.css';
-const PersonTable = ({ people, onView, onEdit, onDelete }) => {
+const PersonTable = ({ people, onView, onEdit, onDelete, onResetPassword }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
 
@@ -18,14 +18,6 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
       if (pageNumber >= 1 && pageNumber <= totalPages) {
           setCurrentPage(pageNumber);
       }
-  };
-
-  // Amélioration pour éviter la division par zéro
-  const calculatePercentage = (passed, total) => {
-      if (!total || total === 0) {
-          return '0.00';
-      }
-      return ((passed / total) * 100).toFixed(2);
   };
    
   return (
@@ -81,6 +73,13 @@ const PersonTable = ({ people, onView, onEdit, onDelete }) => {
                                 </button>
                                 <button onClick={() => onDelete(person.matricule)} title="Supprimer" className={`${styles['actionBtn']} ${styles.delete}`}>
                                     <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                                <button 
+                                    onClick={() => onResetPassword(person)} 
+                                    title="Réinitialiser le mot de passe" 
+                                    className={`${styles['actionBtn']} ${styles.reset}`}
+                                >
+                                    <FontAwesomeIcon icon={faKey} />
                                 </button>
                             </div>
                         </td>

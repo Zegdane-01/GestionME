@@ -563,7 +563,7 @@ const PersonForm = () => {
                   value={formData.manager || ''}
                   onChange={handleSelectChange}
                   className={isEditMode? styles.disableFormControl : styles.formControl} 
-                  disabled={isEditMode}
+                  
                 >
                   <option value="">Aucun manager</option>
                   {managers.map(manager => (
@@ -631,6 +631,8 @@ const PersonForm = () => {
                 <option value="COLLABORATEUR">Collaborateur</option>
                 <option value="TL1">Team Leader N1</option>
                 <option value="TL2">Team Leader N2</option>
+                <option value="UDL">Unit Delivery Leader</option>
+                <option value="CL">Country Leader</option>
               </select>
               {errors.role && <p className={styles.errorText}>{errors.role}</p>}
             </div>

@@ -1,4 +1,7 @@
 import logging
+import pandas as pd
+import os
+from datetime import date, timedelta
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from django.contrib.auth import update_session_auth_hash
@@ -7,15 +10,15 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
-from django.db.models import Q
+from django.db.models import Count, Q, Case, When, Value, IntegerField
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.http import FileResponse
-import pandas as pd
-import os
+from django.db import models
 from .models import Personne, ImportedExcel
+from formation.models import Formation, Equipe
 from projet.models import Projet 
 from .serializers import PersonneSerializer, PersonneLoginSerializer, PersonneHierarchieSerializer, PersonneCreateSerializer,PersonneUpdateSerializer,ChangePasswordSerializer
-from .permissions import IsTeamLeader, IsTeamLeaderN1, IsTeamLeaderN2, IsCollaborateur
+from .permissions import IsTeamLeader, IsCollaborateur
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class PersonneViewSet(viewsets.ModelViewSet):
@@ -68,6 +71,24 @@ class PersonneViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='reset-password', permission_classes=[IsTeamLeader]) 
+    def reset_password(self, request, matricule=None):
+        """
+        Réinitialise le mot de passe d'un utilisateur.
+        Le nouveau mot de passe devient son matricule.
+        """
+        try:
+            personne = self.get_object()
+            # La méthode set_password s'occupe du hachage sécurisé
+            personne.set_password(personne.matricule)
+            personne.save()
+            return Response({'status': 'success', 'message': f"Le mot de passe pour {personne.first_name} {personne.last_name} a été réinitialisé."}, status=status.HTTP_200_OK)
+        except Personne.DoesNotExist:
+            return Response({'error': 'Utilisateur non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class HierarchieView(APIView):
     def get(self, request):
@@ -217,7 +238,6 @@ class ImportChargePlanView(APIView):
                 # CAS 2 : Aucun projet trouvé. On le crée.
                 Projet.objects.create(
                     nom=nom_projet,
-                    final_client=client_final,
                     **donnees_projet
                 )
                 projets_crees += 1
@@ -388,4 +408,207 @@ def download_last_imported_file(request):
     if not latest or not latest.fichier:
         return Response({'error': 'Aucun fichier disponible'}, status=404)
     return FileResponse(open(latest.fichier.path, 'rb'), as_attachment=True, filename=latest.fichier.name)
-    
+
+
+class DashboardStatsAPIView(APIView):
+    permission_classes = [IsAuthenticated] # Protéger l'accès
+
+    def get(self, request, *args, **kwargs):
+        # --- Widget 1: Statut des collaborateurs (Donut Chart) ---
+        collaborators_qs = Personne.objects.all()
+
+        profile_f = request.query_params.get('profile')
+        status_f = request.query_params.get('status')
+        client_f = request.query_params.get('client')
+        activite_f = request.query_params.get('equipe')
+        i_e_f = request.query_params.get('sop')
+
+        if profile_f:
+            collaborators_qs = collaborators_qs.filter(profile=profile_f)
+
+        if status_f:
+            collaborators_qs = collaborators_qs.filter(status=status_f)
+        
+        if client_f:
+            collaborators_qs = collaborators_qs.filter(projet__final_client=client_f)
+        
+        if activite_f:
+            collaborators_qs = collaborators_qs.filter(equipes__name=activite_f)
+        
+        if i_e_f:
+            collaborators_qs = collaborators_qs.filter(projet__sop=i_e_f)
+        
+
+        total_headcount = collaborators_qs.count()
+        
+        status_counts = collaborators_qs.values('status').annotate(count=Count('status'))
+        # Exemple de formatage: {'En cours': 39, 'Bench': 6, ...}
+        by_status = {item['status']: item['count'] for item in status_counts}
+
+        sexe_counts = collaborators_qs.values('sexe').annotate(count=Count('sexe'))
+        # Exemple de formatage: {'Homme': 35, 'Femme': 13}
+        by_sexe = {item['sexe']: item['count'] for item in sexe_counts}
+
+        # --- Widget 2: Répartition par profil (Radar Chart) ---
+        profile_counts = collaborators_qs.exclude(profile=None).exclude(profile='').values('profile').annotate(count=Count('profile'))
+        # Exemple de formatage: [{'profil': 'RFOE', 'count': 5}, ...]
+        by_profile = list(profile_counts)
+
+        client_counts_qs = collaborators_qs.exclude(
+            projet__final_client=None
+        ).exclude(
+            projet__final_client=''
+        ).values(
+            'projet__final_client'  # Grouper par le champ 'final_client' du modèle 'Projet'
+        ).annotate(
+            count=Count('matricule')    # Compter le nombre de personnes dans chaque groupe
+        ).order_by(
+            '-count' # Trier par le plus grand nombre
+        )
+
+        # On renomme la clé pour que ce soit plus simple côté frontend
+        by_client = [
+            {'client': item['projet__final_client'], 'count': item['count']}
+            for item in client_counts_qs
+        ]
+
+        position_order = [choice[0] for choice in Personne.POSITION_CHOICES]
+        
+        # On exécute la requête pour compter les collaborateurs par position
+        position_counts_qs = collaborators_qs.exclude(
+            position__in=[None, '']
+        ).values(
+            'position'
+        ).annotate(
+            count=Count('matricule')
+        )
+        
+        # On convertit le résultat en dictionnaire pour un accès facile
+        position_counts_dict = {item['position']: item['count'] for item in position_counts_qs}
+        
+        # On construit la liste finale en respectant l'ordre et en incluant les zéros
+        by_position = [
+            {'position': pos, 'count': position_counts_dict.get(pos, 0)}
+            for pos in position_order
+        ]
+
+
+        experience_ranges = {
+            '10+ ans': Q(experience_total__gte=120),              # 10 ans = 120 mois
+            '5-10 ans': Q(experience_total__gte=60, experience_total__lt=120),  # 5 ans = 60 mois
+            '2-5 ans': Q(experience_total__gte=24, experience_total__lt=60),   # 2 ans = 24 mois
+            '0-2 ans': Q(experience_total__lt=24),
+        }
+
+        # On annote chaque personne avec sa tranche d'expérience
+        experience_distribution_qs = collaborators_qs.annotate(
+            range=Case(
+                *[When(condition, then=Value(label)) for label, condition in experience_ranges.items()],
+                default=Value('N/A'),
+                output_field=models.CharField()
+            )
+        ).values('range').annotate(count=Count('matricule'))
+
+        # On convertit en dictionnaire pour un accès facile
+        experience_counts_dict = {item['range']: item['count'] for item in experience_distribution_qs}
+
+        # On formate la sortie en respectant l'ordre désiré
+        by_experience = [
+            {'range': label, 'count': experience_counts_dict.get(label, 0)}
+            for label in experience_ranges.keys()
+        ]
+
+        diploma_counts_qs = collaborators_qs.exclude(
+            diplome__in=[None, '']
+        ).values(
+            'diplome'
+        ).annotate(
+            count=Count('matricule')
+        ).order_by('-count')
+
+        by_diploma = list(diploma_counts_qs)
+
+        project_status_counts = Projet.objects.values(
+            'statut'
+        ).annotate(
+            count=Count('projet_id')
+        ).order_by('-count')
+
+        by_project_status = list(project_status_counts)
+
+        today = date.today()
+        thirty_days_from_now = today + timedelta(days=30)
+
+        upcoming_deadlines_qs = Formation.objects.filter(
+            statut='actif',
+            deadline__gte=today,
+            deadline__lte=thirty_days_from_now
+        ).annotate(
+            total_enrolled=Count('domain__equipes__assigned_users', distinct=True),
+            total_completed=Count('userformation', filter=Q(userformation__progress__gte=100), distinct=True)
+        ).order_by('deadline')
+
+        upcoming_deadlines = []
+        for formation in upcoming_deadlines_qs:
+            assigned_teams = formation.assigned_teams.all()
+            
+            # On va construire une liste de la progression de chaque équipe
+            teams_progress_list = []
+            for team in assigned_teams:
+                total_members = team.assigned_users.count()
+                if total_members == 0:
+                    continue
+
+                completed_members = Personne.objects.filter(
+                    equipes=team,
+                    userformation__formation=formation,
+                    userformation__progress__gte=100
+                ).count()
+                
+                teams_progress_list.append({
+                    'name': team.name,
+                    'completed': completed_members,
+                    'total': total_members,
+                })
+            
+            upcoming_deadlines.append({
+                'titre': formation.titre,
+                'deadline': formation.deadline,
+                'total_enrolled': formation.total_enrolled,
+                'total_completed': formation.total_completed,
+                # ✅ On remplace les anciens décomptes par la liste détaillée
+                'teams_progress': teams_progress_list,
+            })
+
+        available_profiles = list(Personne.objects.exclude(profile__in=[None, '']).values_list('profile', flat=True).distinct())
+        available_statuses = [choice[0] for choice in Personne.STATUS_CHOICES]
+        available_clients = list(Projet.objects.exclude(final_client__in=[None, '']).values_list('final_client', flat=True).distinct())
+        available_equipes = list(Equipe.objects.values_list('name', flat=True).distinct())
+        available_sops = [choice[0] for choice in Projet.SOP_CHOICES]
+        
+        
+
+        # --- Assemblage de la réponse ---
+        data = {
+            'filters': {
+                'profiles': available_profiles,
+                'statuses': available_statuses,
+                'clients': available_clients,
+                'equipes': available_equipes,
+                'sops': available_sops,
+            },
+            'collaborator_stats': {
+                'total_headcount': total_headcount,
+                'by_status': by_status,
+                'by_sexe': by_sexe
+            },
+            'profile_distribution': by_profile,
+            'headcount_by_client': by_client,
+            'headcount_by_position': by_position,
+            'experience_distribution': by_experience,
+            'diploma_distribution': by_diploma,
+            'project_status_distribution': by_project_status,
+            'upcoming_deadlines': upcoming_deadlines,
+        }
+        
+        return Response(data)

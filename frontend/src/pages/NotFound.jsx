@@ -1,25 +1,37 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
-      </div>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      textAlign: 'center',
+      backgroundColor: '#f8fafc'
+    }}>
+      <AlertTriangle size={64} className="text-warning mb-4" />
+      <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>404</h1>
+      <h2 style={{ fontSize: '1.5rem', color: '#475569' }}>Page Introuvable</h2>
+      <p style={{ color: '#64748b', marginTop: '1rem' }}>
+        Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+      </p>
+      <Link 
+        to="/" 
+        style={{
+          marginTop: '2rem',
+          padding: '10px 20px',
+          backgroundColor: '#6366f1',
+          color: 'white',
+          textDecoration: 'none',
+          borderRadius: '8px'
+        }}
+      >
+        Retour à l'accueil
+      </Link>
     </div>
   );
 };

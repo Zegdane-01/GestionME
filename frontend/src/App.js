@@ -32,6 +32,11 @@ import FormationBrowser from "./pages/Training/FormationBrowser.jsx";
 
 import RadarCompetence from "./pages/Radar/RadarCompetence.jsx";
 
+import DashboardPage from "./pages/Dashboard/DashboardPage.jsx";
+
+import UnauthorizedPage from "./pages/UnauthorizedPage.jsx";
+import NotFound from "./pages/NotFound.jsx";
+
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -47,44 +52,39 @@ function App() {
         <Navbar onHeightChange={handleHeightChange}/>
         <main style={{ paddingTop: `${navHeight}px` }}>
           <Routes>
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/A_Propos" element={<Apropos />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }/>
-            <Route path="/collaborateurs" element={<PersonList />} />
-            <Route path="/collaborateurs/add" element={<PersonForm />} />
-            <Route path="/collaborateurs/edit/:id" element={<PersonForm />} />
-            <Route path="/hierarchie" element={<Hierarchie />} />
+            <Route element={<ProtectedRoute allowedRoles={['Collaborateur', 'TeamLead']} />}>
+              <Route path="/profile" element={<Profile />}/>
+              <Route path="/hierarchie" element={<Hierarchie />} />
+              <Route path="/formations" element={<FormationBrowser />} />
+              <Route path="/trainings" element={<TrainingList />} />
+              <Route path="/trainings/:id" element={<TrainingDetail />} />
+              <Route path="/radar" element={<RadarCompetence />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={['TeamLead']} />}>
+              <Route path="/collaborateurs" element={<PersonList />} />
+              <Route path="/collaborateurs/add" element={<PersonForm />} />
+              <Route path="/collaborateurs/edit/:id" element={<PersonForm />} />
+              
+              <Route path="/Projets" element={<ProjetList />} />
+              <Route path="/Projets/add" element={<ProjetForm />} />
+              <Route path="/Projets/edit/:id" element={<ProjetForm />} />
 
-            <Route path="/Projets" element={<ProjetList />} />
-            <Route path="/Projets/add" element={<ProjetForm />} />
-            <Route path="/Projets/edit/:id" element={<ProjetForm />} />
+              <Route path="/activites" element={<EquipeList />} />
+              <Route path="/activites/add" element={<EquipeForm />} />
+              <Route path="/activites/edit/:id" element={<EquipeForm />} />
 
-            <Route path="/trainings" element={<TrainingList />} />
-            <Route path="/trainings/:id" element={<TrainingDetail />} />
+              <Route path="/manager/trainings" element={<TrainingListManager />} />
+              <Route path="/manager/trainings/add" element={<TrainingForm />} />
+              <Route path="/manager/trainings/edit/:id" element={<TrainingForm />} />
+              <Route path="/manager/trainings/progress/:formationId" element={<TrainingProgress />} />
 
-            <Route path="/activites" element={<EquipeList />} />
-            <Route path="/activites/add" element={<EquipeForm />} />
-            <Route path="/activites/edit/:id" element={<EquipeForm />} />
-
-
-            <Route path="/manager/trainings" element={<TrainingListManager />} />
-            <Route path="/manager/trainings/add" element={<TrainingForm />} />
-            <Route path="/manager/trainings/edit/:id" element={<TrainingForm />} />
-            <Route path="/manager/trainings/progress/:formationId" element={<TrainingProgress />} />
-
-            {/* Routes pour la navigation des formations */}
-
-            <Route path="/formations" element={<FormationBrowser />} />
-
-            <Route path="/radar" element={<RadarCompetence />} />
-
-            {/* Routes protégées */}
-            
+              <Route path="/dashboard" element={<DashboardPage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Toaster position="top-right" reverseOrder={false} toastOptions={{ duration: 2000 }} />

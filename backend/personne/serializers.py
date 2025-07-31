@@ -100,10 +100,11 @@ class PersonneSerializer(serializers.ModelSerializer):
         return None
 class PersonneHierarchieSerializer(serializers.ModelSerializer):
     subordinates=serializers.SerializerMethodField()
+    equipes = EquipeSerializer(many=True, read_only=True)
 
     class Meta:
         model = Personne
-        fields = ['matricule', 'first_name', 'last_name', 'role','photo', 'subordinates']
+        fields = ['matricule', 'first_name', 'last_name', 'role','photo', 'subordinates','equipes']
     
     def get_subordinates(self, obj):
         subordinates = obj.manager_persons.all()

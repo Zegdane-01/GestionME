@@ -17,7 +17,8 @@ import {
   Users,
   User,
   ListChecks,
-  Award,    
+  Award,
+  History, 
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -228,6 +229,60 @@ const QuizResults = ({ quiz, has_quiz }) => {
   }
 };
 
+const QuizHistory = ({ history, totalScore }) => {
+  if (!history || history.length === 0) {
+    return (
+      <div className={styles.quizSection}>
+        <h2>
+          <History size={22} className={styles.titleIcon} />
+          Historique des tentatives de quiz
+        </h2>
+        <div className={styles.noQuizMessage}>
+          <p>Aucun historique de quiz n'est disponible pour ce collaborateur.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.quizSection}>
+      <h2>
+        <History size={22} className={styles.titleIcon} />
+        Historique des tentatives de quiz
+      </h2>
+      <div className="table-responsive">
+        <table className="table table-sm">
+          <thead className="table-light">
+            <tr>
+              <th className="text-center">#</th>
+              <th>Date de soumission</th>
+              <th>Temps passé</th>
+              <th className="text-center">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((item, index) => {
+              const scorePercent = totalScore > 0 ? ((item.score / totalScore) * 100).toFixed(0) : 0;
+              const scoreOn4 = totalScore > 0 ? ((item.score / totalScore) * 4).toFixed(0) : "0";
+              return (
+                <tr key={index}>
+                  <td className="text-center">{history.length - index}</td>
+                  <td>{item.completed_at}</td>
+                  <td>{formatDuration(item.time_spent)}</td>
+                 <td className="text-center">
+                    <span className="fw-bold">{scoreOn4} / 4</span>
+                    <small className="text-muted d-block">{scorePercent}%</small>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const CollaboratorInfoCard = ({ collaborator }) => {
   if (!collaborator) return null;
 
@@ -269,6 +324,7 @@ const TrainingProgress = () => {
   const [filtersLoading, setFiltersLoading] = useState(true);
   const [teamId, setTeamId] = useState("");
   const [collabId, setCollabId] = useState("");
+  const [quizHistory, setQuizHistory] = useState(null);
 
   /** Fetch select options */
   useEffect(() => {
@@ -295,23 +351,36 @@ const TrainingProgress = () => {
 
   /** Fetch progress each time filters change */
   useEffect(() => {
-    if (!formationId) return;
-    (async () => {
+    if (!formationId || !collabId) {
+      setProgress(null);
+      setQuizHistory(null);
+      return;
+    }
+    const fetchAllData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const { data } = await api.get(`/formations/${formationId}/progress/`, {
-          params: {
-            ...(teamId && { equipe_id: teamId }),
-            ...(collabId && { collaborateur_id: collabId }),
-          },
-        });
+        const [progressResponse, historyResponse] = await  Promise.all([
+          api.get(`/formations/${formationId}/progress/`, {
+            params: {
+              ...(teamId && { equipe_id: teamId }),
+              ...(collabId && { collaborateur_id: collabId }),
+            },
+          }),
+          api.get(`/formations/${formationId}/quiz-history/`, {
+            params:{
+              ...(collabId && { collaborateur_id: collabId }),
+            }
+          }),
+        ]);
+        const progressData = progressResponse.data;
         // Backend peut renvoyer [] si collab n’a jamais commencé.
-        if (!data || (Array.isArray(data) && data.length === 0)) {
+        if (!progressData || (Array.isArray(progressData) && progressData.length === 0)) {
           setProgress(null);
         } else {
-          setProgress(Array.isArray(data) ? data[0] : data);
+          setProgress(Array.isArray(progressData) ? progressData[0] : progressData);
         }
+        setQuizHistory(historyResponse.data);
       } catch (e) {
         if (e.response?.status === 404) {
           // cas « jamais commencé »
@@ -322,7 +391,8 @@ const TrainingProgress = () => {
       } finally {
         setLoading(false);
       }
-    })();
+    };
+    fetchAllData();
   }, [formationId, teamId, collabId]);
 
   useEffect(() => {
@@ -431,6 +501,12 @@ const TrainingProgress = () => {
           <ProgressHeader data={progress} />
           <ChapterList chapters={progress.progression_par_chapitre} has_chapters={progress.has_chapters}/>
           <QuizResults quiz={progress.resultats_du_quiz} has_quiz={progress.has_quiz}/>
+          {quizHistory && (
+            <QuizHistory 
+              history={quizHistory.history} 
+              totalScore={quizHistory.total_possible_score} 
+            />
+          )}
         </>
       )}
     </div>

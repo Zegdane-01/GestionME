@@ -55,7 +55,9 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
         ('TL1', 'Team Leader N1'),
         ('TL2', 'Team Leader N2'),
-        ('COLLABORATEUR', 'Collaborateur')
+        ('COLLABORATEUR', 'Collaborateur'),
+        ('CL', 'Country Leader'),
+        ('UDL', 'Unit Delivery Leader')
     ]
 
 

@@ -1,8 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Form, Button, Alert, Card, Row, Col } from 'react-bootstrap';
-import { login } from '../../../services/auth';
-import { toast } from 'react-hot-toast';
+import { getUserRole, login } from '../../../services/auth';
 import api from '../../../api/api';
 import './Login.css'
 import logo from '../../../assets/images/logo.png'
@@ -29,7 +28,13 @@ const Login = () => {
       login(data.access, data.refresh, data.user);
 
       // Rediriger l'utilisateur
-      navigate('/radar');
+      const userRole = getUserRole();
+      if(userRole=='TeamLead'){
+        navigate('/dashboard');
+      }else if(userRole=='Collaborateur'){
+        navigate('/formations')
+      }
+        
 
    } catch (error) {
       

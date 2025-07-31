@@ -46,8 +46,13 @@ const Profile = () => {
   const [selectedEquipe, setSelectedEquipe] = useState(null);
 
   const handleProjetClick = () => {
-    setSelectedProjet(formData.projet_info);
-    setShowView(true);
+    if(formData.projet_info){
+      setSelectedProjet(formData.projet_info);
+      setShowView(true);
+    }else {
+      toast.error("Ce collaborateur n'est assigné à aucune projet.");
+    }
+    
   };
 
   const handleEquipeClick = () => {
@@ -56,7 +61,7 @@ const Profile = () => {
       setSelectedEquipe(formData.equipe_info); // On passe l'objet entier à la modale
       setShowEquipeView(true); // On affiche la modale
     } else {
-      toast.info("Ce collaborateur n'est assigné à aucune équipe.");
+      toast.error("Ce collaborateur n'est assigné à aucune activité.");
     }
   };
 
@@ -412,7 +417,7 @@ const handleSave = () => {
                       <input
                         type="text"
                         className="form-control"
-                        value={formData.ddc || ''}
+                        value={formData?.ddc || ''}
                         readOnly
                       />
                       <label className="input-group-text btn btn-outline-secondary" htmlFor="file-upload">

@@ -1,0 +1,101 @@
+/* Palette */
+:root {
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-radius: 12px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --text-dark: #0f172a;
+  --text-muted: #64748b;
+  --primary: #6366f1;
+}
+
+/* -------- Layout général -------- */
+.dashboard {
+  padding: 32px;
+  background: #f1f5f9;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.title {
+  font: 700 26px/1.2 'Inter', sans-serif;
+  color: var(--text-dark);
+  margin-bottom: 32px;
+  position: relative;
+}
+.title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 56px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+/* -------- Grid -------- */
+.grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* hauteur fixe pour les charts, sinon auto */
+  min-height: 260px;
+}
+
+/* Titres dans les cards */
+.cardTitle {
+  font: 600 15px/1 'Inter', sans-serif;
+  color: var(--text-dark);
+  margin-bottom: 16px;
+}
+
+/* Assure que les canvas occupent tout l’espace */
+.card canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.centerBody {
+  flex: 1;                     /* prend la hauteur dispo */
+  display: flex;
+  align-items: center;         /* centre verticalement */
+  justify-content: center;     /* centre horizontalement */
+  padding: 2px;                /* petit air autour */
+}
+
+
+
+/* Une carte qui prend 2 rangées de haut */
+.cardSpan2Rows {
+  grid-row: span 2;
+}
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cardSpan2 {
+    grid-column: span 2;
+  }
+}
+
+/* ≥1200 px : 3 cartes par ligne (demande utilisateur) */
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);   /* ⭐️ 3 colonnes fixes */
+  }
+  .cardSpan2 {
+    grid-column: span 4;
+  }
+}

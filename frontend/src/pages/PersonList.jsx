@@ -6,6 +6,7 @@ import PersonTable from '../components/Personne/CRUD/PersonneTable';
 import ViewPersonModal from '../components/Personne/CRUD/ViewPersonneModal';
 import ExcelImportModal from '../components/Personne/CRUD/ExcelImportModal';
 import DeletePersonModal from '../components/Personne/CRUD/DeletePersonneModal';
+import ResetPasswordModal from '../components/Personne/CRUD/RestPasswordModal';
 import styles from '../assets/styles/List.module.css'; 
 import api from '../api/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -23,6 +24,8 @@ const PersonList = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [personToDelete, setPersonToDelete] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [personToReset, setPersonToReset] = useState(null);
 
   const navigate = useNavigate();
   const modalWasOpenRef = useRef(false);
@@ -61,7 +64,6 @@ const PersonList = () => {
       person.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.matricule.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.status.toLowerCase().includes(searchTerm.toLowerCase())
@@ -131,6 +133,27 @@ const PersonList = () => {
     }
   };
 
+  const handleOpenResetModal = (person) => {
+    setPersonToReset(person);
+    setShowResetModal(true);
+  };
+
+  const executeResetPassword = async () => {
+    if (!personToReset) return;
+
+    const toastId = toast.loading("Réinitialisation du mot de passe...");
+    try {
+      const response = await api.post(`/personne/personnes/${personToReset.matricule}/reset-password/`);
+      toast.success(response.data.message || "Mot de passe réinitialisé !", { id: toastId });
+    } catch (error) {
+      toast.error("Une erreur est survenue.", { id: toastId });
+      console.error("Erreur de réinitialisation:", error);
+    } finally {
+      setShowResetModal(false);
+      setPersonToReset(null);
+    }
+  };
+
   return (
     <div className={styles.dashboard}>
       <div className={styles.dashboardHeader}>
@@ -170,6 +193,7 @@ const PersonList = () => {
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDeleteConfirm}
+            onResetPassword={handleOpenResetModal}
           />
         )}
       </div>
@@ -190,6 +214,13 @@ const PersonList = () => {
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
         onConfirm={deletePerson}
+      />
+
+      <ResetPasswordModal
+        show={showResetModal}
+        onHide={() => setShowResetModal(false)}
+        onConfirm={executeResetPassword}
+        userName={`${personToReset?.first_name} ${personToReset?.last_name}`}
       />
     </div>
   );

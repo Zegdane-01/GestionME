@@ -318,30 +318,7 @@ const EquipeForm = () => {
           </div>
 
           <div className="col-md-12">
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Membres sélectionnés ({assignedUsersDetails.length})</label>
-              <div className={styles.assignedListContainer}>
-                {assignedUsersDetails.length > 0 ? (
-                  assignedUsersDetails.map(user => (
-                    <div key={user.matricule} className={styles.assignedUserRow}>
-                      <span>{user.first_name} {user.last_name}</span>
-                      <button
-                        type="button"
-                        className={styles.removeButton}
-                        onClick={() => promptRemoveUser(user)}
-                        title={`Retirer ${user.first_name}`}
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted small m-2">Aucun membre sélectionné pour le moment.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Section pour AJOUTER des membres */}
+                        {/* Section pour AJOUTER des membres */}
             <div className={`${styles.formGroup} mt-4`}>
               <label htmlFor="userSearch" className={styles.formLabel}>Ajouter un membre</label>
               <input
@@ -350,6 +327,7 @@ const EquipeForm = () => {
                 placeholder="Rechercher par nom pour ajouter un membre..."
                 className={styles.formControl}
                 value={userSearch}
+                autoComplete="off" 
                 onChange={(e) => setUserSearch(e.target.value)}
               />
               {/* Affichage des résultats de recherche */}
@@ -372,24 +350,32 @@ const EquipeForm = () => {
                 </div>
               )}
             </div>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Membres sélectionnés ({assignedUsersDetails.length})</label>
+              <div className={styles.assignedListContainer}>
+                {assignedUsersDetails.length > 0 ? (
+                  assignedUsersDetails.map(user => (
+                    <div key={user.matricule} className={styles.assignedUserRow}>
+                      <span>{user.first_name} {user.last_name}</span>
+                      <button
+                        type="button"
+                        className={styles.removeButton}
+                        onClick={() => promptRemoveUser(user)}
+                        title={`Retirer ${user.first_name}`}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted small m-2">Aucun membre sélectionné pour le moment.</p>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="col-md-12">
-            {/* Affichage des domaines sélectionnés */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Domaines associés ({assignedDomainsDetails.length})</label>
-              <div className={styles.assignedListContainer}>
-                {assignedDomainsDetails.map(domain => (
-                  <div key={domain.id} className={styles.assignedItemRow}>
-                    <span>{domain.name}</span>
-                    <button type="button" className={styles.removeButton} onClick={() => handleRemoveDomain(domain)} title={`Retirer ${domain.name}`}>
-                      <X size={16} />
-                    </button>
-                  </div>
-                ))}
-                {assignedDomainsDetails.length === 0 && <p className="text-muted small m-2">Aucun domaine associé.</p>}
-              </div>
-            </div>
+
             {/* Ajout de domaines via recherche */}
             <div className={`${styles.formGroup} mt-4`}>
               <label htmlFor="domainSearch" className={styles.formLabel}>Associer un domaine</label>
@@ -399,6 +385,7 @@ const EquipeForm = () => {
                 placeholder="Rechercher par nom pour associer un domaine..."
                 className={styles.formControl}
                 value={searchDomain}
+                autoComplete="off" 
                 onChange={(e) => setSearchDomain(e.target.value)}
               />
               {domainSearchResults.length > 0 && (
@@ -414,6 +401,22 @@ const EquipeForm = () => {
                   ))}
                 </div>
               )}
+            </div>
+
+                       {/* Affichage des domaines sélectionnés */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Domaines associés ({assignedDomainsDetails.length})</label>
+              <div className={styles.assignedListContainer}>
+                {assignedDomainsDetails.map(domain => (
+                  <div key={domain.id} className={styles.assignedItemRow}>
+                    <span>{domain.name}</span>
+                    <button type="button" className={styles.removeButton} onClick={() => handleRemoveDomain(domain)} title={`Retirer ${domain.name}`}>
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+                {assignedDomainsDetails.length === 0 && <p className="text-muted small m-2">Aucun domaine associé.</p>}
+              </div>
             </div>
           </div>
 
