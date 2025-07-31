@@ -9,7 +9,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 const HeadcountByClientPieChart = ({ data }) => {
   // 2. Transformer les données reçues de l'API
-  const labels = data.map(item => item.client);
+  const labels = data.map(item => item.client === "nan" ? "Autre" : item.client);
   const values = data.map(item => item.count);
 
   const chartData = {

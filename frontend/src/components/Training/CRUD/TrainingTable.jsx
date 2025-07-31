@@ -50,8 +50,9 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
     }
     if (filters.formateur.length > 0) {
         data = data.filter(t => {
-            const formateur = t.formateur ?? "__vide__"; // remplace null/undefined par un marqueur
-            return filters.formateur.includes(formateur === "__vide__" ? "Non attribué" : formateur);
+            const raw = t.formateur;
+            const cleaned = (!raw || raw === "null") ? "Non attribué" : raw;
+            return filters.formateur.includes(cleaned);
         });
     }
     if (filters.has_quiz.length > 0) {
@@ -205,7 +206,7 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
                     <td><span className="badge bg-light text-dark">{training.domain_info?.name || ''}</span></td>
                     <td>{`${training.created_by_info?.last_name || ''} ${training.created_by_info?.first_name || ''}`}</td>
                     <td>
-                        {training.formateur ? (
+                        {training.formateur && training.formateur !== "null" && training.formateur.trim() !== "" ? (
                             <span className="fw-semibold">{training.formateur}</span>
                         ) : (
                             <span className="text-muted fst-italic">Non attribué</span>
@@ -222,9 +223,22 @@ const TrainingTable = ({ trainings, onEdit, onDelete, onResetAll  }) => {
                         </span>
                     </td>
                     <td>
-                        <span className="badge bg-primary">
-                            <strong>{training.assigned_team_count}</strong> activité{training.resource_count > 1 ? 's' : ''}
-                        </span>
+                        <div className="d-flex flex-wrap gap-2">
+                            {training.teams_progress?.length > 0 ? (
+                            training.teams_progress.map((team, teamIndex) => {
+                                const isTeamComplete = team.completed === team.total;
+                                const teamBadgeClass = isTeamComplete ? 'bg-success text-black' : 'bg-warning text-black';
+
+                                return (
+                                <span key={teamIndex} className={`badge ${teamBadgeClass}`}>
+                                    {team.name}: {team.completed} / {team.total}
+                                </span>
+                                );
+                            })
+                            ) : (
+                            <span className="text-muted fst-italic">Aucune activité</span>
+                            )}
+                        </div>
                     </td>
                     <td>
                         <span className={`badge ${training.has_quiz ? "bg-success" : "bg-secondary"}`}>

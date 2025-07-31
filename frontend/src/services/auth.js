@@ -33,7 +33,7 @@ export const getUserRole = () => {
     
     const rawRole = userData.role;
     
-    if (['TL1', 'TL2'].includes(rawRole)) {
+    if (['TL1', 'TL2', 'CL', 'UDL'].includes(rawRole)) {
       return 'TeamLead';
     } else if (rawRole === 'COLLABORATEUR') {
       return 'Collaborateur';

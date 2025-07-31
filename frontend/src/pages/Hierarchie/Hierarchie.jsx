@@ -221,7 +221,7 @@ OrgChart.templates.myTemplate.ripple = {
       template: "myTemplate",
       enableSearch: false,
       nodeMouseClick: OrgChart.action.none,
-      collapse: { level: 3 },
+      collapse: { level: 5 },
       tags: {
         collapsible: {
           template: "ula"

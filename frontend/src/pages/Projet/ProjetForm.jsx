@@ -50,7 +50,7 @@ const ProjetForm = () => {
     const fetchInitialData = async () => {
       try {
         // Charger la liste des team leaders
-        const teamLeadersRes = await api.get('/personne/personnes/?role=TL1,TL2');
+        const teamLeadersRes = await api.get('/personne/personnes/?role=TL1,TL2,UDL,CL');
         setTeamLeaders(teamLeadersRes.data);
 
         // Si en mode édition, charger les données du projet
@@ -165,6 +165,7 @@ const ProjetForm = () => {
                 onChange={handleChange}
                 className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.nom ? styles.inputError : ''}`}
                 disabled={isEditMode}
+                autoComplete="off" 
               />
               {errors.nom && <p className={styles.errorText}>{errors.nom}</p>}
             </div>
@@ -180,6 +181,7 @@ const ProjetForm = () => {
                   value={formData.code}
                   onChange={handleChange}
                   className={styles.formControl}
+                  autoComplete="off" 
                 />
               </div>
           </div>
@@ -194,6 +196,7 @@ const ProjetForm = () => {
                 onChange={handleChange}
                 className={isEditMode? styles.disableFormControl : styles.formControl} 
                 disabled={isEditMode}
+                autoComplete="off" 
               />
             </div>
           </div>
@@ -210,6 +213,7 @@ const ProjetForm = () => {
                 onChange={handleChange}
                 className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.final_client ? styles.inputError : ''}`}
                 disabled={isEditMode}
+                autoComplete="off" 
               />
               {errors.final_client && <p className={styles.errorText}>{errors.final_client}</p>}
             </div>
@@ -227,6 +231,7 @@ const ProjetForm = () => {
                 onChange={handleChange}
                 className={`${isEditMode? styles.disableFormControl : styles.formControl} ${errors.date_demarrage ? styles.inputError : ''}`}
                 disabled={isEditMode}
+                autoComplete="off" 
               />
               {errors.date_demarrage && <p className={styles.errorText}>{errors.date_demarrage}</p>}
             </div>
@@ -247,6 +252,7 @@ const ProjetForm = () => {
                 value={formData.cbu}
                 onChange={handleChange}
                 className={`${styles.formControl} ${errors.cbu ? styles.inputError : ''}`}
+                autoComplete="off" 
               />
               {errors.cbu && <p className={styles.errorText}>{errors.cbu}</p>}
             </div>
@@ -301,6 +307,7 @@ const ProjetForm = () => {
                 value={formData.chef_de_projet}
                 onChange={handleChange}
                 className={styles.formControl}
+                autoComplete="off" 
               />
             </div>
           </div>

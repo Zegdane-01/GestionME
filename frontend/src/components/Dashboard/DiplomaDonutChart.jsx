@@ -8,7 +8,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 const DiplomaDonutChart = ({ data }) => {
   // Transformer les données : [{diplome: 'Bac+5', count: 20}, ...]
-  const labels = data.map(item => item?.diplome || 'N/A');
+  const labels = data.map(item => item?.diplome || 'Autre');
   const values = data.map(item => item.count);
 
   const chartData = {
