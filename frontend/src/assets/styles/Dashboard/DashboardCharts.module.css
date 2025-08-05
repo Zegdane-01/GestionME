@@ -86,6 +86,9 @@
     grid-template-columns: repeat(2, 1fr);
   }
   .cardSpan2 {
+    grid-column: span 1;
+  }
+  .cardSpan4 {
     grid-column: span 2;
   }
 }
@@ -96,6 +99,9 @@
     grid-template-columns: repeat(4, 1fr);   /* ⭐️ 3 colonnes fixes */
   }
   .cardSpan2 {
+    grid-column: span 2;
+  }
+  .cardSpan4 {
     grid-column: span 4;
   }
 }

@@ -1,6 +1,7 @@
 import logging
 import pandas as pd
 import os
+import re
 from datetime import date, timedelta
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
@@ -14,6 +15,7 @@ from django.db.models import Count, Q, Case, When, Value, IntegerField
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.http import FileResponse
 from django.db import models
+from django.conf import settings
 from .models import Personne, ImportedExcel
 from formation.models import Formation, Equipe
 from projet.models import Projet 
@@ -143,6 +145,13 @@ class ImportChargePlanView(APIView):
     def post(self, request, format=None):
         POSITIONS_VALIDES = {'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'}
         file = request.FILES.get('file')
+
+        if not file:
+            return Response({'error': 'Aucun fichier reçu'}, status=400)
+        
+        fixed_filename = "plan_de_charge_actuel.xlsx"
+
+        file.name = fixed_filename
 
         last_import = ImportedExcel.objects.first()
         if last_import:
@@ -409,9 +418,78 @@ def download_last_imported_file(request):
         return Response({'error': 'Aucun fichier disponible'}, status=404)
     return FileResponse(open(latest.fichier.path, 'rb'), as_attachment=True, filename=latest.fichier.name)
 
+class BenchProdChartDataAPIView(APIView):
+    permission_classes = [IsTeamLeader]
+
+    def get(self, request, *args, **kwargs):
+        year_str = request.query_params.get('year')
+        if not year_str or not year_str.isdigit():
+            return Response({"error": "Veuillez fournir une année valide."}, status=400)
+
+        selected_year = int(year_str)
+        
+        try:
+            file_path = os.path.join(settings.MEDIA_ROOT, 'excels', 'plan_de_charge_actuel.xlsx')
+            if not os.path.exists(file_path):
+                return Response({"error": "Fichier plan de charge non trouvé."}, status=404)
+
+            sheet_name_to_read = f"Plan de charge ME {selected_year}"
+            
+            xls = pd.ExcelFile(file_path)
+            if sheet_name_to_read not in xls.sheet_names:
+                return Response({"error": f"La feuille pour l'année {selected_year} n'existe pas."}, status=404)
+
+            # On lit la première ligne comme en-tête (comportement par défaut)
+            df = pd.read_excel(xls, sheet_name=sheet_name_to_read, header=0)
+
+            # Vérifier si le fichier a assez de colonnes (jusqu'à AF, soit l'indice 31)
+            if df.shape[1] < 32:
+                return Response({"error": "Le fichier ne contient pas les colonnes requises jusqu'à AF."}, status=400)
+
+            # --- NOUVELLE LOGIQUE D'EXTRACTION ET VALIDATION DES MOIS ---
+
+            # 1. Définir les noms des mois valides en français (en minuscules)
+            VALID_MONTHS = {
+                'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+                'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+            }
+
+            labels = []
+            bench_counts = []
+            prod_counts = []
+
+            # 2. Itérer sur les en-têtes des colonnes R à AF (indices 17 à 31)
+            for col_header in df.columns[17:32]:
+                # Nettoyer l'en-tête pour la comparaison
+                cleaned_header = str(col_header).strip().lower()
+
+                # 3. Vérifier si l'en-tête est un mois valide
+                if cleaned_header in VALID_MONTHS:
+                    # Si c'est valide, on ajoute l'étiquette et on calcule les données
+                    labels.append(str(col_header).strip()) # On garde la casse originale pour l'affichage
+
+                    # Calculer les données pour la colonne correspondante
+                    numeric_data = pd.to_numeric(df[col_header], errors='coerce').dropna()
+                    bench_counts.append(int((numeric_data == 0).sum()))
+                    prod_counts.append(int((numeric_data > 0).sum()))
+
+            # 4. Construire la réponse avec les données validées
+            chart_data = {
+                "labels": labels,
+                "datasets": [
+                    {"label": 'En Production', "data": prod_counts, "backgroundColor": 'rgba(54, 162, 235, 0.7)'},
+                    {"label": 'Au Bench', "data": bench_counts, "backgroundColor": 'rgba(255, 99, 132, 0.7)'}
+                ]
+            }
+            return Response(chart_data)
+
+        except Exception as e:
+            print(f"Erreur serveur pour le graphique du plan de charge : {e}")
+            return Response({"error": "Erreur interne du serveur."}, status=500)
+
 
 class DashboardStatsAPIView(APIView):
-    permission_classes = [IsAuthenticated] # Protéger l'accès
+    permission_classes = [IsTeamLeader]
 
     def get(self, request, *args, **kwargs):
         # --- Widget 1: Statut des collaborateurs (Donut Chart) ---
@@ -492,42 +570,6 @@ class DashboardStatsAPIView(APIView):
             for pos in position_order
         ]
 
-
-        experience_ranges = {
-            '10+ ans': Q(experience_total__gte=120),              # 10 ans = 120 mois
-            '5-10 ans': Q(experience_total__gte=60, experience_total__lt=120),  # 5 ans = 60 mois
-            '2-5 ans': Q(experience_total__gte=24, experience_total__lt=60),   # 2 ans = 24 mois
-            '0-2 ans': Q(experience_total__lt=24),
-        }
-
-        # On annote chaque personne avec sa tranche d'expérience
-        experience_distribution_qs = collaborators_qs.annotate(
-            range=Case(
-                *[When(condition, then=Value(label)) for label, condition in experience_ranges.items()],
-                default=Value('N/A'),
-                output_field=models.CharField()
-            )
-        ).values('range').annotate(count=Count('matricule'))
-
-        # On convertit en dictionnaire pour un accès facile
-        experience_counts_dict = {item['range']: item['count'] for item in experience_distribution_qs}
-
-        # On formate la sortie en respectant l'ordre désiré
-        by_experience = [
-            {'range': label, 'count': experience_counts_dict.get(label, 0)}
-            for label in experience_ranges.keys()
-        ]
-
-        diploma_counts_qs = collaborators_qs.exclude(
-            diplome__in=[None, '']
-        ).values(
-            'diplome'
-        ).annotate(
-            count=Count('matricule')
-        ).order_by('-count')
-
-        by_diploma = list(diploma_counts_qs)
-
         project_status_counts = Projet.objects.values(
             'statut'
         ).annotate(
@@ -586,7 +628,29 @@ class DashboardStatsAPIView(APIView):
         available_equipes = list(Equipe.objects.values_list('name', flat=True).distinct())
         available_sops = [choice[0] for choice in Projet.SOP_CHOICES]
         
-        
+        available_years = []
+        try:
+            file_path = os.path.join(settings.MEDIA_ROOT, 'excels', 'plan_de_charge_actuel.xlsx')
+            if os.path.exists(file_path):
+                xls = pd.ExcelFile(file_path)
+                
+                # On définit le préfixe attendu pour les noms de feuilles
+                sheet_prefix = "Plan de charge ME "
+                
+                for sheet_name in xls.sheet_names:
+                    # On vérifie si le nom de la feuille commence par le préfixe
+                    if sheet_name.startswith(sheet_prefix):
+                        # On extrait la partie qui devrait être l'année
+                        year_str = sheet_name[len(sheet_prefix):]
+                        
+                        # On s'assure que c'est bien un nombre avant de l'ajouter
+                        if year_str.isdigit():
+                            available_years.append(int(year_str))
+                            
+                available_years.sort(reverse=True) # Trier de la plus récente à la plus ancienne
+        except Exception as e:
+            print(f"Impossible de lire les années depuis le fichier Excel : {e}")
+
 
         # --- Assemblage de la réponse ---
         data = {
@@ -596,6 +660,7 @@ class DashboardStatsAPIView(APIView):
                 'clients': available_clients,
                 'equipes': available_equipes,
                 'sops': available_sops,
+                'years': available_years,
             },
             'collaborator_stats': {
                 'total_headcount': total_headcount,
@@ -605,8 +670,6 @@ class DashboardStatsAPIView(APIView):
             'profile_distribution': by_profile,
             'headcount_by_client': by_client,
             'headcount_by_position': by_position,
-            'experience_distribution': by_experience,
-            'diploma_distribution': by_diploma,
             'project_status_distribution': by_project_status,
             'upcoming_deadlines': upcoming_deadlines,
         }
