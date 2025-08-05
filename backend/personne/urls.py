@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PersonneViewSet, HierarchieView, PersonneLoginView, change_password, ImportChargePlanView, download_last_imported_file, DashboardStatsAPIView
+from .views import PersonneViewSet, HierarchieView, PersonneLoginView, change_password, ImportChargePlanView, download_last_imported_file, DashboardStatsAPIView, BenchProdChartDataAPIView
 
 router = DefaultRouter()
 router.register(r'personnes', PersonneViewSet)
@@ -13,5 +13,6 @@ urlpatterns = [
     path('import-excel/', ImportChargePlanView.as_view(), name='import-excel'),
     path('download-latest-excel/', download_last_imported_file),
     path('stats/', DashboardStatsAPIView.as_view(), name='dashboard-stats'),
+    path('stats/bench-prod-chart/', BenchProdChartDataAPIView.as_view(), name='BenchProd-stats'),
     
 ]

@@ -16,7 +16,7 @@ const StatusDonutChart = ({ data }) => {
     datasets: [
       {
         data: Object.values(data.by_status),
-        backgroundColor: ['#63B3ED', '#FC8181', '#F6E05E', '#805AD5'],
+        backgroundColor: ['#63B3ED', '#48bb78', '#F6E05E', '#805AD5', '#d55a5aff','#fca13aff'],
         borderColor: '#FFFFFF',
         borderWidth: 2,
         cutout: '50%',

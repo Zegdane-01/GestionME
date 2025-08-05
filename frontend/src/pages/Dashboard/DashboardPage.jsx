@@ -5,10 +5,9 @@ import StatusDonutChart from '../../components/Dashboard/StatusDonutChart';
 import ProfileHorizontalBarChart from '../../components/Dashboard/ProfileHorizontalBarChart';
 import HeadcountByClientPieChart from '../../components/Dashboard/HeadcountByClientPieChart';
 import PositionBarChart from '../../components/Dashboard/PositionBarChart';
-import ExperienceBarChart from '../../components/Dashboard/ExperienceBarChart';
-import DiplomaDonutChart from '../../components/Dashboard/DiplomaDonutChart';
 import ProjectStatusDonutChart from '../../components/Dashboard/ProjectStatusDonutChart';
 import UpcomingDeadlinesList from '../../components/Dashboard/UpcomingDeadlinesList';
+import StatusHBarChart from '../../components/Dashboard/StatusHBarChart';
 import styles from '../../assets/styles/Dashboard/DashboardCharts.module.css';
 
 const Loader = () => <div>Chargement du tableau de bord...</div>;
@@ -129,7 +128,13 @@ return (
         </div>
       </section>
 
-      {/* Niveaux */}
+      <section className={`${styles.card} ${styles.cardSpan2}`}>
+        <h3 className={styles.cardTitle}>Analyse du Plan de Charge (Bench vs. Prod)</h3>
+        <div className={styles.centerBody}>
+            <StatusHBarChart availableYears={dashboardData.filters?.years || []} />
+        </div>
+      </section> 
+ 
       <section className={styles.card}>
         <h3 className={styles.cardTitle}>Répartition par Position</h3>
         <div className={styles.centerBody}>
@@ -145,14 +150,6 @@ return (
         </div>
       </section>
 
-      {/* Répartition par Niveau d'Expérience */}
-      <section className={styles.card}>
-        <h3 className={styles.cardTitle}>Répartition par Niveau d'Expérience</h3>
-        <div className={styles.centerBody}>
-          <ExperienceBarChart data={dashboardData.experience_distribution} />
-        </div>
-      </section>
-
       {/* Statut des Projets */}
       <section className={styles.card}>
         <h3 className={styles.cardTitle}>Statut des Projets</h3>
@@ -161,16 +158,9 @@ return (
         </div>
       </section>
 
-      {/* Répartition par Niveau de Diplôme */}
-      <section className={styles.card}>
-        <h3 className={styles.cardTitle}>Répartition par Niveau de Diplôme</h3>
-        <div className={styles.centerBody}>
-          <DiplomaDonutChart data={dashboardData.diploma_distribution} />
-        </div>
-      </section>
 
       {/* Formations avec Échéance Proche*/}
-      <section className={`${styles.card} ${styles.cardSpan2}`}>
+      <section className={`${styles.card} ${styles.cardSpan4}`}>
         <h3 className={styles.cardTitle}>Formations avec Échéance Proche</h3>
         <UpcomingDeadlinesList data={dashboardData.upcoming_deadlines} />
       </section>
