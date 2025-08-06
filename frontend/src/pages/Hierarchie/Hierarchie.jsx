@@ -53,52 +53,49 @@ const HierarchieTree = () => {
   }
 
   const flattenHierarchy = async (data, parent = null, result = []) => {
-    const teamsAdded = new Set();
-    for (const person of data) {
-      const photoUrl = person.photo
-        ? `${mediaApi.defaults.baseURL}${person.photo}`
-        : defaultAvatar;
+  const teamsAdded = new Set();
+  for (const person of data) {
+    const photoUrl = person.photo
+      ? `${mediaApi.defaults.baseURL}${person.photo}`
+      : defaultAvatar;
 
-      const base64Img = await toBase64(photoUrl).catch(() => defaultAvatar);
-      const base64ImgEquipe = await toBase64('https://cdn-icons-png.flaticon.com/512/681/681494.png').catch(() => '');
+    const base64Img = await toBase64(photoUrl).catch(() => defaultAvatar);
 
-      let personParentId = parent;
-      if (person.equipes && person.equipes.length > 0) {
-        const team = person.equipes[0]; // On prend la première équipe pour simplifier
-        const teamId = `team-${team.name}-${parent}`; // Crée un ID unique pour l'équipe sous ce manager
+    let personParentId = parent;
+    if (person.equipes && person.equipes.length > 0) {
+      const team = person.equipes[0];
+      const teamId = `team-${team.name}-${parent}`;
 
-        // Si l'équipe n'a pas encore été ajoutée pour ce manager, on la crée
-        if (!teamsAdded.has(teamId)) {
-          result.push({
-            id: teamId,
-            pid: parent, // L'équipe est rattachée au manager
-            name: team.name,
-            role: '',
-            img: base64ImgEquipe, // Icône générique pour une équipe
-            tags: ["team-node"], // Tag pour un style différent
-          });
-          teamsAdded.add(teamId);
-        }
-        personParentId = teamId;
+      if (!teamsAdded.has(teamId)) {
+        result.push({
+          id: teamId,
+          pid: parent,
+          name: "", // Pas de texte
+          role: "",
+          img: "",  // Pas d'image
+          tags: ["invisible-team-node"],
+        });
+        teamsAdded.add(teamId);
       }
-
-      result.push({
-        id: person.matricule,
-        pid: personParentId,
-        first_name: person.first_name,
-        last_name: person.last_name,
-        name: `${person.first_name} ${person.last_name}`,
-        role: person.role,
-        img: base64Img, // 🔁 ici on utilise l'image encodée
-      });
-
-      if (person.subordinates?.length) {
-        await flattenHierarchy(person.subordinates, person.matricule, result);
-      }
+      personParentId = teamId;
     }
-    return result;
-  };
 
+    result.push({
+      id: person.matricule,
+      pid: personParentId,
+      first_name: person.first_name,
+      last_name: person.last_name,
+      name: `${person.first_name} ${person.last_name}`,
+      role: person.role,
+      img: base64Img,
+    });
+
+    if (person.subordinates?.length) {
+      await flattenHierarchy(person.subordinates, person.matricule, result);
+    }
+  }
+  return result;
+};
   const nodeTemplate = ({ data }) => {
     return `
       <div class="${styles.organizationCardWrapper}">
@@ -206,34 +203,140 @@ OrgChart.templates.myTemplate.ripple = {
   rect: { x: 0, y: 0, width: 300, height: 80, rx: 10, ry: 10 }
 };
 
+const getTeamColor = (teamName) => {
+  const colors = [
+    { primary: "#6946c6", secondary: "#b0b1f7" }, // Violet (défaut)
+    { primary: "#059669", secondary: "#a7f3d0" }, // Vert
+    { primary: "#dc2626", secondary: "#fca5a5" }, // Rouge
+    { primary: "#ea580c", secondary: "#fed7aa" }, // Orange
+    { primary: "#0891b2", secondary: "#a5f3fc" }, // Cyan
+    { primary: "#7c3aed", secondary: "#c4b5fd" }  // Indigo
+  ];
+  
+  if (!teamName) return colors[0];
+  
+  // Hash simple pour assigner une couleur basée sur le nom de l'équipe
+  let hash = 0;
+  for (let i = 0; i < teamName.length; i++) {
+    hash = teamName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
 
-  const initChart = (nodes) => {
-    if (chart) chart.destroy(); // clean old chart
-    const newChart = new OrgChart(chartRef.current, {
-      nodes: nodes,
-      layout: OrgChart.tree,
+// Créer des templates dynamiques pour chaque équipe
+const createTeamTemplates = (nodes) => {
+  const teams = [...new Set(nodes.map(n => n.team).filter(Boolean))];
+  
+  teams.forEach(teamName => {
+    const teamColor = getTeamColor(teamName);
+    const templateName = `team-${teamName.replace(/\s+/g, '-').toLowerCase()}`;
+    
+    OrgChart.templates[templateName] = Object.assign({}, OrgChart.templates.ana);
+    OrgChart.templates[templateName].size = [300, 80];
+    
+    OrgChart.templates[templateName].defs = `
+      <linearGradient id="gradient-${templateName}" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="-30%" stop-color="${teamColor.secondary}" />
+        <stop offset="100%" stop-color="${teamColor.primary}" />
+      </linearGradient>
+    `;
+    
+    OrgChart.templates[templateName].node = `
+      <rect x="0" y="0" height="80" width="300" fill="url(#gradient-${templateName})" rx="10" ry="10"></rect>
+      <circle cx="40" cy="40" r="30" fill="#ffffff" stroke="${teamColor.primary}" stroke-width="2"></circle>
+    `;
+    
+    OrgChart.templates[templateName].img_0 = `
+      <clipPath id="{randId}">
+        <circle cx="40" cy="40" r="28"></circle>
+      </clipPath>
+      <image preserveAspectRatio="xMidYMid slice" clip-path="url(#{randId})"
+             xlink:href="{val}" x="12" y="12" width="56" height="56"></image>
+    `;
+    
+    OrgChart.templates[templateName].field_0 = `
+      <text width="200" style="font-size: 16px;" font-weight="bold"
+            fill="#ffffff" x="170" y="30" text-anchor="middle">{val}</text>
+    `;
+    
+    OrgChart.templates[templateName].field_1 = `
+      <text width="200" style="font-size: 13px;" fill="#ffffff"
+            x="170" y="55" text-anchor="middle">{val}</text>
+    `;
+  });
+};
+
+OrgChart.templates.transparent = Object.assign({}, OrgChart.templates.base);
+OrgChart.templates.transparent.size = [1, 1];
+OrgChart.templates.transparent.node = `<rect width="1" height="1" fill="none"></rect>`;
+
+
+ const initChart = (nodes) => {
+  if (chart) chart.destroy();
+  
+  // Créer les templates d'équipe
+  createTeamTemplates(nodes);
+  
+  // Trier pour regrouper par équipe
+  const sortedNodes = nodes.sort((a, b) => {
+    if (a.pid !== b.pid) {
+      return (a.pid || '').toString().localeCompare((b.pid || '').toString());
+    }
+    const teamA = a.team || 'zzz';
+    const teamB = b.team || 'zzz';
+    return teamA.localeCompare(teamB);
+  });
+
+  // Créer les tags pour assigner les bons templates
+  const tags = {};
+  nodes.forEach(node => {
+    if (node.team) {
+      const teamTag = `team-${node.team.replace(/\s+/g, '-').toLowerCase()}`;
+      const templateName = teamTag;
       
-      nodeBinding: {
-        field_0: "name",
-        field_1: "role",
-        img_0: "img"
-      },
-      template: "myTemplate",
-      enableSearch: false,
-      nodeMouseClick: OrgChart.action.none,
-      collapse: { level: 5 },
-      tags: {
-        collapsible: {
-          template: "ula"
-        },
-        "team-node": {
-          template: "ana" // Utilisez un template plus simple pour les équipes
-        }
-      },
-      nodeTemplate
-    });
-    setChart(newChart);
-  };
+      if (!tags[teamTag]) {
+        tags[teamTag] = { template: templateName };
+      }
+      
+      // Ajouter le tag au nœud
+      if (!node.tags) node.tags = [];
+      node.tags.push(teamTag);
+    }
+  });
+
+  const newChart = new OrgChart(chartRef.current, {
+    nodes: sortedNodes,
+    layout: OrgChart.tree,
+    
+    nodeBinding: {
+      field_0: "name",
+      field_1: "role",
+      img_0: "img"
+    },
+    template: "myTemplate", // Template par défaut
+    enableSearch: false,
+    nodeMouseClick: OrgChart.action.none,
+    collapse: { level: 7 },
+    siblingSeparation: 80,
+    subtreeSeparation: 120,
+    levelSeparation: 100,
+    tags:{
+  "invisible-team-node": {
+    template: "transparent",
+    subTreeConfig: {
+      orientation: OrgChart.orientation.top,
+      layout: OrgChart.tree,
+      siblingSeparation: 10,
+      levelSeparation: 20,
+      columns: 1
+    }
+  }
+},
+    nodeTemplate
+  });
+  
+  setChart(newChart);
+};
 
   return (
     <div className={styles.dashboard}>
