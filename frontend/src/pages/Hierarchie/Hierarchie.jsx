@@ -203,68 +203,6 @@ OrgChart.templates.myTemplate.ripple = {
   rect: { x: 0, y: 0, width: 300, height: 80, rx: 10, ry: 10 }
 };
 
-const getTeamColor = (teamName) => {
-  const colors = [
-    { primary: "#6946c6", secondary: "#b0b1f7" }, // Violet (défaut)
-    { primary: "#059669", secondary: "#a7f3d0" }, // Vert
-    { primary: "#dc2626", secondary: "#fca5a5" }, // Rouge
-    { primary: "#ea580c", secondary: "#fed7aa" }, // Orange
-    { primary: "#0891b2", secondary: "#a5f3fc" }, // Cyan
-    { primary: "#7c3aed", secondary: "#c4b5fd" }  // Indigo
-  ];
-  
-  if (!teamName) return colors[0];
-  
-  // Hash simple pour assigner une couleur basée sur le nom de l'équipe
-  let hash = 0;
-  for (let i = 0; i < teamName.length; i++) {
-    hash = teamName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
-
-// Créer des templates dynamiques pour chaque équipe
-const createTeamTemplates = (nodes) => {
-  const teams = [...new Set(nodes.map(n => n.team).filter(Boolean))];
-  
-  teams.forEach(teamName => {
-    const teamColor = getTeamColor(teamName);
-    const templateName = `team-${teamName.replace(/\s+/g, '-').toLowerCase()}`;
-    
-    OrgChart.templates[templateName] = Object.assign({}, OrgChart.templates.ana);
-    OrgChart.templates[templateName].size = [300, 80];
-    
-    OrgChart.templates[templateName].defs = `
-      <linearGradient id="gradient-${templateName}" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="-30%" stop-color="${teamColor.secondary}" />
-        <stop offset="100%" stop-color="${teamColor.primary}" />
-      </linearGradient>
-    `;
-    
-    OrgChart.templates[templateName].node = `
-      <rect x="0" y="0" height="80" width="300" fill="url(#gradient-${templateName})" rx="10" ry="10"></rect>
-      <circle cx="40" cy="40" r="30" fill="#ffffff" stroke="${teamColor.primary}" stroke-width="2"></circle>
-    `;
-    
-    OrgChart.templates[templateName].img_0 = `
-      <clipPath id="{randId}">
-        <circle cx="40" cy="40" r="28"></circle>
-      </clipPath>
-      <image preserveAspectRatio="xMidYMid slice" clip-path="url(#{randId})"
-             xlink:href="{val}" x="12" y="12" width="56" height="56"></image>
-    `;
-    
-    OrgChart.templates[templateName].field_0 = `
-      <text width="200" style="font-size: 16px;" font-weight="bold"
-            fill="#ffffff" x="170" y="30" text-anchor="middle">{val}</text>
-    `;
-    
-    OrgChart.templates[templateName].field_1 = `
-      <text width="200" style="font-size: 13px;" fill="#ffffff"
-            x="170" y="55" text-anchor="middle">{val}</text>
-    `;
-  });
-};
 
 OrgChart.templates.transparent = Object.assign({}, OrgChart.templates.base);
 OrgChart.templates.transparent.size = [1, 1];
@@ -273,9 +211,6 @@ OrgChart.templates.transparent.node = `<rect width="1" height="1" fill="none"></
 
  const initChart = (nodes) => {
   if (chart) chart.destroy();
-  
-  // Créer les templates d'équipe
-  createTeamTemplates(nodes);
   
   // Trier pour regrouper par équipe
   const sortedNodes = nodes.sort((a, b) => {
@@ -319,7 +254,7 @@ OrgChart.templates.transparent.node = `<rect width="1" height="1" fill="none"></
     collapse: { level: 7 },
     siblingSeparation: 80,
     subtreeSeparation: 120,
-    levelSeparation: 100,
+    levelSeparation: 50,
     tags:{
   "invisible-team-node": {
     template: "transparent",
@@ -327,7 +262,7 @@ OrgChart.templates.transparent.node = `<rect width="1" height="1" fill="none"></
       orientation: OrgChart.orientation.top,
       layout: OrgChart.tree,
       siblingSeparation: 10,
-      levelSeparation: 20,
+      levelSeparation: 50,
       columns: 1
     }
   }
