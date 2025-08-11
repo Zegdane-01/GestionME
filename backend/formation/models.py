@@ -356,7 +356,6 @@ class UserAnswer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='user_answers')
     selected_options = models.ManyToManyField(Option, blank=True)
     text_response = models.TextField(blank=True, null=True)
-    image_response = models.ImageField(upload_to='answers/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.user} - {self.question.texte[:30]}"

@@ -29,7 +29,7 @@ const Navbar = ({ onHeightChange }) => {
     TeamLead: [
       { path: '/formations', label: 'Formations' },
       { path: '/radar', label: 'Rapports' },
-      { path: '/hierarchie', label: 'Organisation chart' },
+      { path: '/hierarchie', label: 'Organigramme' },
       { 
         label: 'Gestion',
         sublinks: [
@@ -49,7 +49,7 @@ const Navbar = ({ onHeightChange }) => {
     COLLABORATEUR: [
       { path: '/trainings', label: 'Formations' },
       { path: '/radar', label: 'Rapports' },
-      { path: '/hierarchie', label: 'Organisation chart' }
+      { path: '/hierarchie', label: 'Organigramme' }
 
     ],
     public: [

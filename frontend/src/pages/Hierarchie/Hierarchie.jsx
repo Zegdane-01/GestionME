@@ -53,52 +53,49 @@ const HierarchieTree = () => {
   }
 
   const flattenHierarchy = async (data, parent = null, result = []) => {
-    const teamsAdded = new Set();
-    for (const person of data) {
-      const photoUrl = person.photo
-        ? `${mediaApi.defaults.baseURL}${person.photo}`
-        : defaultAvatar;
+  const teamsAdded = new Set();
+  for (const person of data) {
+    const photoUrl = person.photo
+      ? `${mediaApi.defaults.baseURL}${person.photo}`
+      : defaultAvatar;
 
-      const base64Img = await toBase64(photoUrl).catch(() => defaultAvatar);
-      const base64ImgEquipe = await toBase64('https://cdn-icons-png.flaticon.com/512/681/681494.png').catch(() => '');
+    const base64Img = await toBase64(photoUrl).catch(() => defaultAvatar);
 
-      let personParentId = parent;
-      if (person.equipes && person.equipes.length > 0) {
-        const team = person.equipes[0]; // On prend la première équipe pour simplifier
-        const teamId = `team-${team.name}-${parent}`; // Crée un ID unique pour l'équipe sous ce manager
+    let personParentId = parent;
+    if (person.equipes && person.equipes.length > 0) {
+      const team = person.equipes[0];
+      const teamId = `team-${team.name}-${parent}`;
 
-        // Si l'équipe n'a pas encore été ajoutée pour ce manager, on la crée
-        if (!teamsAdded.has(teamId)) {
-          result.push({
-            id: teamId,
-            pid: parent, // L'équipe est rattachée au manager
-            name: team.name,
-            role: '',
-            img: base64ImgEquipe, // Icône générique pour une équipe
-            tags: ["team-node"], // Tag pour un style différent
-          });
-          teamsAdded.add(teamId);
-        }
-        personParentId = teamId;
+      if (!teamsAdded.has(teamId)) {
+        result.push({
+          id: teamId,
+          pid: parent,
+          name: "", // Pas de texte
+          role: "",
+          img: "",  // Pas d'image
+          tags: ["invisible-team-node"],
+        });
+        teamsAdded.add(teamId);
       }
-
-      result.push({
-        id: person.matricule,
-        pid: personParentId,
-        first_name: person.first_name,
-        last_name: person.last_name,
-        name: `${person.first_name} ${person.last_name}`,
-        role: person.role,
-        img: base64Img, // 🔁 ici on utilise l'image encodée
-      });
-
-      if (person.subordinates?.length) {
-        await flattenHierarchy(person.subordinates, person.matricule, result);
-      }
+      personParentId = teamId;
     }
-    return result;
-  };
 
+    result.push({
+      id: person.matricule,
+      pid: personParentId,
+      first_name: person.first_name,
+      last_name: person.last_name,
+      name: `${person.first_name} ${person.last_name}`,
+      role: person.role,
+      img: base64Img,
+    });
+
+    if (person.subordinates?.length) {
+      await flattenHierarchy(person.subordinates, person.matricule, result);
+    }
+  }
+  return result;
+};
   const nodeTemplate = ({ data }) => {
     return `
       <div class="${styles.organizationCardWrapper}">
@@ -207,33 +204,74 @@ OrgChart.templates.myTemplate.ripple = {
 };
 
 
-  const initChart = (nodes) => {
-    if (chart) chart.destroy(); // clean old chart
-    const newChart = new OrgChart(chartRef.current, {
-      nodes: nodes,
-      layout: OrgChart.tree,
+OrgChart.templates.transparent = Object.assign({}, OrgChart.templates.base);
+OrgChart.templates.transparent.size = [1, 1];
+OrgChart.templates.transparent.node = `<rect width="1" height="1" fill="none"></rect>`;
+
+
+ const initChart = (nodes) => {
+  if (chart) chart.destroy();
+  
+  // Trier pour regrouper par équipe
+  const sortedNodes = nodes.sort((a, b) => {
+    if (a.pid !== b.pid) {
+      return (a.pid || '').toString().localeCompare((b.pid || '').toString());
+    }
+    const teamA = a.team || 'zzz';
+    const teamB = b.team || 'zzz';
+    return teamA.localeCompare(teamB);
+  });
+
+  // Créer les tags pour assigner les bons templates
+  const tags = {};
+  nodes.forEach(node => {
+    if (node.team) {
+      const teamTag = `team-${node.team.replace(/\s+/g, '-').toLowerCase()}`;
+      const templateName = teamTag;
       
-      nodeBinding: {
-        field_0: "name",
-        field_1: "role",
-        img_0: "img"
-      },
-      template: "myTemplate",
-      enableSearch: false,
-      nodeMouseClick: OrgChart.action.none,
-      collapse: { level: 5 },
-      tags: {
-        collapsible: {
-          template: "ula"
-        },
-        "team-node": {
-          template: "ana" // Utilisez un template plus simple pour les équipes
-        }
-      },
-      nodeTemplate
-    });
-    setChart(newChart);
-  };
+      if (!tags[teamTag]) {
+        tags[teamTag] = { template: templateName };
+      }
+      
+      // Ajouter le tag au nœud
+      if (!node.tags) node.tags = [];
+      node.tags.push(teamTag);
+    }
+  });
+
+  const newChart = new OrgChart(chartRef.current, {
+    nodes: sortedNodes,
+    layout: OrgChart.tree,
+    
+    nodeBinding: {
+      field_0: "name",
+      field_1: "role",
+      img_0: "img"
+    },
+    template: "myTemplate", // Template par défaut
+    enableSearch: false,
+    nodeMouseClick: OrgChart.action.none,
+    collapse: { level: 7 },
+    siblingSeparation: 80,
+    subtreeSeparation: 120,
+    levelSeparation: 50,
+    tags:{
+  "invisible-team-node": {
+    template: "transparent",
+    subTreeConfig: {
+      orientation: OrgChart.orientation.top,
+      layout: OrgChart.tree,
+      siblingSeparation: 10,
+      levelSeparation: 50,
+      columns: 1
+    }
+  }
+},
+    nodeTemplate
+  });
+  
+  setChart(newChart);
+};
 
   return (
     <div className={styles.dashboard}>
