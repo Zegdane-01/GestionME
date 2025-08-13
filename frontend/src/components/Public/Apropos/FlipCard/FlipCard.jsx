@@ -4,7 +4,7 @@ import './FlipCard.css';
 
 const FlipCard = ({ title, image, content }) => {
   return (
-    <div className="col-md-4 flip-card">
+    <div className="col-md-3 flip-card">
       <div className="flip-card-inner">
         <div className="flip-card-front">
           <img 
