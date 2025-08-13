@@ -5,7 +5,7 @@ import StatusDonutChart from '../../components/Dashboard/StatusDonutChart';
 import ProfileHorizontalBarChart from '../../components/Dashboard/ProfileHorizontalBarChart';
 import HeadcountByClientPieChart from '../../components/Dashboard/HeadcountByClientPieChart';
 import PositionBarChart from '../../components/Dashboard/PositionBarChart';
-import ProjectStatusDonutChart from '../../components/Dashboard/ProjectStatusDonutChart';
+import ProjectIEDonutChart from '../../components/Dashboard/ProjectIEDonutChart';
 import UpcomingDeadlinesList from '../../components/Dashboard/UpcomingDeadlinesList';
 import StatusHBarChart from '../../components/Dashboard/StatusHBarChart';
 import styles from '../../assets/styles/Dashboard/DashboardCharts.module.css';
@@ -150,14 +150,14 @@ return (
         </div>
       </section>
 
-      {/* Statut des Projets */}
-      <section className={styles.card}>
-        <h3 className={styles.cardTitle}>Statut des Projets</h3>
-        <div className={styles.centerBody}>
-          <ProjectStatusDonutChart data={dashboardData.project_status_distribution} />
-        </div>
-      </section>
-
+      {dashboardData.project_ie_stats && (
+        <section className={styles.card}>
+          <h3 className={styles.cardTitle}>Projets — Interne vs Externe</h3>
+          <div className={styles.centerBody}>
+            <ProjectIEDonutChart data={dashboardData.project_ie_stats} />
+          </div>
+        </section>
+      )}
 
       {/* Formations avec Échéance Proche*/}
       <section className={`${styles.card} ${styles.cardSpan4}`}>

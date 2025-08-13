@@ -1,0 +1,38 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centre le bloc donut+legend dans la card */
+  gap: 24px;
+  width: 100%;
+}
+
+.chart {
+  position: relative;
+  width: 240px;            /* ajuste selon ta card */
+  max-width: 100%;
+  aspect-ratio: 1 / 1;     /* carré => donut parfait */
+}
+.chart canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font: 500 14px Inter, Arial, sans-serif;
+  color: #334155;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+.legend li span {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
