@@ -107,15 +107,14 @@ class PersonneLoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
-            response_data = {
+            return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-            }
-
-            response_data['is_manager'] = True
-            response_data['user'] = PersonneSerializer(user).data  # Utilisez PersonneSerializer pour les non-managers
-
-            return Response(response_data, status=status.HTTP_200_OK)
+                'user': PersonneSerializer(user).data,
+                # Optionnel: expose un rôle clair si tu en as un
+                'role': getattr(user, 'role', None),
+                'is_manager': getattr(user, 'is_manager', False),
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
