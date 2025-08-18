@@ -107,15 +107,14 @@ class PersonneLoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
-            response_data = {
+            return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-            }
-
-            response_data['is_manager'] = True
-            response_data['user'] = PersonneSerializer(user).data  # Utilisez PersonneSerializer pour les non-managers
-
-            return Response(response_data, status=status.HTTP_200_OK)
+                'user': PersonneSerializer(user).data,
+                # Optionnel: expose un rôle clair si tu en as un
+                'role': getattr(user, 'role', None),
+                'is_manager': getattr(user, 'is_manager', False),
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
@@ -570,13 +569,36 @@ class DashboardStatsAPIView(APIView):
             for pos in position_order
         ]
 
-        project_status_counts = Projet.objects.values(
-            'statut'
-        ).annotate(
-            count=Count('projet_id')
-        ).order_by('-count')
+        # --- Widget : Projets Interne vs Externe (Donut) ---
+        projects_qs = Projet.objects.all()
 
-        by_project_status = list(project_status_counts)
+        # mêmes filtres facultatifs que le reste (si utiles pour toi)
+        if client_f:
+            projects_qs = projects_qs.filter(final_client=client_f)
+        if activite_f:
+            # si Projet est lié à Equipe (ManyToMany/ForeignKey) par 'equipes'
+            projects_qs = projects_qs.filter(equipes__name=activite_f)
+        # si tu souhaites filtrer aussi par I/E envoyé en query
+        if i_e_f:
+            projects_qs = projects_qs.filter(sop=i_e_f)   # <<< remplace 'i_e' par le vrai nom du champ si différent
+
+        # Compter
+        total_projects = projects_qs.distinct().count()
+
+        # Répartition I/E
+        # Remplace 'i_e' ci-dessous par le nom exact de ton champ projet (ex: 'ie', 'type_ie', 'intern_extern', etc.)
+        projects_ie_qs = projects_qs.values('sop').annotate(count=Count('projet_id')).order_by('-count')
+
+        # Mapper vers un dict propre; gérer None/N/A
+        by_i_e_raw = {item['sop']: item['count'] for item in projects_ie_qs}
+        # Option: afficher les labels des CHOICES si tu en as
+        try:
+            IE_DISPLAY = dict(Projet.I_E_CHOICES)  # ex: [('I','Interne'),('E','Externe')]
+            by_i_e = {IE_DISPLAY.get(k, 'N/A' if k in (None, '') else k): v for k, v in by_i_e_raw.items()}
+        except Exception:
+            by_i_e = {('N/A' if k in (None, '') else k): v for k, v in by_i_e_raw.items()}
+
+
 
         today = date.today()
         thirty_days_from_now = today + timedelta(days=30)
@@ -670,8 +692,11 @@ class DashboardStatsAPIView(APIView):
             'profile_distribution': by_profile,
             'headcount_by_client': by_client,
             'headcount_by_position': by_position,
-            'project_status_distribution': by_project_status,
             'upcoming_deadlines': upcoming_deadlines,
+            'project_ie_stats': {
+                'total_projects': total_projects,
+                'by_i_e': by_i_e
+            },
         }
         
         return Response(data)

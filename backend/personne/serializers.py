@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model, authenticate
 from .models import Personne
 from formation.serializers import EquipeSerializer
 from projet.models import Projet
 from datetime import date
+from django.db.models import Q
 
 class MiniPersonneSerializer(serializers.ModelSerializer):
     class Meta:
@@ -111,24 +112,38 @@ class PersonneHierarchieSerializer(serializers.ModelSerializer):
         return PersonneHierarchieSerializer(subordinates, many=True).data
 
 class PersonneLoginSerializer(serializers.Serializer):
-    matricule = serializers.CharField(max_length=50)
+    identifier = serializers.CharField(max_length=150)  # matricule OU email
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        matricule = data.get('matricule')
-        password = data.get('password')
+        identifier = (data.get('identifier') or '').strip()
+        password   = data.get('password')
 
-        if matricule and password:
-            user = authenticate(username=matricule, password=password)
-            if user:
-                if not user.is_active:
-                    raise serializers.ValidationError("Compte utilisateur désactivé.")
-                data['user'] = user
-            else:
-                raise serializers.ValidationError("Identifiants invalides.")
-        else:
-            raise serializers.ValidationError("Doit inclure 'matricule' et 'mot de passe'.")
+        if not identifier or not password:
+            raise serializers.ValidationError("Veuillez renseigner l'identifiant et le mot de passe.")
 
+        User = get_user_model()
+
+        # 1) On retrouve l’utilisateur par matricule OU par email (case-insensitive sur l’email)
+        try:
+            user_obj = User.objects.get(
+                Q(matricule__iexact=identifier) | Q(email__iexact=identifier)
+            )
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Identifiants invalides.")
+
+        # 2) On authentifie via le champ username réel (souvent matricule si USERNAME_FIELD='matricule')
+        #    Si votre USERNAME_FIELD est différent, remplacez ci-dessous en conséquence.
+        request = self.context.get('request')
+        user = authenticate(request, username=getattr(user_obj, 'matricule', user_obj.get_username()),
+                            password=password)
+
+        if not user:
+            raise serializers.ValidationError("Identifiants invalides.")
+        if not user.is_active:
+            raise serializers.ValidationError("Compte utilisateur désactivé.")
+
+        data['user'] = user
         return data
 
 class LogoutSerializer(serializers.Serializer):

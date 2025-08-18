@@ -5,8 +5,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
 
 import Navbar from './components/Public/Navbar/Navbar.jsx';
-import HomePage from './components/Public/HomePage/HomePage';
-import Apropos from './components/Public/Apropos/Apropos';
+//import HomePage from './components/Public/HomePage/HomePage';
+import HomePage from "./pages/Hompage/HomePage.jsx";
 
 import Login from './components/Personne/Login/Login';
 
@@ -54,7 +54,6 @@ function App() {
           <Routes>
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/" element={<HomePage />} />
-            <Route path="/A_Propos" element={<Apropos />} />
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute allowedRoles={['Collaborateur', 'TeamLead']} />}>
               <Route path="/profile" element={<Profile />}/>

@@ -1,0 +1,101 @@
+.homePage {
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+.heroSection { position: relative; height: 75vh; display: flex; align-items: center; justify-content: center; text-align: center; color: white; overflow: hidden; /* Important pour cacher les débordements de la vidéo */ }
+
+.heroVideoBackground { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; /* Placer la vidéo en arrière-plan */ }
+
+
+
+/* --- Section (générique) --- */
+.section {
+  padding: 4rem 2rem 1rem 2rem;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  text-align: center;
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  color: #1e293b;
+}
+
+/* --- Cartes de Statistiques --- */
+.statsSection {
+  display: flex;
+  justify-content: space-around;
+  gap: 2rem;
+  background-color: #ffffff;
+  padding: 3rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.statCard {
+  text-align: center;
+  color: #475569;
+}
+
+.statValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #6366f1; /* Couleur primaire */
+}
+
+.statLabel {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+
+
+/* --- Cartes des Secteurs --- */
+.sectorsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.sectorCard {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.sectorIcon {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #eef2ff;
+  color: #6366f1;
+  border-radius: 50%;
+}
+
+.sectorTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.sectorPercentage {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+
+  .statsSection {
+    flex-direction: column;
+  }
+}
