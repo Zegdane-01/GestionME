@@ -268,7 +268,7 @@ class ImportChargePlanView(APIView):
             sexe = str(row.get("Sexe")).strip() if pd.notna(row.get("Sexe")) else None
 
             raw_position = str(row.get("Position")).strip() if pd.notna(row.get("Position")) else ''
-            position_f = raw_position if raw_position in POSITIONS_VALIDES else 'T1'
+            position_f = raw_position if raw_position in POSITIONS_VALIDES else 'N/A'
 
             manager_name = str(row.get("Hierarchical manager")).strip() if pd.notna(row.get("Hierarchical manager")) else None
             Status = str(row.get("Status")).strip() if pd.notna(row.get("Status")) else None

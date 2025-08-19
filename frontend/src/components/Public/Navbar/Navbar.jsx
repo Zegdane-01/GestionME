@@ -30,6 +30,7 @@ const Navbar = ({ onHeightChange }) => {
       { path: '/formations', label: 'Formations' },
       { path: '/radar', label: 'Rapports' },
       { path: '/hierarchie', label: 'Organigramme' },
+      {path:'/dashboard', label: 'Tableau de board'},
       { 
         label: 'Gestion',
         sublinks: [
@@ -39,12 +40,8 @@ const Navbar = ({ onHeightChange }) => {
           { path: '/manager/trainings', label: 'Formations' },
         ]
       },
-      {
-        label: 'Dashboard',
-        sublinks:[
-          {path:'/dashboard', label: 'Tableau de board'}
-        ]
-      }
+      
+
     ],
     COLLABORATEUR: [
       { path: '/trainings', label: 'Formations' },

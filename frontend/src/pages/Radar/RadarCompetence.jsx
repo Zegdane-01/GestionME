@@ -225,7 +225,8 @@ const RadarCompetence = () => {
     const avg = valid.reduce((sum, d) => sum + d.score, 0) / valid.length;
     return Math.round(avg);            // Arrondi entier
   }, [radarData]);
-  const top3                = [...tableData].sort((a,b)=>b.average-a.average).slice(0,3);
+  const top3 =useMemo(() => [...tableData].filter(r => typeof r.average === 'number').sort((a,b)=>b.average-a.average).slice(0,3),[tableData]);
+  const bottom3 = useMemo(() => [...tableData].filter(r => typeof r.average === 'number').sort((a, b) => a.average - b.average).slice(0, 3),[tableData]);
 
   /* ---------------------- CHART CONFIG -------------------- */
   const radarChart = {
@@ -544,85 +545,105 @@ const RadarCompetence = () => {
                 </div>
             </div>
             <div className="row g-4 mb-4">
-                <div className={role === "TeamLead" ? "col-lg-8" : "col-lg-12"}>
-                  <div className="card shadow-sm h-100 p-4">
-                    <div className="card-body">
-                      <h4 className="card-title mb-0">Répartition par compétence</h4>
-                      <small>Distribution des scores moyens par domaine</small>
+              <div className="col-lg-12">
+                <div className="card shadow-sm h-100 p-4">
+                  <div className="card-body">
+                    <h4 className="card-title mb-0">Répartition par compétence</h4>
+                    <small>Distribution des scores moyens par domaine</small>
 
-                      {loading ? (
-                        <p>Chargement…</p>
-                      ) : (
-                        <div className="table-responsive mt-4">
-                          <table className="table table-sm align-middle">
-                            <thead className="table-light">
-                              <tr>
-                                <th>Domaine</th>
-                                <th style={{ width: "25%" }}>Score</th>
-                                <th className="text-center">Prérequis</th>
-                                <th className="text-center">Consultant</th>
-                                <th className="text-center">Leader</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {radarData.map((item, idx) => {
-                                const score = item.score;
-                                return (
-                                  <tr key={idx}>
-                                    <td><strong>{item.domaine}</strong></td>
-                                    <td className="pe-4">
-                                      {score !== null ? (
-                                        <div className="d-flex align-items-center">
-                                          <div className="flex-grow-1">
-                                            <div className="progress" style={{ height: '6px' }}>
-                                              <div
-                                                className={`progress-bar ${getProgressBarColor(score, item.prerequisites, item.consultant_target, item.leader_target)}`}
-                                                style={{ width: `${score}%` }}
-                                                role="progressbar"
-                                                aria-valuenow={score}
-                                                aria-valuemin="0"
-                                                aria-valuemax="100"
-                                              />
-                                            </div>
+                    {loading ? (
+                      <p>Chargement…</p>
+                    ) : (
+                      <div className="table-responsive mt-4">
+                        <table className="table table-sm align-middle">
+                          <thead className="table-light">
+                            <tr>
+                              <th>Domaine</th>
+                              <th style={{ width: "25%" }}>Score</th>
+                              <th className="text-center">Prérequis</th>
+                              <th className="text-center">Consultant</th>
+                              <th className="text-center">Leader</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {radarData.map((item, idx) => {
+                              const score = item.score;
+                              return (
+                                <tr key={idx}>
+                                  <td><strong>{item.domaine}</strong></td>
+                                  <td className="pe-4">
+                                    {score !== null ? (
+                                      <div className="d-flex align-items-center">
+                                        <div className="flex-grow-1">
+                                          <div className="progress" style={{ height: '6px' }}>
+                                            <div
+                                              className={`progress-bar ${getProgressBarColor(score, item.prerequisites, item.consultant_target, item.leader_target)}`}
+                                              style={{ width: `${score}%` }}
+                                              role="progressbar"
+                                              aria-valuenow={score}
+                                              aria-valuemin="0"
+                                              aria-valuemax="100"
+                                            />
                                           </div>
-                                          <span className="ms-2 text-muted">{score.toFixed(2)}%</span>
                                         </div>
-                                      ) : (
-                                        <span className="text-muted">N/A</span>
-                                      )}
-                                    </td>
-                                    <td className="bg-danger text-center text-white"><strong>{(item.prerequisites*100/4).toFixed(2)}%</strong></td>
-                                    <td className="bg-warning text-center text-white"><strong>{(item.consultant_target*100/4).toFixed(2)}%</strong></td>
-                                    <td className="bg-success text-center text-white"><strong>{(item.leader_target*100/4).toFixed(2)}%</strong></td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
+                                        <span className="ms-2 text-muted">{score.toFixed(2)}%</span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted">N/A</span>
+                                    )}
+                                  </td>
+                                  <td className="bg-danger text-center text-white"><strong>{(item.prerequisites*100/4).toFixed(2)}%</strong></td>
+                                  <td className="bg-warning text-center text-white"><strong>{(item.consultant_target*100/4).toFixed(2)}%</strong></td>
+                                  <td className="bg-success text-center text-white"><strong>{(item.leader_target*100/4).toFixed(2)}%</strong></td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
-                {role === "TeamLead" && (
-                  <div className="col-lg-4">
-                      <div className="card shadow-sm h-100 p-4">
-                          <div className="card-body">
-                          <h4 className="card-title mb-3">Top performers</h4>
-                          {top3.length===0 && <>N/A</>}
-                          {top3.map((p,i)=>(
-                              <div key={i} className="d-flex justify-content-between align-items-center bg-light rounded-3 p-3 mb-2">
-                              <div>
-                                  <strong>{p.user}</strong><br/>
-                                  <span className="text-muted small">{p.equipe}</span>
-                              </div>
-                              <span className="fw-bold text-primary">{p.average}%</span>
-                              </div>
-                          ))}
-                          </div>
+              </div>
+            </div>
+            <div className="row g-4 mb-4">
+              {role === "TeamLead" && (
+                <><div className="col-lg-6">
+              {/* Top */}
+              <div className="card shadow-sm h-100 p-4 mb-3">
+                <div className="card-body">
+                  <h4 className="card-title mb-3">Top performers</h4>
+                  {top3.length === 0 && <>N/A</>}
+                  {top3.map((p, i) => (
+                    <div key={i} className="d-flex justify-content-between align-items-center bg-light rounded-3 p-3 mb-2">
+                      <div>
+                        <strong>{p.user}</strong><br />
+                        <span className="text-muted small">{p.equipe}</span>
                       </div>
+                      <span className="fw-bold text-primary">{p.average}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div><div className="col-lg-6">
+                {/* Bottom */}
+                <div className="card shadow-sm h-100 p-4">
+                  <div className="card-body">
+                    <h4 className="card-title mb-3">Bottom performers</h4>
+                    {bottom3.length === 0 && <>N/A</>}
+                    {bottom3.map((p, i) => (
+                      <div key={i} className="d-flex justify-content-between align-items-center bg-light rounded-3 p-3 mb-2">
+                        <div>
+                          <strong>{p.user}</strong><br />
+                          <span className="text-muted small">{p.equipe}</span>
+                        </div>
+                        <span className="fw-bold text-danger">{p.average}%</span>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              </div></>
+              )}
             </div>
           </>
           ) : (role === "TeamLead" && (
