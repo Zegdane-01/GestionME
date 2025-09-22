@@ -43,8 +43,7 @@ const ProjetList = () => {
     setFiltered(
       projets.filter(p =>
         p.nom.toLowerCase().includes(low) ||
-        p.code.toLowerCase().includes(low) ||
-        p.direct_client.toLowerCase().includes(low) ||
+        p.ordre_travail.toLowerCase().includes(low) ||
         p.final_client.toLowerCase().includes(low) ||
         p.statut.toLowerCase().includes(low)
       )

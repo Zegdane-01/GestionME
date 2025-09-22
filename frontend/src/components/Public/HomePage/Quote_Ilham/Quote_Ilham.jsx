@@ -2,8 +2,8 @@ import React from 'react';
 import ilham from '../../../../assets/images/leadership/Ilham_megouaz.jpg'; 
 function Quote_Ilham() {
   return (
-    <section className="lead-quote py-6 bg-dark">
-        <div className="container">
+    <section className="lead-quote py-6 bg-dark ">
+        <div className="container p-5">
             <div className="row justify-content-center">
             <div className="col-md-10 col-lg-8 text-center">
                 <div className="card border-0 bg-transparent">
