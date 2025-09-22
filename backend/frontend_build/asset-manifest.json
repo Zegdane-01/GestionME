@@ -1,0 +1,35 @@
+{
+  "files": {
+    "main.css": "./static/css/main.bd2d83eb.css",
+    "main.js": "./static/js/main.8e7056c5.js",
+    "static/js/977.d09af86f.chunk.js": "./static/js/977.d09af86f.chunk.js",
+    "static/js/732.447e1da6.chunk.js": "./static/js/732.447e1da6.chunk.js",
+    "static/js/453.8ab44547.chunk.js": "./static/js/453.8ab44547.chunk.js",
+    "static/media/vd_background.mp4": "./static/media/vd_background.b7eafb0070d086606b4e.mp4",
+    "static/media/Manuf_Process.png": "./static/media/Manuf_Process.94b17c65e1c09080f33f.png",
+    "static/media/Installation.png": "./static/media/Installation.4781f78a9c6c5842f18d.png",
+    "static/media/Manu_methods.png": "./static/media/Manu_methods.040babd20546ef3b8dcd.png",
+    "static/media/Industrial_process.png": "./static/media/Industrial_process.29e68f29407ab7cca77c.png",
+    "static/media/Picture-urasmus.png": "./static/media/Picture-urasmus.2f8f0ec6999d019f8b43.png",
+    "static/media/nissan-logo.png": "./static/media/nissan-logo.eab0cea087baebcbab85.png",
+    "static/media/Valeo_Logo.png": "./static/media/Valeo_Logo.7ce11fc747474bebc272.png",
+    "static/media/default-avatar.png": "./static/media/default-avatar.dd22b00ce960634f4453.png",
+    "static/media/Expleo_Group_Logo.png": "./static/media/Expleo_Group_Logo.334e71802d7067df5205.png",
+    "static/media/Stellantis.png": "./static/media/Stellantis.54bd43aa3e48949b0ab7.png",
+    "static/media/continental.png": "./static/media/continental.0fd3654f1945ae0e178c.png",
+    "static/media/Bosch-logo.png": "./static/media/Bosch-logo.e23fa1a8c62f9b47a3e6.png",
+    "static/media/Airbus-Logo.png": "./static/media/Airbus-Logo.8e426a75558330a8de47.png",
+    "static/media/vitesco_t.jpg": "./static/media/vitesco_t.3e499cd8b2686e7c2ec3.jpg",
+    "static/media/Logo_de_Daher.png": "./static/media/Logo_de_Daher.e36413acb2b0416c9b3d.png",
+    "index.html": "./index.html",
+    "main.bd2d83eb.css.map": "./static/css/main.bd2d83eb.css.map",
+    "main.8e7056c5.js.map": "./static/js/main.8e7056c5.js.map",
+    "977.d09af86f.chunk.js.map": "./static/js/977.d09af86f.chunk.js.map",
+    "732.447e1da6.chunk.js.map": "./static/js/732.447e1da6.chunk.js.map",
+    "453.8ab44547.chunk.js.map": "./static/js/453.8ab44547.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.bd2d83eb.css",
+    "static/js/main.8e7056c5.js"
+  ]
+}

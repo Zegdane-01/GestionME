@@ -2,6 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@balkangraph/orgchart.js": "^8.19.28",
     "@cyntler/react-doc-viewer": "^1.17.0",

@@ -9,14 +9,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
-# En production, spécifiez les origines autorisées:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://mem.internal.expleogroup.com",
+    "http://www.mem.internal.expleogroup.com",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]
 
 
 # Quick-start development settings - unsuitable for production
@@ -28,7 +27,8 @@ SECRET_KEY = 'django-insecure-#agrql!42)9q$b-2c2#c#jl-hv-d9rdc)o$$+g%4=azojda$#)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["mem.internal.expleogroup.com", "www.mem.internal.expleogroup.com", "10.133.28.114","127.0.0.1", "localhost"]
+CSRF_TRUSTED_ORIGINS = ["https://mem.internal.expleogroup.com", "https://www.mem.internal.expleogroup.com","http://127.0.0.1:8000", "http://localhost:8000"]
 
 
 # Application definition
@@ -131,11 +131,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
 
 # Password validation
@@ -173,6 +173,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = BASE_DIR / "static"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "frontend_build/static",
+]
+
+# Serve index.html from React build
+TEMPLATES[0]['DIRS'] = [
+    BASE_DIR / "frontend_build"
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
