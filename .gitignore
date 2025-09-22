@@ -49,8 +49,6 @@ frontend/build/
 *.swp
 *.swo
 
-# dependency
-requirements.txt
 
 # 
 #frontend/public/assets/videos/*.mp4
