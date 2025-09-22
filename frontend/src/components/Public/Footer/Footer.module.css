@@ -92,3 +92,19 @@
 .bottomLinks a:hover {
   color: #fff;
 }
+.signature {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.signature a {
+  color: #0a66c2; /* bleu LinkedIn */
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.signature a:hover {
+  text-decoration: underline;
+}

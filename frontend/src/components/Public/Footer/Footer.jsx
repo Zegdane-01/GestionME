@@ -42,6 +42,20 @@ const Footer = () => {
           <Link to="/privacy">Politique de confidentialité</Link>
           <Link to="/legal">Mentions légales</Link>
         </div>
+        {/* Signature développeur */}
+        <div className={styles.signature}>
+          <p>
+            Développé par{" "}
+            <a 
+              href="https://www.linkedin.com/in/ahmed-zegdane" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={styles.linkedin}
+            >
+              Ahmed Zegdane
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

@@ -577,16 +577,17 @@ class DashboardStatsAPIView(APIView):
             projects_qs = projects_qs.filter(final_client=client_f)
         if activite_f:
             # si Projet est lié à Equipe (ManyToMany/ForeignKey) par 'equipes'
-            projects_qs = projects_qs.filter(equipes__name=activite_f)
+            projects_qs = projects_qs.filter(projet_persons__equipes__name=activite_f)
         # si tu souhaites filtrer aussi par I/E envoyé en query
         if i_e_f:
             projects_qs = projects_qs.filter(sop=i_e_f)   # <<< remplace 'i_e' par le vrai nom du champ si différent
 
+        projects_qs = projects_qs.distinct()
+
         # Compter
-        total_projects = projects_qs.distinct().count()
+        total_projects = projects_qs.count()
 
         # Répartition I/E
-        # Remplace 'i_e' ci-dessous par le nom exact de ton champ projet (ex: 'ie', 'type_ie', 'intern_extern', etc.)
         projects_ie_qs = projects_qs.values('sop').annotate(count=Count('projet_id')).order_by('-count')
 
         # Mapper vers un dict propre; gérer None/N/A
