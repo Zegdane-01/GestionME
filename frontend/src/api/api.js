@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { logout } from '../services/auth';
 
-const API_URL = 'http://10.133.28.114:8000/api/';
-export const API_URL_MEDIA= 'http://10.133.28.114:8000/'
+const API_URL = 'http://10.133.28.114/api/';
+export const API_URL_MEDIA= 'http://10.133.28.114/'
 
 const api = axios.create({
   baseURL: API_URL,
