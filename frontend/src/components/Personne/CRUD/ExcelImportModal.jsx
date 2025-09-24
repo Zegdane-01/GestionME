@@ -33,7 +33,7 @@ const ExcelImportModal = ({ show, onHide }) => {
     formData.append('sheet_name', sheetName);
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://localhost:8000/api/personne/import-excel/', true);
+    xhr.open('POST', 'http://10.133.28.114/api/personne/import-excel/', true);
     xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('accessToken')}`); // si JWT
     setIsUploading(true);
     setImportSummary(null); 
