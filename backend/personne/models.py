@@ -38,6 +38,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         ('T4', 'T4'),
         ('T5', 'T5'),
         ('T6', 'T6'),
+        ('N/A', 'Non applicable'),
     ]
     DIPLOME_CHOICES = [
         ('Bac+2', 'Bac+2'),

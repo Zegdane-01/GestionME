@@ -13,6 +13,8 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@react-icons/all-files": "^4.1.0",
+    "@syncfusion/ej2-data": "^31.1.17",
+    "@syncfusion/ej2-react-diagrams": "^31.1.20",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",

@@ -97,7 +97,7 @@ const Profile = () => {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        if (e.target.id === 'profile-image') {
+        if (e.target.id === 'photo-upload') {
         setFormData(prev => ({ ...prev, photo: file }));
         } else if (e.target.id === 'file-upload') {
         setFormData(prev => ({ ...prev, ddc: file }));
@@ -434,7 +434,7 @@ const handleSave = () => {
                     </div>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="image-upload" className="form-label">Image</label>
+                    <label htmlFor="photo-upload" className="form-label">Image</label>
                     <div className="input-group">
                       <input
                         type="text"
@@ -442,11 +442,11 @@ const handleSave = () => {
                         value={formData.photo? formData.photo || formData.photo : ''}
                         readOnly
                       />
-                      <label className="input-group-text btn btn-outline-secondary" htmlFor="image-upload">
+                      <label className="input-group-text btn btn-outline-secondary" htmlFor="photo-upload">
                         Parcourir
                       </label>
                       <input
-                        id="image-upload"
+                        id="photo-upload"
                         name="image"
                         type="file"
                         className="d-none"
