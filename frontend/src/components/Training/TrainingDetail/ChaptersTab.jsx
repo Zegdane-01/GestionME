@@ -64,7 +64,7 @@ const ChaptersTab = ({
     const percentageWatched = (video.currentTime / video.duration) * 100;
 
     // Si plus de 90% de la vidéo a été vue, on l'ajoute à notre liste
-    if (percentageWatched > 0.2) {
+    if (percentageWatched > 0.9) {
       setWatchedModules(prev => new Set(prev).add(current.id));
     }
   };
