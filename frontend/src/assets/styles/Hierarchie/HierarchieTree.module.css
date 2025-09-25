@@ -41,7 +41,11 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   text-align: center; /* Centre le graphique initialement */
-  overflow-x: auto; /* Permet le scroll horizontal */
+  overflow: auto; 
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .downloadBtn {
@@ -86,4 +90,52 @@
   font-weight: 600; /* Un peu moins gras que 'bold' pour un look moderne */
   color: #4f46e5;
   margin: 0; /* Important pour éviter les marges par défaut du h2 */
+}
+
+.organizationCard {
+  width: 140px; /* Avant : 200px ou + */
+  height: 80px; /* Avant : 100px ou + */
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  font-size: 12px; /* texte plus petit */
+}
+
+.avatar {
+  width: 36px; /* Avant : 50px ou plus */
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 4px;
+}
+
+.textBox {
+  text-align: center;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.role {
+  font-size: 10px;
+  color: #666;
+}
+
+.wrapper div[id^='chart'] > svg {
+  width: 100%;
+  height: auto;
+}
+#chart {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 700px;
 }
