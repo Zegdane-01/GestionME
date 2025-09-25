@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import toast from "react-hot-toast";
-import OrgChart from "@balkangraph/orgchart.js";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { Download } from "lucide-react";
+import * as d3 from 'd3';
+import { OrgChart } from 'd3-org-chart';
+
 import api, { mediaApi } from "../../api/api";
 import defaultAvatar from "../../assets/images/default-avatar.png";
 import styles from "../../assets/styles/Hierarchie/HierarchieTree.module.css";
@@ -11,267 +13,210 @@ import logo from '../../assets/images/Expleo_Group_Logo.png';
 
 const HierarchieTree = () => {
   const chartRef = useRef(null);
-  const [chart, setChart] = useState(null);
 
+  // --- Les fonctions de traitement des données sont conservées ---
   const pruneIsolatedNodes = (nodes) => {
-    // 1. Tous les ids jouant le rôle de parent
     const referencedAsParent = new Set(
       nodes.filter(n => n.pid !== null).map(n => n.pid)
     );
-
-    // 2. On conserve :
-    //    • les nœuds qui ont un parent (pid ≠ null)
-    //    • OU les nœuds qui sont vraiment parents de quelqu’un
     return nodes.filter(
       n => n.pid !== null || referencedAsParent.has(n.id)
     );
   };
 
+  const toBase64 = async (url) => {
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      return defaultAvatar; // Fallback to default avatar
+    }
+  };
+  
+  const flattenHierarchy = async (data, parent = null, result = []) => {
+    const teamsAdded = new Set();
+    for (const person of data) {
+      const photoUrl = person.photo
+        ? `${mediaApi.defaults.baseURL}${person.photo}`
+        : defaultAvatar;
+
+      const base64Img = await toBase64(photoUrl);
+
+      let personParentId = parent;
+      if (person.equipes && person.equipes.length > 0) {
+        const team = person.equipes[0];
+        const teamId = `team-${team.name}-${parent}`;
+
+        if (!teamsAdded.has(teamId)) {
+          result.push({
+            id: teamId,
+            pid: parent,
+            tags: ["invisible-team-node"],
+          });
+          teamsAdded.add(teamId);
+        }
+        personParentId = teamId;
+      }
+
+      result.push({
+        id: person.matricule,
+        pid: personParentId,
+        first_name: person.first_name,
+        last_name: person.last_name,
+        name: `${person.first_name} ${person.last_name}`,
+        role: person.role,
+        img: base64Img,
+      });
+
+      if (person.subordinates?.length) {
+        await flattenHierarchy(person.subordinates, person.matricule, result);
+      }
+    }
+    return result;
+  };
+
+  // --- Initialisation du graphique avec D3 ---
   useEffect(() => {
-    const loadData = async () => {
+    const loadDataAndRenderChart = async () => {
       try {
         const { data } = await api.get("/personne/hierarchie/");
-        const allNodes     = await flattenHierarchy(data);
+        const allNodes = await flattenHierarchy(data);
         const visibleNodes = pruneIsolatedNodes(allNodes);
-        initChart(visibleNodes);
-      } catch {
+        
+        const chartData = visibleNodes.map(node => ({ ...node, parentId: node.pid }));
+        
+        if (chartRef.current && chartData.length > 0) {
+          
+          d3.select(chartRef.current).html('');
+
+          const chart = new OrgChart()
+            // --- MODIFICATIONS DU DESIGN ---
+            .nodeHeight(d => d.data.tags?.includes("invisible-team-node") ? 0 : 80)
+            .nodeWidth(() => 300)
+            .initialExpandLevel(7) // Pour montrer les 7 premiers niveaux par défaut
+            // --- FIN DES MODIFICATIONS DU DESIGN ---
+            .childrenMargin(() => 50)
+            .compactMarginBetween(() => 35)
+            .compactMarginPair(() => 30)
+            .neighbourMargin(() => 20)
+            .nodeContent((d) => {
+              if (d.data.tags?.includes("invisible-team-node")) {
+                return '';
+              }
+              
+              // --- NOUVEAU TEMPLATE HTML POUR LE DESIGN DEMANDÉ ---
+              return `
+              <div style="font-family: 'Inter', sans-serif; width:${d.width}px; height:${d.height}px;">
+                <div style="
+                  width:100%;
+                  height:100%;
+                  background: linear-gradient(90deg, #b0b1f7, #6946c6);
+                  border-radius: 10px;
+                  color: white;
+                  display: flex;
+                  align-items: center;
+                  padding: 0 12px;
+                  box-sizing: border-box;
+                ">
+                  <div style="
+                    border: 2px solid #6366f1;
+                    border-radius: 50%;
+                    width: 56px;
+                    height: 56px;
+                    flex-shrink: 0;
+                    background-color: white;
+                  ">
+                      <img src="${d.data.img}" style="border-radius:50%; width:100%; height:100%; object-fit: cover;" onerror="this.onerror=null; this.src='${defaultAvatar}';" />
+                  </div>
+                  <div style="margin-left: 15px; text-align: left;">
+                      <div style="font-size:16px; font-weight:bold;">${d.data.name}</div>
+                      <div style="font-size:13px; margin-top:3px; opacity: 0.9;">${d.data.role}</div>
+                  </div>
+                </div>
+              </div>
+              `;
+            })
+            .container(chartRef.current)
+            .data(chartData);
+
+          // --- CORRECTION DU CHAÎNAGE ---
+          // Il faut appeler .render() d'abord, puis les autres méthodes sur l'instance
+          chart.render();
+          chart.fit();
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement ou du rendu du graphique :", error);
         toast.error("Erreur de chargement de la hiérarchie");
       }
     };
-    loadData();
+
+    loadDataAndRenderChart();
+
+    return () => {
+      if (chartRef.current) {
+        d3.select(chartRef.current).html('');
+      }
+    };
   }, []);
 
-  const toBase64 = async (url) => {
-    const response = await fetch(url, { mode: 'cors' });
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
 
-  const flattenHierarchy = async (data, parent = null, result = []) => {
-  const teamsAdded = new Set();
-  for (const person of data) {
-    const photoUrl = person.photo
-      ? `${mediaApi.defaults.baseURL}${person.photo}`
-      : defaultAvatar;
-
-    const base64Img = await toBase64(photoUrl).catch(() => defaultAvatar);
-
-    let personParentId = parent;
-    if (person.equipes && person.equipes.length > 0) {
-      const team = person.equipes[0];
-      const teamId = `team-${team.name}-${parent}`;
-
-      if (!teamsAdded.has(teamId)) {
-        result.push({
-          id: teamId,
-          pid: parent,
-          name: "", // Pas de texte
-          role: "",
-          img: "",  // Pas d'image
-          tags: ["invisible-team-node"],
-        });
-        teamsAdded.add(teamId);
-      }
-      personParentId = teamId;
-    }
-
-    result.push({
-      id: person.matricule,
-      pid: personParentId,
-      first_name: person.first_name,
-      last_name: person.last_name,
-      name: `${person.first_name} ${person.last_name}`,
-      role: person.role,
-      img: base64Img,
-    });
-
-    if (person.subordinates?.length) {
-      await flattenHierarchy(person.subordinates, person.matricule, result);
-    }
-  }
-  return result;
-};
-  const nodeTemplate = ({ data }) => {
-    return `
-      <div class="${styles.organizationCardWrapper}">
-        <div class="${styles.organizationCard}">
-          <img src="${data.img}" class="${styles.avatar}" onerror="this.src='${defaultAvatar}'" />
-          <div class="${styles.textBox}">
-            <div class="${styles.name}">${data.first_name} ${data.last_name}</div>
-            <div class="${styles.role}">${data.role}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
+  // --- Les fonctions d'export sont conservées ---
   const handleDownload = () => {
     const chartContainer = document.getElementById("chart-export-wrapper");
     if (!chartContainer) return;
 
-    html2canvas(chartContainer, {
-      useCORS: true,
-      allowTaint: true,
-      scale: 2
-    }).then(canvas => {
-      const link = document.createElement("a");
-      link.download = "organigramme.png";
-      link.href = canvas.toDataURL();
-      link.click();
-    }).catch(() => {
-      toast.error("Erreur lors de l'export de l'organigramme");
-    });
+    toast.promise(
+        html2canvas(chartContainer, { useCORS: true, allowTaint: true, scale: 2 })
+            .then(canvas => {
+                const link = document.createElement("a");
+                link.download = "organigramme.png";
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            }),
+        {
+            loading: 'Export en cours...',
+            success: 'Image téléchargée !',
+            error: "Erreur lors de l'export de l'image",
+        }
+    );
   };
 
   const handleDownloadPdf = async () => {
     const chartContainer = document.getElementById("chart-export-wrapper");
     if (!chartContainer) return;
 
-    try {
-      const canvas = await html2canvas(chartContainer, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 2
-      });
+    const promise = async () => {
+        const canvas = await html2canvas(chartContainer, { useCORS: true, allowTaint: true, scale: 2 });
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 20;
+        const availableWidth = pageWidth - 2 * margin;
+        const availableHeight = pageHeight - 2 * margin;
+        const ratio = Math.min(availableWidth / canvas.width, availableHeight / canvas.height);
+        const imgW = canvas.width * ratio;
+        const imgH = canvas.height * ratio;
+        const x = (pageWidth - imgW) / 2;
+        const y = (pageHeight - imgH) / 2;
+        pdf.addImage(imgData, "PNG", x, y, imgW, imgH);
+        pdf.save("organigramme.pdf");
+    };
 
-      const imgData = canvas.toDataURL("image/png");
-
-      // taille de la page A4 en pixels @96 dpi ≈ 794 x 1123
-      const pdf = new jsPDF({
-        orientation: "landscape",     // A4 horizontal : plus large
-        unit: "pt",
-        format: "a4"
-      });
-
-      const pageWidth  = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // redimensionne pour que ça rentre
-      const ratio   = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
-      const imgW    = canvas.width  * ratio;
-      const imgH    = canvas.height * ratio;
-
-      pdf.addImage(imgData, "PNG", (pageWidth - imgW) / 2, (pageHeight - imgH) / 2, imgW, imgH);
-      pdf.save("organigramme.pdf");
-    } catch (e) {
-      toast.error("Erreur lors de la génération du PDF");
-    }
+    toast.promise(promise(), {
+        loading: 'Génération du PDF...',
+        success: 'PDF téléchargé !',
+        error: "Erreur lors de la génération du PDF",
+    });
   };
-
-
-OrgChart.templates.myTemplate = Object.assign({}, OrgChart.templates.ana);
-OrgChart.templates.myTemplate.size = [300, 80];
-
-OrgChart.templates.myTemplate.defs = `
-  <linearGradient id="expleoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="-30%" stop-color="#b0b1f7" />
-    <stop offset="100%" stop-color="#6946c6" />
-  </linearGradient>
-`;
-
-OrgChart.templates.myTemplate.node = `
-  <rect x="0" y="0" height="80" width="300" fill="url(#expleoGradient)" rx="10" ry="10"></rect>
-  <circle cx="40" cy="40" r="30" fill="#ffffff" stroke="#6366f1" stroke-width="2"></circle>
-`;
-
-OrgChart.templates.myTemplate.img_0 = `
-  <clipPath id="{randId}">
-    <circle cx="40" cy="40" r="28"></circle>
-  </clipPath>
-  <image preserveAspectRatio="xMidYMid slice" clip-path="url(#{randId})"
-         xlink:href="{val}" x="12" y="12" width="56" height="56"></image>
-`;
-
-OrgChart.templates.myTemplate.field_0 = `
-  <text width="200" style="font-size: 16px;" font-weight="bold"
-        fill="#ffffff" x="170" y="30" text-anchor="middle">{val}</text>
-`;
-
-OrgChart.templates.myTemplate.field_1 = `
-  <text width="200" style="font-size: 13px;" fill="#ffffff"
-        x="170" y="55" text-anchor="middle">{val}</text>
-`;
-
-OrgChart.templates.myTemplate.ripple = {
-  radius: 20,
-  color: "#5e92d1",
-  rect: { x: 0, y: 0, width: 300, height: 80, rx: 10, ry: 10 }
-};
-
-
-OrgChart.templates.transparent = Object.assign({}, OrgChart.templates.base);
-OrgChart.templates.transparent.size = [1, 1];
-OrgChart.templates.transparent.node = `<rect width="1" height="1" fill="none"></rect>`;
-
-
- const initChart = (nodes) => {
-  if (chart) chart.destroy();
-  
-  // Trier pour regrouper par équipe
-  const sortedNodes = nodes.sort((a, b) => {
-    if (a.pid !== b.pid) {
-      return (a.pid || '').toString().localeCompare((b.pid || '').toString());
-    }
-    const teamA = a.team || 'zzz';
-    const teamB = b.team || 'zzz';
-    return teamA.localeCompare(teamB);
-  });
-
-  // Créer les tags pour assigner les bons templates
-  const tags = {};
-  nodes.forEach(node => {
-    if (node.team) {
-      const teamTag = `team-${node.team.replace(/\s+/g, '-').toLowerCase()}`;
-      const templateName = teamTag;
-      
-      if (!tags[teamTag]) {
-        tags[teamTag] = { template: templateName };
-      }
-      
-      // Ajouter le tag au nœud
-      if (!node.tags) node.tags = [];
-      node.tags.push(teamTag);
-    }
-  });
-
-  const newChart = new OrgChart(chartRef.current, {
-    nodes: sortedNodes,
-    layout: OrgChart.tree,
-    
-    nodeBinding: {
-      field_0: "name",
-      field_1: "role",
-      img_0: "img"
-    },
-    template: "myTemplate", // Template par défaut
-    enableSearch: false,
-    nodeMouseClick: OrgChart.action.none,
-    collapse: { level: 7 },
-    siblingSeparation: 80,
-    subtreeSeparation: 120,
-    levelSeparation: 50,
-    tags:{
-  "invisible-team-node": {
-    template: "transparent",
-    subTreeConfig: {
-      orientation: OrgChart.orientation.top,
-      layout: OrgChart.tree,
-      siblingSeparation: 10,
-      levelSeparation: 50,
-      columns: 1
-    }
-  }
-},
-    nodeTemplate
-  });
-  
-  setChart(newChart);
-};
 
   return (
     <div className={styles.dashboard}>
@@ -294,7 +239,7 @@ OrgChart.templates.transparent.node = `<rect width="1" height="1" fill="none"></
         <div
           id="chart"
           ref={chartRef}
-          style={{ width: '100%', height: '700px', background: 'transparent' }}
+          style={{ width: '100%', minHeight: '700px', backgroundColor: 'transparent' }}
         />
       </section>
     </div>
