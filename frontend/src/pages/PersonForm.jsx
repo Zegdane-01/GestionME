@@ -681,9 +681,9 @@ const PersonForm = () => {
               {isEditMode && formData.photo && (
                 <div className="mt-2">
                   <img 
-                    src={formData.photo} 
-                    alt="Photo actuelle" 
-                    className="h-20 w-20 object-cover rounded"
+                    src={formData.photo}
+                    alt="Photo actuelle"
+                    className={styles.previewPhoto}
                   />
                 </div>
               )}
